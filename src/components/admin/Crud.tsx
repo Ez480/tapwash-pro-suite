@@ -151,6 +151,7 @@ export function CrudTable({
   canDelete?: boolean;
 }) {
   const { t } = useI18n();
+const { loading: adminLoading, isAdmin } = useRequireAdmin();
   const queryClient = useQueryClient();
   const { data, isLoading } = useAdminTable(table, select, orderBy);
   const [open, setOpen] = useState(false);
