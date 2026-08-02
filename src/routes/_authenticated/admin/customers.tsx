@@ -4,13 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CrudTable, type Row } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
-
+import { useAdminTable } from "@/lib/data";
 export const Route = createFileRoute("/_authenticated/admin/customers")({
   component: AdminCustomers,
 });
 
 function AdminCustomers() {
   const { t, fmtDate } = useI18n();
+const { data: subscriptions } = useAdminTable(
+  "subscriptions",
+  "*, packages(title_en,title_ar)",
+  "created_at",
+);
 
   return (
     <CrudTable
