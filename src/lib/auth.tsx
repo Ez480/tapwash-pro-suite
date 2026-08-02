@@ -46,3 +46,13 @@ export function useIsAdmin(userId?: string | null) {
     },
   });
 }
+export function useRequireAdmin() {
+  const { user, ready } = useSession();
+  const { data: roles, isLoading } = useIsAdmin(user?.id);
+
+  return {
+    loading: !ready || isLoading,
+    isAdmin: (roles ?? []).includes("admin"),
+    user,
+  };
+}
