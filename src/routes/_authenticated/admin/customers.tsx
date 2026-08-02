@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CrudTable, type Row } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 
