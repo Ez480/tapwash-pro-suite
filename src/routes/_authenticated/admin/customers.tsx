@@ -36,7 +36,24 @@ const { data: subscriptions } = useAdminTable(
           ),
         },
         { key: "created_at", label: t("activation_date"), render: (r) => fmtDate(String(r["created_at"])) },
-      ]}
+     {
+  key: "subscription",
+  label: t("subscription_status"),
+  render: (r: Row) => {
+    const sub = subscriptions?.find(
+      (s) => s.customer_id === r["id"],
+    );
+
+    return sub ? (
+      <Badge variant={sub.status === "active" ? "default" : "destructive"}>
+        {sub.status}
+      </Badge>
+    ) : (
+      <span className="text-muted-foreground">—</span>
+    );
+  },
+},
+ ]}
       fields={[
         { name: "full_name", label: t("full_name") },
         { name: "phone", label: t("phone") },
