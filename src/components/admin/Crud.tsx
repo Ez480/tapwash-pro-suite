@@ -218,7 +218,13 @@ const { loading: adminLoading, isAdmin } = useRequireAdmin();
     toast.success(t("deleted"));
     refresh();
   };
+if (adminLoading) {
+  return <p>{t("loading")}</p>;
+}
 
+if (!isAdmin) {
+  return <p className="text-destructive">Unauthorized</p>;
+}
   return (
     <div>
       <SectionHeader
