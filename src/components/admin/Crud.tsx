@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
+import { useRequireAdmin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
