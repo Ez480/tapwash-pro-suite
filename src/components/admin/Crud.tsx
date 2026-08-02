@@ -179,6 +179,10 @@ const { loading: adminLoading, isAdmin } = useRequireAdmin();
   };
 
   const save = async () => {
+  if (!isAdmin) {
+    toast.error("Unauthorized");
+    return;
+  }
     const payload: Row = {};
     fields.forEach((f) => {
       const v = draft[f.name];
