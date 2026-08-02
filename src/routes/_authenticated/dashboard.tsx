@@ -90,7 +90,10 @@ function CustomerDashboard() {
       .from("profiles")
       .update({ ...form, language: lang })
       .eq("id", user!.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(t("saved"));
     setProfileOpen(false);
     queryClient.invalidateQueries({ queryKey: ["profile", user!.id] });
@@ -98,7 +101,10 @@ function CustomerDashboard() {
 
   const changePassword = async () => {
     const { error } = await supabase.auth.updateUser({ password });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(t("password_changed"));
     setPassword("");
     setPassOpen(false);
