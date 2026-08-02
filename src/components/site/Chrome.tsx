@@ -211,9 +211,9 @@ export function PageHero({
   title,
   subtitle,
 }: {
-  eyebrow?: string;
+  eyebrow?: string | undefined;
   title: string;
-  subtitle?: string;
+  subtitle?: string | null | undefined;
 }) {
   return (
     <section className="surface-hero border-b border-border">
