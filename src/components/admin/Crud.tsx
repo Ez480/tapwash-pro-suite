@@ -204,6 +204,10 @@ const { loading: adminLoading, isAdmin } = useRequireAdmin();
   };
 
   const remove = async (id: string) => {
+  if (!isAdmin) {
+    toast.error("Unauthorized");
+    return;
+  }
     if (!window.confirm(t("confirm_delete"))) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase.from(table as any).delete().eq("id", id);
