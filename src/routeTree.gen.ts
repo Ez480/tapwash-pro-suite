@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +59,11 @@ const ServicesRoute = ServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/services': typeof ServicesRoute
+  '/admin': typeof AuthenticatedAdminRouteRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/services': typeof ServicesRoute
+  '/admin': typeof AuthenticatedAdminRouteRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesById {
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/services': typeof ServicesRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/offers'
     | '/packages'
     | '/services'
+    | '/admin'
     | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/offers'
     | '/packages'
     | '/services'
+    | '/admin'
     | '/dashboard'
   id:
     | '__root__'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/offers'
     | '/packages'
     | '/services'
+    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -210,10 +229,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
 }
 
