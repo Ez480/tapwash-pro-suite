@@ -13,10 +13,10 @@ function AdminCards() {
   const { t, fmtDate } = useI18n();
   const { data: customers } = useAdminTable("profiles", "id, full_name, phone", "created_at");
 
-  const const customerOptions = (customers ?? []).map((c) => ({
-  value: String(c.id),
-  label: `${String(c.full_name ?? "-")} (${String(c.phone ?? "-")})`,
-}));
+  const customerOptions = (customers ?? []).map((c) => ({
+    value: String(c.id),
+    label: `${String(c.full_name ?? "-")} (${String(c.phone ?? "-")})`,
+  }));
 
   const typeLabel = (v: unknown) =>
     v === "card" ? t("card") : v === "sticker" ? t("sticker") : t("keychain");
@@ -25,11 +25,10 @@ function AdminCards() {
     <CrudTable
       table="nfc_cards"
       title={t("a_cards")}
-    
-          columns={[
-  { key: "serial_number", label: t("serial_number") },
-  { key: "uid", label: t("uid") },
-  { key: "card_type", label: t("card_type"), render: (r) => typeLabel(r["card_type"]) },
+      columns={[
+        { key: "serial_number", label: t("serial_number") },
+        { key: "uid", label: t("uid") },
+        { key: "card_type", label: t("card_type"), render: (r) => typeLabel(r["card_type"]) },
         {
           key: "status",
           label: t("status"),
@@ -49,16 +48,16 @@ function AdminCards() {
           render: (r) =>
             customerOptions.find((c) => c.value === String(r["customer_id"]))?.label ?? "—",
         },
-          {
-  key: "activation_date",
-  label: t("activation_date"),
-  render: (r) => fmtDate(r["activation_date"] ? String(r["activation_date"]) : null),
-},
-{
-  key: "created_at",
-  label: t("created"),
-  render: (r) => fmtDate(String(r["created_at"])),
-},
+        {
+          key: "activation_date",
+          label: t("activation_date"),
+          render: (r) => fmtDate(r["activation_date"] ? String(r["activation_date"]) : null),
+        },
+        {
+          key: "created_at",
+          label: t("created"),
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
       ]}
       fields={[
         { name: "serial_number", label: t("serial_number") },
