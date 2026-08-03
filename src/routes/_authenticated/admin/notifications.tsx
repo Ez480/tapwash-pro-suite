@@ -15,7 +15,7 @@ function AdminNotifications() {
     { value: "", label: t("broadcast") },
     ...(customers ?? []).map((c) => ({
       value: String(c.id),
-      label: String(c.full_name ?? c.phone ?? c.id),
+      label: `${String(c.full_name ?? "-")} (${String(c.phone ?? "-")})`,
     })),
   ];
 
@@ -24,6 +24,7 @@ function AdminNotifications() {
       table="notifications"
       title={t("a_notifications")}
       columns={[
+        { key: "id", label: "ID" },
         { key: "title", label: t("title") },
         { key: "message", label: t("message") },
         {
@@ -34,7 +35,11 @@ function AdminNotifications() {
               ? (customerOptions.find((c) => c.value === String(r["customer_id"]))?.label ?? "—")
               : t("broadcast"),
         },
-        { key: "created_at", label: t("paid_at"), render: (r) => fmtDate(String(r["created_at"])) },
+        {
+          key: "created_at",
+          label: "Created",
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
       ]}
       fields={[
         { name: "title", label: t("title") },
