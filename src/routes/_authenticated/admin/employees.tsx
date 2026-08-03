@@ -28,9 +28,17 @@ function AdminEmployees() {
         { name: "phone", label: t("phone") },
         { name: "job_title", label: t("job_title") },
         { name: "branch", label: t("branch") },
-        {
-          name: "status",
-          label: t("status"),
+        
+          {
+  key: "status",
+  label: t("status"),
+  render: (r) => (
+    <Badge variant={r["status"] === "active" ? "default" : "secondary"}>
+      {String(r["status"])}
+    </Badge>
+  ),
+},
+  
           type: "select",
           defaultValue: "active",
           options: [
