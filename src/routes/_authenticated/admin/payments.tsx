@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Badge } from "@/components/ui/badge";
 import { CrudTable } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
@@ -13,7 +14,7 @@ function AdminPayments() {
   const { data: customers } = useAdminTable("profiles", "id, full_name, phone", "created_at");
   const customerOptions = (customers ?? []).map((c) => ({
     value: String(c.id),
-    label: String(c.full_name ?? c.phone ?? c.id),
+    label: `${String(c.full_name ?? "-")} (${String(c.phone ?? "-")})`,
   }));
 
   return (
@@ -22,6 +23,7 @@ function AdminPayments() {
       title={t("a_payments")}
       orderBy="paid_at"
       columns={[
+        { key: "id", label: "ID" },
         {
           key: "customer_id",
           label: t("customer"),
@@ -32,7 +34,28 @@ function AdminPayments() {
         { key: "method", label: t("method") },
         { key: "reference", label: t("reference") },
         { key: "paid_at", label: t("paid_at"), render: (r) => fmtDate(String(r["paid_at"])) },
-        { key: "status", label: t("status") },
+        {
+          key: "created_at",
+          label: t("created"),
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
+        {
+          key: "status",
+          label: t("status"),
+          render: (r) => (
+            <Badge
+              variant={
+                r["status"] === "active"
+                  ? "default"
+                  : r["status"] === "pending"
+                    ? "secondary"
+                    : "destructive"
+              }
+            >
+              {String(r["status"])}
+            </Badge>
+          ),
+        },
       ]}
       fields={[
         { name: "customer_id", label: t("customer"), type: "select", options: customerOptions },
