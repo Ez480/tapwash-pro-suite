@@ -1,21 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { CrudTable, type Row } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
+
 export const Route = createFileRoute("/_authenticated/admin/customers")({
   component: AdminCustomers,
 });
 
 function AdminCustomers() {
   const { t, fmtDate } = useI18n();
-const { data: subscriptions } = useAdminTable(
-  "subscriptions",
-  "*, packages(title_en,title_ar)",
-  "created_at",
-);
+  const { data: subscriptions } = useAdminTable(
+    "subscriptions",
+    "*, packages(title_en,title_ar)",
+    "created_at",
+  );
 
   return (
     <CrudTable
@@ -35,25 +35,27 @@ const { data: subscriptions } = useAdminTable(
             </Badge>
           ),
         },
-        { key: "created_at", label: t("activation_date"), render: (r) => fmtDate(String(r["created_at"])) },
-     {
-  key: "subscription",
-  label: t("subscription_status"),
-  render: (r: Row) => {
-    const sub = subscriptions?.find(
-      (s) => s.customer_id === r["id"],
-    );
+        {
+          key: "created_at",
+          label: t("activation_date"),
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
+        {
+          key: "subscription",
+          label: t("subscription_status"),
+          render: (r: Row) => {
+            const sub = subscriptions?.find((s) => s.customer_id === r["id"]);
 
-    return sub ? (
-      <Badge variant={sub.status === "active" ? "default" : "destructive"}>
-        {sub.status}
-      </Badge>
-    ) : (
-      <span className="text-muted-foreground">—</span>
-    );
-  },
-},
- ]}
+            return sub ? (
+              <Badge variant={sub.status === "active" ? "default" : "destructive"}>
+                {sub.status}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            );
+          },
+        },
+      ]}
       fields={[
         { name: "full_name", label: t("full_name") },
         { name: "phone", label: t("phone") },
