@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Badge } from "@/components/ui/badge";
 import { CrudTable } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/admin/packages")({
 });
 
 function AdminPackages() {
-  const { t, pick, fmtMoney } = useI18n();
+  const { t, pick, fmtMoney, fmtDate } = useI18n();
 
   return (
     <CrudTable
@@ -16,11 +17,26 @@ function AdminPackages() {
       title={t("a_packages")}
       orderBy="sort_order"
       columns={[
+        { key: "id", label: "ID" },
         { key: "title_en", label: t("title"), render: (r) => pick(String(r["title_en"]), String(r["title_ar"])) },
         { key: "price", label: t("price"), render: (r) => fmtMoney(Number(r["price"] ?? 0)) },
         { key: "washes_count", label: t("washes_count") },
         { key: "duration_days", label: t("duration_days") },
         { key: "sort_order", label: t("sort_order") },
+        {
+          key: "status",
+          label: t("status"),
+          render: (r) => (
+            <Badge variant={r["status"] === "active" ? "default" : "secondary"}>
+              {r["status"] === "active" ? t("active") : t("inactive")}
+            </Badge>
+          ),
+        },
+        {
+          key: "created_at",
+          label: "Created",
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
       ]}
       fields={[
         { name: "title_en", label: t("title_en") },
