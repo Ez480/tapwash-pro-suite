@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { Badge } from "@/components/ui/badge";
 import { CrudTable } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 
@@ -15,6 +16,7 @@ function AdminOffers() {
       table="offers"
       title={t("a_offers")}
       columns={[
+        { key: "id", label: "ID" },
         {
           key: "title_en",
           label: t("title"),
@@ -23,7 +25,20 @@ function AdminOffers() {
         { key: "new_price", label: t("new_price"), render: (r) => fmtMoney(Number(r["new_price"] ?? 0)) },
         { key: "old_price", label: t("old_price"), render: (r) => fmtMoney(Number(r["old_price"] ?? 0)) },
         { key: "end_date", label: t("end_date"), render: (r) => fmtDate(r["end_date"] ? String(r["end_date"]) : null) },
-        { key: "status", label: t("status") },
+        {
+          key: "created_at",
+          label: "Created",
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
+        {
+          key: "status",
+          label: t("status"),
+          render: (r) => (
+            <Badge variant={r["status"] === "active" ? "default" : "secondary"}>
+              {r["status"] === "active" ? t("active") : t("inactive")}
+            </Badge>
+          ),
+        },
       ]}
       fields={[
         { name: "title_en", label: t("title_en") },
