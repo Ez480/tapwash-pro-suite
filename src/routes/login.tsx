@@ -61,8 +61,7 @@ function LoginPage() {
           },
         });
 
-        console.log("SIGNUP DATA:", data);
-        console.log("SIGNUP ERROR:", error);
+        alert(JSON.stringify({ data, error }, null, 2));
 
         if (error) throw error;
         toast.success(t("check_email"));
