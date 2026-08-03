@@ -38,6 +38,11 @@ function AdminEmployees() {
     </Badge>
   ),
 },
+ {
+  key: "created_at",
+  label: t("activation_date"),
+  render: (r) => fmtDate(String(r["created_at"])),
+},
   
           type: "select",
           defaultValue: "active",
