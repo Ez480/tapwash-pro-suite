@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/admin/employees")({
 });
 
 function AdminEmployees() {
-  const { t } = useI18n();
+    const { t, fmtDate } = useI18n();
 
   return (
     <CrudTable
