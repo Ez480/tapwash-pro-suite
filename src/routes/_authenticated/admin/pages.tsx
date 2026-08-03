@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authenticated/admin/pages")({
 });
 
 function AdminPages() {
-  const { t, pick } = useI18n();
+  const { t, pick, fmtDate } = useI18n();
 
   return (
     <CrudTable
@@ -18,11 +18,18 @@ function AdminPages() {
       canCreate={false}
       canDelete={false}
       columns={[
+        { key: "id", label: "ID" },
         { key: "slug", label: t("slug") },
         {
           key: "title_en",
           label: t("title"),
           render: (r) => pick(String(r["title_en"]), String(r["title_ar"])),
+        },
+        { key: "title_ar", label: t("title_ar") },
+        {
+          key: "created_at",
+          label: "Created",
+          render: (r) => fmtDate(String(r["created_at"])),
         },
       ]}
       fields={[
