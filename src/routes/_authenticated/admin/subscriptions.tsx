@@ -22,7 +22,7 @@ function AdminSubscriptions() {
 
   const customerOptions = (customers ?? []).map((c) => ({
     value: String(c.id),
-    label: String(c.full_name ?? c.phone ?? c.id),
+    label: `${String(c.full_name ?? "-")} (${String(c.phone ?? "-")})`,
   }));
   const packageOptions = (packages ?? []).map((p) => ({
     value: String(p.id),
@@ -36,6 +36,18 @@ function AdminSubscriptions() {
 
   const addWash = async (row: Row) => {
     const used = Number(row["used_washes"] ?? 0);
+    const total = Number(row["total_washes"] ?? 0);
+
+    if (used >= total) {
+      toast.error(t("no_washes_left"));
+      return;
+    }
+
+    if (row["status"] !== "active") {
+      toast.error(t("subscription_not_active"));
+      return;
+    }
+
     const { error } = await supabase.from("washes").insert({
       customer_id: String(row["customer_id"]),
       subscription_id: String(row["id"]),
@@ -73,6 +85,7 @@ function AdminSubscriptions() {
       title={t("a_subscriptions")}
       select="*, packages(title_en,title_ar)"
       columns={[
+        { key: "id", label: "ID" },
         {
           key: "customer_id",
           label: t("customer"),
@@ -92,6 +105,11 @@ function AdminSubscriptions() {
         },
         { key: "start_date", label: t("start_date"), render: (r) => fmtDate(String(r["start_date"])) },
         { key: "end_date", label: t("end_date"), render: (r) => fmtDate(String(r["end_date"])) },
+        {
+          key: "created_at",
+          label: t("created"),
+          render: (r) => fmtDate(String(r["created_at"])),
+        },
         {
           key: "status",
           label: t("status"),
