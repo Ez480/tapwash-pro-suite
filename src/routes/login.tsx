@@ -53,14 +53,17 @@ function LoginPage() {
         if (error) throw error;
         navigate({ to: "/dashboard", replace: true });
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: form.email,
           password: form.password,
           options: {
             data: { full_name: form.name },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         });
+
+        console.log("SIGNUP DATA:", data);
+        console.log("SIGNUP ERROR:", error);
+
         if (error) throw error;
         toast.success(t("check_email"));
         setMode("in");
