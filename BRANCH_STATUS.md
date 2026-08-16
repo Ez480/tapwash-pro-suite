@@ -1,0 +1,1 @@
+Dependency compatibility baseline: @radix-ui/react-collapsible ^1.1.20 and @radix-ui/react-dropdown-menu ^2.1.24.
