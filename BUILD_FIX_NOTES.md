@@ -1,0 +1,1 @@
+Build fix: use published Radix package versions; @radix-ui/react-collapsible must use ^1.1.20 instead of unavailable ^1.2.12.
