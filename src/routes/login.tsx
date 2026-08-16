@@ -29,6 +29,15 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+function getAuthErrorMessage(error: unknown) {
+  if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
+    return "تعذر الاتصال بخدمة التسجيل. تأكد أن VITE_SUPABASE_URL و VITE_SUPABASE_PUBLISHABLE_KEY مضبوطتان في Vercel ثم أعد المحاولة.";
+  }
+
+  if (error instanceof Error) return error.message;
+  return "حدث خطأ غير متوقع أثناء التسجيل.";
+}
+
 function LoginPage() {
   const { t, pick } = useI18n();
   const navigate = useNavigate();
@@ -47,17 +56,17 @@ function LoginPage() {
     try {
       if (mode === "in") {
         const { error } = await supabase.auth.signInWithPassword({
-          email: form.email,
+          email: form.email.trim(),
           password: form.password,
         });
         if (error) throw error;
         navigate({ to: "/dashboard", replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
-          email: form.email,
+          email: form.email.trim(),
           password: form.password,
           options: {
-            data: { full_name: form.name },
+            data: { full_name: form.name.trim() },
             emailRedirectTo: `${window.location.origin}/dashboard`,
           },
         });
@@ -66,7 +75,8 @@ function LoginPage() {
         setMode("in");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("error"));
+      console.error("TapWash authentication error", err);
+      toast.error(getAuthErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -77,15 +87,12 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
+        options: { redirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) throw error;
-      // Supabase redirects the browser to Google; no client-side session
-      // handling is needed here. The auth listener restores the session after return.
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("error"));
+      console.error("TapWash OAuth error", err);
+      toast.error(getAuthErrorMessage(err));
       setBusy(false);
     }
   };
@@ -165,7 +172,7 @@ function LoginPage() {
           </Button>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            {mode === "in" ? t("no_account") : t("have_account")}{" "}
+            {mode === "in" ? t("no_account") : t("have_account")} {" "}
             <button
               type="button"
               onClick={() => setMode(mode === "in" ? "up" : "in")}
