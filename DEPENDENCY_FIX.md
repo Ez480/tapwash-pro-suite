@@ -1,0 +1,1 @@
+Vercel dependency resolution issue identified: @radix-ui/react-collapsible ^1.2.12 and @radix-ui/react-dropdown-menu ^2.2.1 are invalid for the current registry state.
