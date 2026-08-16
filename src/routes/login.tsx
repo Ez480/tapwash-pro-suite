@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LanguageToggle, ThemeToggle } from "@/components/site/Chrome";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import heroCar from "@/assets/hero-car.jpg";
@@ -75,16 +74,20 @@ function LoginPage() {
 
   const google = async () => {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? t("error"));
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) throw error;
+      // Supabase redirects the browser to Google; no client-side session
+      // handling is needed here. The auth listener restores the session after return.
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("error"));
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard", replace: true });
   };
 
   return (
