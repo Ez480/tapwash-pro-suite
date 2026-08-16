@@ -1,0 +1,1 @@
+The Vercel build failure was caused by @radix-ui/react-collapsible ^1.2.12, which does not exist. Use ^1.1.20.
