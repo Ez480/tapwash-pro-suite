@@ -1,40 +1,51 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+// Vercel/Vite inject these at build time. The public Supabase values below are
+// kept as a production fallback so a missing Vercel env variable cannot take
+// the authentication UI completely offline. The publishable key is designed
+// for browser use; never put a service_role key here.
+const DEFAULT_SUPABASE_URL = "https://xeqijpgjxsagedhamzhe.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_WMaCSaelRFRfitPUznmSKg_h2KFprnZ";
 
-function assertSupabaseConfig() {
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      !SUPABASE_URL ? "VITE_SUPABASE_URL" : null,
-      !SUPABASE_PUBLISHABLE_KEY ? "VITE_SUPABASE_PUBLISHABLE_KEY" : null,
-    ].filter(Boolean).join(", ");
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
+  DEFAULT_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined)?.trim() ||
+  DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
-    throw new Error(`Supabase is not configured. Missing: ${missing}`);
-  }
-
+function validateSupabaseConfig() {
   try {
     const url = new URL(SUPABASE_URL);
-    if (url.protocol !== "https:") {
-      throw new Error("VITE_SUPABASE_URL must use HTTPS");
+    if (url.protocol !== "https:" || !url.hostname.endsWith(".supabase.co")) {
+      throw new Error("Invalid Supabase URL");
     }
   } catch {
     throw new Error("VITE_SUPABASE_URL is invalid");
   }
+
+  if (!SUPABASE_PUBLISHABLE_KEY.startsWith("sb_publishable_")) {
+    throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY is invalid");
+  }
 }
 
-assertSupabaseConfig();
+validateSupabaseConfig();
 
 export const supabase = createClient<Database>(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
-      storage: typeof window !== "undefined" ? window.localStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+    },
+    global: {
+      headers: {
+        "X-Client-Info": "tapwash-web",
+      },
     },
   },
 );
