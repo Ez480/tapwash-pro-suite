@@ -1,0 +1,1 @@
+Vercel build fix: replaced unavailable @radix-ui/react-collapsible ^1.2.12 and @radix-ui/react-dropdown-menu ^2.2.1 specs with published versions.
