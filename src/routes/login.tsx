@@ -31,6 +31,19 @@ function getAuthErrorMessage(error: unknown) {
   return "حدث خطأ غير متوقع أثناء التسجيل.";
 }
 
+async function getLandingPath(userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  const roles = (data ?? []).map((row) => row.role as string);
+  if (roles.includes("admin")) return "/admin" as const;
+  return "/dashboard" as const;
+}
+
 function LoginPage() {
   const { t, pick } = useI18n();
   const navigate = useNavigate();
@@ -42,7 +55,19 @@ function LoginPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   useEffect(() => {
-    if (ready && user) navigate({ to: "/dashboard", replace: true });
+    if (!ready || !user) return;
+    let cancelled = false;
+    void getLandingPath(user.id)
+      .then((path) => {
+        if (!cancelled) navigate({ to: path, replace: true });
+      })
+      .catch((error) => {
+        console.error("Failed to resolve user role", error);
+        if (!cancelled) navigate({ to: "/dashboard", replace: true });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [ready, user, navigate]);
 
   const copyPassword = async () => {
@@ -62,9 +87,10 @@ function LoginPage() {
     setBusy(true);
     try {
       if (mode === "in") {
-        const { error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
         if (error) throw error;
-        navigate({ to: "/dashboard", replace: true });
+        const path = data.user ? await getLandingPath(data.user.id) : "/dashboard";
+        navigate({ to: path, replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email: form.email.trim(),
@@ -86,7 +112,7 @@ function LoginPage() {
   const google = async () => {
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/dashboard` } });
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/login` } });
       if (error) throw error;
     } catch (err) {
       console.error("TapWash OAuth error", err);
