@@ -32,7 +32,7 @@ export function useSession() {
   return { session, user: session?.user ?? null, ready };
 }
 
-export function useIsAdmin(userId?: string | null) {
+export function useUserRoles(userId?: string | null) {
   return useQuery({
     queryKey: ["role", userId],
     enabled: !!userId,
@@ -42,7 +42,11 @@ export function useIsAdmin(userId?: string | null) {
         .select("role")
         .eq("user_id", userId!);
       if (error) throw error;
-      return (data ?? []).map((r) => r.role);
+      return (data ?? []).map((r) => r.role as string);
     },
   });
+}
+
+export function useIsAdmin(userId?: string | null) {
+  return useUserRoles(userId);
 }
