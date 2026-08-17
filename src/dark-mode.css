@@ -1,0 +1,47 @@
+.dark,
+.dark * {
+  --color-foreground: #ffffff;
+}
+
+.dark {
+  --foreground: #ffffff;
+  --card-foreground: #ffffff;
+  --popover-foreground: #ffffff;
+  --secondary-foreground: #ffffff;
+  --muted-foreground: #ffffff;
+  --accent-foreground: #ffffff;
+  --ink: #ffffff;
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent-foreground: #ffffff;
+}
+
+.dark body,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark p,
+.dark span,
+.dark label,
+.dark li,
+.dark td,
+.dark th,
+.dark [data-slot="label"],
+.dark [data-slot="card-title"],
+.dark [data-slot="card-description"] {
+  color: #ffffff;
+}
+
+.dark input,
+.dark textarea,
+.dark select,
+.dark button {
+  color: #ffffff;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(255, 255, 255, 0.75);
+}
