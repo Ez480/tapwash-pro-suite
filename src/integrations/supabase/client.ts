@@ -1,13 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-// Vercel/Vite inject these at build time. The public Supabase values below are
-// kept as a production fallback so a missing Vercel env variable cannot take
-// the authentication UI completely offline. The publishable key is designed
-// for browser use; never put a service_role key here.
-const DEFAULT_SUPABASE_URL = "https://xeqijpgjxsagedhamzhe.supabase.co";
+// TapWash production Supabase project: El.EZZ CAR WASH.
+// Publishable browser key only; never use a service_role key here.
+const DEFAULT_SUPABASE_URL = "https://aualcmbftzymhkgqfojw.supabase.co";
 const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_WMaCSaelRFRfitPUznmSKg_h2KFprnZ";
+  "sb_publishable_PKyGTmUBRBajj3J5mOzfRg_ecOJu5Bd";
 
 const SUPABASE_URL =
   (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
