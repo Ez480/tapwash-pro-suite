@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,111 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useSettings } from "@/lib/data";
 
-export const Route = createFileRoute("/_authenticated/admin/settings")({
-  component: AdminSettings,
-});
-
-type SettingsForm = {
-  company_name_en: string;
-  company_name_ar: string;
-  logo_url: string;
-  phone: string;
-  whatsapp: string;
-  email: string;
-  address_en: string;
-  address_ar: string;
-  facebook_url: string;
-  instagram_url: string;
-  tiktok_url: string;
-  primary_color: string;
-  secondary_color: string;
-};
-
-const empty: SettingsForm = {
-  company_name_en: "",
-  company_name_ar: "",
-  logo_url: "",
-  phone: "",
-  whatsapp: "",
-  email: "",
-  address_en: "",
-  address_ar: "",
-  facebook_url: "",
-  instagram_url: "",
-  tiktok_url: "",
-  primary_color: "#1F6FEB",
-  secondary_color: "#0B1220",
-};
-
-function AdminSettings() {
-  const { t } = useI18n();
-  const { data } = useSettings();
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState<SettingsForm>(empty);
-
-  useEffect(() => {
-    if (!data) return;
-    setForm({
-      company_name_en: data.company_name_en ?? "",
-      company_name_ar: data.company_name_ar ?? "",
-      logo_url: data.logo_url ?? "",
-      phone: data.phone ?? "",
-      whatsapp: data.whatsapp ?? "",
-      email: data.email ?? "",
-      address_en: data.address_en ?? "",
-      address_ar: data.address_ar ?? "",
-      facebook_url: data.facebook_url ?? "",
-      instagram_url: data.instagram_url ?? "",
-      tiktok_url: data.tiktok_url ?? "",
-      primary_color: data.primary_color ?? "#1F6FEB",
-      secondary_color: data.secondary_color ?? "#0B1220",
-    });
-  }, [data]);
-
-  const save = async () => {
-    const { error } = await supabase.from("site_settings").update(form).eq("id", 1);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(t("saved"));
-    queryClient.invalidateQueries({ queryKey: ["settings"] });
-  };
-
-  const fields: { key: keyof SettingsForm; label: string; type?: string }[] = [
-    { key: "company_name_en", label: t("company_name_en") },
-    { key: "company_name_ar", label: t("company_name_ar") },
-    { key: "logo_url", label: t("company_logo") },
-    { key: "phone", label: t("phone") },
-    { key: "whatsapp", label: t("whatsapp") },
-    { key: "email", label: t("email") },
-    { key: "address_en", label: t("address_en") },
-    { key: "address_ar", label: t("address_ar") },
-    { key: "facebook_url", label: "Facebook" },
-    { key: "instagram_url", label: "Instagram" },
-    { key: "tiktok_url", label: "TikTok" },
-    { key: "primary_color", label: t("primary_color"), type: "color" },
-    { key: "secondary_color", label: t("secondary_color"), type: "color" },
-  ];
-
-  return (
-    <div>
-      <SectionHeader title={t("a_settings")} />
-      <div className="panel grid gap-5 p-6 sm:grid-cols-2">
-        {fields.map((f) => (
-          <div key={f.key} className="space-y-2">
-            <Label>{f.label}</Label>
-            <Input
-              type={f.type ?? "text"}
-              value={form[f.key]}
-              onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-            />
-          </div>
-        ))}
-        <div className="sm:col-span-2">
-          <Button onClick={save}>{t("save")}</Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+export const Route=createFileRoute("/_authenticated/admin/settings")({component:AdminSettings});
+type Form={company_name_en:string;company_name_ar:string;logo_url:string;phone:string;whatsapp:string;email:string;address_en:string;address_ar:string;facebook_url:string;instagram_url:string;tiktok_url:string;primary_color:string;secondary_color:string;smart_wallet_number:string;instapay_number:string;bank_name:string;bank_account_name:string;bank_account_number:string;bank_iban:string;booking_start_time:string;booking_end_time:string;booking_slot_minutes:string};
+const empty:Form={company_name_en:"",company_name_ar:"",logo_url:"",phone:"",whatsapp:"",email:"",address_en:"",address_ar:"",facebook_url:"",instagram_url:"",tiktok_url:"",primary_color:"#1F6FEB",secondary_color:"#0B1220",smart_wallet_number:"",instapay_number:"",bank_name:"",bank_account_name:"",bank_account_number:"",bank_iban:"",booking_start_time:"09:00",booking_end_time:"21:00",booking_slot_minutes:"60"};
+function AdminSettings(){const{t}=useI18n();const{data}=useSettings();const qc=useQueryClient();const[d,setD]=useState<Form>(empty);useEffect(()=>{const x:any=data;if(!x)return;setD({...empty,...x,booking_start_time:String(x.booking_start_time??"09:00").slice(0,5),booking_end_time:String(x.booking_end_time??"21:00").slice(0,5),booking_slot_minutes:String(x.booking_slot_minutes??60)})},[data]);const set=(k:keyof Form,v:string)=>setD(f=>({...f,[k]:v}));const save=async()=>{const{error}=await(supabase as any).from("site_settings").update({...d,booking_slot_minutes:Number(d.booking_slot_minutes)||60}).eq("id",1);if(error)toast.error(error.message);else{toast.success(t("saved"));qc.invalidateQueries({queryKey:["settings"]})}};const fields:[keyof Form,string,string?][]=[["company_name_en",t("company_name_en")],["company_name_ar",t("company_name_ar")],["logo_url",t("company_logo")],["phone",t("phone")],["whatsapp",t("whatsapp")],["email",t("email")],["address_en",t("address_en")],["address_ar",t("address_ar")],["facebook_url","Facebook"],["instagram_url","Instagram"],["tiktok_url","TikTok"],["primary_color",t("primary_color"),"color"],["secondary_color",t("secondary_color"),"color"],["smart_wallet_number","رقم المحفظة الذكية"],["instapay_number","رقم/عنوان InstaPay"],["bank_name","اسم البنك"],["bank_account_name","اسم صاحب الحساب"],["bank_account_number","رقم الحساب البنكي"],["bank_iban","IBAN"],["booking_start_time","بداية مواعيد الحجز","time"],["booking_end_time","نهاية مواعيد الحجز","time"],["booking_slot_minutes","مدة كل موعد بالدقائق","number"]];return <div><SectionHeader title={t("a_settings")}/><div className="panel grid gap-5 p-6 sm:grid-cols-2"><div className="sm:col-span-2"><h2 className="text-lg font-bold">الدفع والحجز</h2><p className="text-sm text-muted-foreground">أدخل أرقام التحويل واضبط ساعات ومواعيد الحجز. ستظهر طرق الدفع للعميل فقط عند وجود بياناتها.</p></div>{fields.map(([k,label,type])=><div key={k} className="space-y-2"><Label>{label}</Label><Input type={type??"text"} value={d[k]} onChange={e=>set(k,e.target.value)}/></div>)}<div className="sm:col-span-2"><Button onClick={save}>{t("save")}</Button></div></div></div>}
