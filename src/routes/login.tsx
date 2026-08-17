@@ -41,6 +41,7 @@ async function getLandingPath(userId: string) {
 
   const roles = (data ?? []).map((row) => row.role as string);
   if (roles.includes("admin")) return "/admin" as const;
+  if (roles.includes("employee")) return "/dashboard" as const;
   return "/dashboard" as const;
 }
 
