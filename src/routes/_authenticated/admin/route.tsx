@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BadgeDollarSign,
   Bell,
+  ClipboardList,
   CreditCard,
   FileText,
   Gift,
@@ -23,9 +24,7 @@ import { useI18n } from "@/lib/i18n";
 import { useIsAdmin, useSession } from "@/lib/auth";
 import { adminExists, claimAdmin } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/_authenticated/admin")({
-  component: AdminLayout,
-});
+export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
 
 function AdminLayout() {
   const { t } = useI18n();
@@ -35,15 +34,11 @@ function AdminLayout() {
   const checkAdmin = useServerFn(adminExists);
   const claim = useServerFn(claimAdmin);
   const isAdmin = (roles ?? []).includes("admin");
-
-  const { data: existing } = useQuery({
-    queryKey: ["admin-exists"],
-    enabled: !isLoading && !isAdmin,
-    queryFn: () => checkAdmin(),
-  });
+  const { data: existing } = useQuery({ queryKey: ["admin-exists"], enabled: !isLoading && !isAdmin, queryFn: () => checkAdmin() });
 
   const items = [
     { to: "/admin", label: t("a_dashboard"), icon: LayoutDashboard },
+    { to: "/admin/tasks", label: "المهام / Tasks", icon: ClipboardList },
     { to: "/admin/customers", label: t("a_customers"), icon: Users },
     { to: "/admin/cards", label: t("a_cards"), icon: CreditCard },
     { to: "/admin/subscriptions", label: t("a_subscriptions"), icon: Package },
@@ -57,68 +52,8 @@ function AdminLayout() {
     { to: "/admin/settings", label: t("a_settings"), icon: Settings },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-        {t("loading")}
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">{t("loading")}</div>;
+  if (!isAdmin) return <div className="min-h-screen bg-background"><AppTopbar title={t("admin_panel")} /><div className="mx-auto max-w-lg px-4 py-20 text-center"><h2 className="font-display text-2xl font-bold">{t("admin_only")}</h2><p className="mt-2 text-sm text-muted-foreground">{t("admin_only_d")}</p>{existing && !existing.exists && <div className="panel mt-8 p-6"><p className="text-sm text-muted-foreground">{t("claim_admin_d")}</p><Button className="mt-4" onClick={async () => { try { await claim(); toast.success(t("saved")); queryClient.invalidateQueries({ queryKey: ["role", user?.id] }); } catch (e) { toast.error(e instanceof Error ? e.message : t("error")); } }}>{t("claim_admin")}</Button></div>}<div className="mt-6"><Button asChild variant="outline"><Link to="/dashboard">{t("nav_dashboard")}</Link></Button></div></div></div>;
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppTopbar title={t("admin_panel")} />
-        <div className="mx-auto max-w-lg px-4 py-20 text-center">
-          <h2 className="font-display text-2xl font-bold">{t("admin_only")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{t("admin_only_d")}</p>
-          {existing && !existing.exists && (
-            <div className="panel mt-8 p-6">
-              <p className="text-sm text-muted-foreground">{t("claim_admin_d")}</p>
-              <Button
-                className="mt-4"
-                onClick={async () => {
-                  try {
-                    await claim();
-                    toast.success(t("saved"));
-                    queryClient.invalidateQueries({ queryKey: ["role", user?.id] });
-                  } catch (e) {
-                    toast.error(e instanceof Error ? e.message : t("error"));
-                  }
-                }}
-              >
-                {t("claim_admin")}
-              </Button>
-            </div>
-          )}
-          <div className="mt-6">
-            <Button asChild variant="outline">
-              <Link to="/dashboard">{t("nav_dashboard")}</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <AppTopbar
-        title={t("admin_panel")}
-        extra={
-          <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-            <Link to="/dashboard">{t("nav_dashboard")}</Link>
-          </Button>
-        }
-      />
-      <div className="border-b border-border bg-card/40 px-4 py-3 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <AdminNav items={items} />
-        </div>
-      </div>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-        <Outlet />
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen bg-background"><AppTopbar title={t("admin_panel")} extra={<Button asChild variant="outline" size="sm" className="hidden sm:inline-flex"><Link to="/dashboard">{t("nav_dashboard")}</Link></Button>} /><div className="border-b border-border bg-card/40 px-4 py-3 sm:px-6"><div className="mx-auto max-w-7xl"><AdminNav items={items} /></div></div><div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6"><Outlet /></div></div>;
 }
