@@ -1,47 +1,23 @@
-.dark,
-.dark * {
-  --color-foreground: #ffffff;
-}
-
-.dark {
-  --foreground: #ffffff;
-  --card-foreground: #ffffff;
-  --popover-foreground: #ffffff;
-  --secondary-foreground: #ffffff;
-  --muted-foreground: #ffffff;
-  --accent-foreground: #ffffff;
-  --ink: #ffffff;
-  --sidebar-foreground: #ffffff;
-  --sidebar-accent-foreground: #ffffff;
-}
-
-.dark body,
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6,
-.dark p,
-.dark span,
-.dark label,
-.dark li,
-.dark td,
-.dark th,
-.dark [data-slot="label"],
-.dark [data-slot="card-title"],
-.dark [data-slot="card-description"] {
-  color: #ffffff;
-}
-
+/* TapWash dark mode uses the semantic color tokens from styles.css.
+   Keep contrast nuanced instead of forcing every element to pure white. */
 .dark input,
 .dark textarea,
-.dark select,
+.dark select {
+  color: var(--color-foreground);
+  background-color: var(--color-card);
+}
+
 .dark button {
-  color: #ffffff;
+  color: inherit;
 }
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-muted-foreground);
+  opacity: 1;
+}
+
+.dark ::selection {
+  background: color-mix(in oklch, var(--color-primary) 35%, transparent);
+  color: var(--color-foreground);
 }
