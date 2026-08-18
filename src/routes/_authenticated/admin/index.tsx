@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Camera, Truck, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Download, Camera, Truck, RefreshCw, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/app/Shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
@@ -22,12 +23,15 @@ function AdminOverview() {
   const { data: cards } = useAdminTable("nfc_cards", "*", "created_at");
   const [tasks, setTasks] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const loadLive = async () => {
-    const [{ data: taskData }, { data: photoData }] = await Promise.all([
-      (supabase as any).from("employee_tasks").select("id,title,status,delivery_status,customer_name,serial_number,updated_at").order("updated_at", { ascending: false }).limit(20),
-      (supabase as any).from("order_photos").select("id,task_id,kind,url,created_at").order("created_at", { ascending: false }).limit(20),
+    const [{ data: taskData, error: taskError }, { data: photoData, error: photoError }] = await Promise.all([
+      (supabase as any).from("employee_tasks").select("*").order("updated_at", { ascending: false }).limit(30),
+      (supabase as any).from("order_photos").select("id,task_id,kind,url,created_at").order("created_at", { ascending: false }).limit(200),
     ]);
+    if (taskError) toast.error(taskError.message);
+    if (photoError) toast.error(photoError.message);
     setTasks(taskData ?? []);
     setPhotos(photoData ?? []);
   };
@@ -41,6 +45,9 @@ function AdminOverview() {
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, []);
+
+  const selectedTask = useMemo(() => tasks.find((task) => String(task.id) === selectedTaskId) ?? null, [tasks, selectedTaskId]);
+  const selectedPhotos = useMemo(() => photos.filter((photo) => String(photo.task_id) === selectedTaskId), [photos, selectedTaskId]);
 
   const monthStart = new Date();
   monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
@@ -85,21 +92,49 @@ function AdminOverview() {
       </div>
 
       <section className="panel mt-8 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="flex items-center gap-2 text-lg font-bold"><Truck className="size-5 text-primary" />متابعة الأوردرات والدليفري لايف</h3><p className="text-sm text-muted-foreground">أي تغيير في حالة الأوردر أو الدليفري يظهر هنا فورًا بدون Refresh.</p></div><Button size="sm" variant="outline" onClick={() => void loadLive()}><RefreshCw className="me-1 size-4" />تحديث</Button></div>
-        <div className="mt-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h3 className="flex items-center gap-2 text-lg font-bold"><Truck className="size-5 text-primary" />متابعة الأوردرات والدليفري لايف</h3><p className="text-sm text-muted-foreground">اضغط على أي أوردر لعرض تفاصيله وصوره. التحديثات تظهر فورًا بدون Refresh.</p></div>
+          <Button size="sm" variant="outline" onClick={() => void loadLive()}><RefreshCw className="me-1 size-4" />تحديث</Button>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {tasks.length === 0 && <p className="text-sm text-muted-foreground">لا توجد أوردرات موظفين حاليًا.</p>}
-          {tasks.slice(0, 12).map((task) => <div key={task.id} className="rounded-xl border p-4"><div className="flex flex-wrap items-center gap-2"><b>{task.title}</b><Badge>{statusLabel(task.status)}</Badge><Badge variant="outline">{deliveryLabel(task.delivery_status)}</Badge>{task.serial_number && <span className="text-xs text-muted-foreground">#{task.serial_number}</span>}</div><p className="mt-1 text-sm text-muted-foreground">{task.customer_name || "—"}</p><p className="mt-2 text-xs text-muted-foreground">آخر تحديث: {fmtDate(task.updated_at)}</p></div>)}
+          {tasks.slice(0, 20).map((task) => {
+            const taskPhotos = photos.filter((photo) => String(photo.task_id) === String(task.id));
+            return (
+              <button key={task.id} type="button" onClick={() => setSelectedTaskId(String(task.id))} className="w-full rounded-xl border bg-card p-4 text-start transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary">
+                <div className="flex flex-wrap items-center gap-2"><b>{task.title || "Order"}</b><Badge>{statusLabel(task.status)}</Badge><Badge variant="outline">{deliveryLabel(task.delivery_status)}</Badge>{task.serial_number && <span className="text-xs text-muted-foreground">#{task.serial_number}</span>}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{task.customer_name || "—"}</p>
+                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>آخر تحديث: {fmtDate(task.updated_at)}</span><span>{taskPhotos.length} صورة</span></div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <section className="panel mt-6 p-6">
-        <div className="flex items-center gap-2"><Camera className="size-5 text-primary" /><h3 className="text-lg font-bold">صور السيارات لايف</h3></div>
-        <p className="mt-1 text-sm text-muted-foreground">صور قبل الغسيل وبعد التنظيف التي يرفعها الموظف تظهر للمدير فورًا.</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {photos.length === 0 && <p className="text-sm text-muted-foreground">لم يتم رفع صور سيارات بعد.</p>}
-          {photos.slice(0, 12).map((photo) => <div key={photo.id} className="overflow-hidden rounded-2xl border"><img src={photo.url} alt={photo.kind === "before" ? "before wash" : "after cleaning"} className="aspect-[4/3] w-full object-cover" /><div className="p-3"><div className="flex items-center justify-between gap-2"><Badge variant={photo.kind === "before" ? "outline" : "default"}>{photo.kind === "before" ? "قبل الغسيل" : "بعد التنظيف"}</Badge><span className="text-xs text-muted-foreground">{fmtDate(photo.created_at)}</span></div></div></div>)}
-        </div>
-      </section>
+      <Dialog open={Boolean(selectedTask)} onOpenChange={(open) => { if (!open) setSelectedTaskId(null); }}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          {selectedTask && <>
+            <DialogHeader>
+              <DialogTitle className="flex flex-wrap items-center gap-2">{selectedTask.title || "تفاصيل الأوردر"}<Badge>{statusLabel(selectedTask.status)}</Badge><Badge variant="outline">{deliveryLabel(selectedTask.delivery_status)}</Badge></DialogTitle>
+              <DialogDescription>المتابعة الحية للأوردر والصور الخاصة به.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 rounded-2xl border bg-muted/20 p-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div><span className="text-xs text-muted-foreground">العميل</span><p className="font-semibold">{selectedTask.customer_name || "—"}</p></div>
+              <div><span className="text-xs text-muted-foreground">رقم الأوردر</span><p className="font-semibold">{selectedTask.serial_number ? `#${selectedTask.serial_number}` : selectedTask.id}</p></div>
+              <div><span className="text-xs text-muted-foreground">آخر تحديث</span><p className="font-semibold">{fmtDate(selectedTask.updated_at)}</p></div>
+              <div><span className="text-xs text-muted-foreground">حالة الغسيل</span><p className="font-semibold">{statusLabel(selectedTask.status)}</p></div>
+              <div><span className="text-xs text-muted-foreground">حالة الدليفري</span><p className="font-semibold">{deliveryLabel(selectedTask.delivery_status)}</p></div>
+              {selectedTask.employee_id && <div><span className="text-xs text-muted-foreground">الموظف</span><p className="font-semibold">{selectedTask.employee_id}</p></div>}
+              {selectedTask.address && <div className="sm:col-span-2 lg:col-span-3"><span className="text-xs text-muted-foreground">العنوان</span><p className="font-semibold">{selectedTask.address}</p></div>}
+              {selectedTask.notes && <div className="sm:col-span-2 lg:col-span-3"><span className="text-xs text-muted-foreground">ملاحظات</span><p className="font-semibold">{selectedTask.notes}</p></div>}
+            </div>
+            <div>
+              <div className="mb-3 flex items-center gap-2"><Camera className="size-5 text-primary" /><h4 className="font-bold">صور هذا الأوردر</h4><Badge variant="outline">{selectedPhotos.length}</Badge></div>
+              {selectedPhotos.length === 0 ? <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">لم يتم رفع صور لهذا الأوردر حتى الآن.</p> : <div className="grid gap-4 sm:grid-cols-2"><div><h5 className="mb-2 font-semibold">قبل الغسيل</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "before").map((p) => <img key={p.id} src={p.url} alt="قبل الغسيل" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "before").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p>}</div></div><div><h5 className="mb-2 font-semibold">بعد التنظيف</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "after").map((p) => <img key={p.id} src={p.url} alt="بعد التنظيف" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "after").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p>}</div></div></div>}
+            </div>
+          </>}
+        </DialogContent>
+      </Dialog>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="panel p-6"><h3 className="text-lg font-bold">{t("recent_washes")}</h3><div className="mt-4 space-y-2 text-sm">{(washes ?? []).slice(0, 8).map((w) => <div key={String(w.id)} className="flex items-center justify-between rounded-lg border border-border px-4 py-3"><span>{fmtDate(String(w.washed_at))}</span><span className="text-muted-foreground">{String(w.branch ?? "—")}</span></div>)}{(washes ?? []).length === 0 && <p className="text-muted-foreground">{t("empty")}</p>}</div></section>
