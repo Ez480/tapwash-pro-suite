@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Truck, Bell } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck, Sparkles, Truck, Bell } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
@@ -72,7 +72,7 @@ export function AppTopbar({ title, extra }: { title: string; extra?: ReactNode }
         <div className="ms-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
           {extra}
           {isAdmin && isAdminArea && (
-            <Button type="button" variant="outline" size="sm" onClick={goToLiveOrders} className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 dark:border-primary/40 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/25">
+            <Button type="button" variant="outline" size="sm" onClick={goToLiveOrders} aria-label="متابعة الأوردرات والدليفري Live" title="متابعة الأوردرات والدليفري Live" className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 dark:border-primary/40 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/25">
               <Truck className="me-1.5 size-4" />
               <span className="hidden sm:inline">متابعة الأوردرات والدليفري Live</span>
               <span className="sm:hidden">الأوردرات Live</span>
@@ -85,8 +85,6 @@ export function AppTopbar({ title, extra }: { title: string; extra?: ReactNode }
               <span className="font-bold">مدفوعات معلقة {pendingPayments > 99 ? "99+" : pendingPayments}</span>
             </Button>
           )}
-          {isAdmin && <Button asChild variant="ghost" size="icon" className="text-primary sm:hidden" aria-label={isAdminArea ? "لوحة الموظف" : "لوحة المدير"}><Link to={isAdminArea ? "/dashboard" : "/admin"}>{isAdminArea ? <LayoutDashboard className="size-4" /> : <ShieldCheck className="size-4" />}</Link></Button>}
-          {!isAdminArea && <Button asChild variant="ghost" size="icon" aria-label="حالة الطلبات"><Link to="/orders"><ClipboardList className="size-4" /></Link></Button>}
           <NotificationCenter />
           <LanguageToggle />
           <ThemeToggle />
