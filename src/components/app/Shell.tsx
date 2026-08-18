@@ -97,7 +97,7 @@ export function AdminNav({ items }: { items: { to: string; label: string; icon: 
       {i.label}
       {badgeCount > 0 && <span className={cn("inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold", active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground")}>
         {badgeCount > 99 ? "99+" : badgeCount}
-      </span>;
+      </span>}
     </Link>;
   })}</nav>;
 }
