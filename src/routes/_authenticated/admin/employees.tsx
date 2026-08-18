@@ -8,23 +8,31 @@ export const Route = createFileRoute("/_authenticated/admin/employees")({
 });
 
 function AdminEmployees() {
-  const { t } = useI18n();
+  const { t, pick } = useI18n();
+  const employeeIdLabel = pick("Employee ID", "رقم ID الموظف");
+  const cardNumberLabel = pick("Card number", "رقم البطاقة");
+  const jobTitleLabel = t("job_title");
 
   return (
     <CrudTable
       table="employees"
       title={t("a_employees")}
+      description={pick("Manage employee identity, job title and branch information.", "إدارة بيانات الموظفين ورقم الـID ورقم البطاقة والمسمى الوظيفي والفرع.")}
       columns={[
+        { key: "employee_code", label: employeeIdLabel },
+        { key: "card_number", label: cardNumberLabel },
         { key: "full_name", label: t("full_name") },
         { key: "phone", label: t("phone") },
-        { key: "job_title", label: t("job_title") },
+        { key: "job_title", label: jobTitleLabel },
         { key: "branch", label: t("branch") },
         { key: "status", label: t("status") },
       ]}
       fields={[
-        { name: "full_name", label: t("full_name") },
+        { name: "employee_code", label: employeeIdLabel, required: true },
+        { name: "card_number", label: cardNumberLabel, required: true },
+        { name: "full_name", label: t("full_name"), required: true },
         { name: "phone", label: t("phone") },
-        { name: "job_title", label: t("job_title") },
+        { name: "job_title", label: jobTitleLabel },
         { name: "branch", label: t("branch") },
         {
           name: "status",
