@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
 import { downloadCustomersExcel } from "@/lib/admin-export";
+import { NfcCheckin } from "@/components/admin/NfcCheckin";
 
 export const Route = createFileRoute("/_authenticated/admin/")({ component: AdminOverview });
 type Task = Record<string, any>;
@@ -54,6 +55,7 @@ function AdminOverview() {
   const deliveryLabel = (status: string) => ({ not_started: "لم يبدأ الدليفري", picked_up: "تم الاستلام", on_the_way: "في الطريق", delivered: "تم التسليم", cancelled: "ملغي" } as Record<string, string>)[status] ?? status;
   return <div>
     <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/45 bg-white/20 p-4 text-foreground shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_8px_30px_rgba(0,0,0,0.22)] sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-display text-lg font-bold">إدارة بيانات العملاء</h2><p className="text-sm text-muted-foreground">تصدير بيانات العملاء الكاملة، الأوردرات السابقة، وكروت NFC.</p></div><Button onClick={exportCustomers} className="gap-2"><Download className="size-4" />تصدير Excel</Button></div>
+    <NfcCheckin />
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-2xl border border-sky-300/45 bg-sky-200/25 p-1 shadow-[0_8px_24px_rgba(14,165,233,0.10)] backdrop-blur-xl dark:border-sky-200/15 dark:bg-sky-300/[0.08]"><StatCard tone="default" label={t("total_customers")} value={(customers ?? []).length} /></div>
       <div className="rounded-2xl border border-amber-300/45 bg-amber-200/25 p-1 shadow-[0_8px_24px_rgba(245,158,11,0.10)] backdrop-blur-xl dark:border-amber-200/15 dark:bg-amber-300/[0.08]"><StatCard tone="default" label={t("active_subs")} value={activeSubs} /></div>
