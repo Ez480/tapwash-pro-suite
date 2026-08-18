@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles } from "lucide-react";
+import { ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Truck, Bell } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
@@ -27,31 +27,70 @@ export function useSignOut() {
 export function AppTopbar({ title, extra }: { title: string; extra?: ReactNode }) {
   const { t, pick } = useI18n();
   const signOut = useSignOut();
+  const navigate = useNavigate();
   const { data: s } = useSettings();
   const { user } = useSession();
   const { data: roles } = useIsAdmin(user?.id);
   const isAdmin = (roles ?? []).includes("admin");
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isAdminArea = pathname.startsWith("/admin");
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const [pendingPaymentOrders, setPendingPaymentOrders] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const load = async () => {
+      const { data, count } = await supabase
+        .from("payments")
+        .select("order_id", { count: "exact" })
+        .in("status", ["pending", "awaiting", "unpaid"])
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setPendingPayments(count ?? data?.length ?? 0);
+      setPendingPaymentOrders((data ?? []).map((p) => p.order_id).filter(Boolean));
+    };
+    void load();
+    const channel = supabase
+      .channel("admin-topbar-payment-alerts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => void load())
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
+  const goToLiveOrders = () => navigate({ to: "/admin" });
+  const goToPayments = () => navigate({ to: "/admin/payments" });
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/82 px-4 shadow-sm backdrop-blur-2xl sm:px-6">
-      <div className="flex h-16 items-center gap-3">
-        <Link to="/" className="flex items-center gap-2.5">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 px-4 text-foreground shadow-sm backdrop-blur-2xl sm:px-6">
+      <div className="flex min-h-16 items-center gap-2.5">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <span className="surface-blue flex size-8 items-center justify-center rounded-lg shadow-luxe"><Sparkles className="size-4" /></span>
           <span className="hidden font-display text-sm font-bold text-foreground sm:block">{s ? pick(s.company_name_en, s.company_name_ar) : t("brand")}</span>
         </Link>
-        <span className="h-5 w-px bg-border" />
-        <h1 className="truncate text-sm font-semibold text-muted-foreground">{title}</h1>
-        <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
+        <span className="hidden h-5 w-px bg-border sm:block" />
+        <h1 className="hidden truncate text-sm font-semibold text-muted-foreground md:block">{title}</h1>
+        <div className="ms-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
           {extra}
-          {isAdmin && <Button asChild variant="outline" size="sm" className={cn("hidden border-primary/25 bg-primary/8 text-primary shadow-sm hover:bg-primary/15 sm:inline-flex", isAdminArea && "border-border bg-secondary text-foreground hover:bg-accent")}><Link to={isAdminArea ? "/dashboard" : "/admin"}>{isAdminArea ? <LayoutDashboard className="me-1.5 size-4" /> : <ShieldCheck className="me-1.5 size-4" />}{isAdminArea ? "لوحة الموظف" : "لوحة المدير"}</Link></Button>}
+          {isAdmin && isAdminArea && (
+            <Button type="button" variant="outline" size="sm" onClick={goToLiveOrders} className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 dark:border-primary/40 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/25">
+              <Truck className="me-1.5 size-4" />
+              <span className="hidden sm:inline">متابعة الأوردرات والدليفري Live</span>
+              <span className="sm:hidden">الأوردرات Live</span>
+            </Button>
+          )}
+          {isAdmin && !isAdminArea && <Button asChild variant="outline" size="sm" className="border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 dark:border-primary/40 dark:bg-primary/15 dark:text-primary"><Link to="/admin"><ShieldCheck className="me-1.5 size-4" />لوحة المدير</Link></Button>}
+          {isAdmin && isAdminArea && pendingPayments > 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={goToPayments} title={`طلبات دفع معلقة: ${pendingPaymentOrders.join(", ")}`} className="border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15 dark:border-destructive/40 dark:bg-destructive/15 dark:text-red-300 dark:hover:bg-destructive/25">
+              <Bell className="me-1 size-4" />
+              <span className="font-bold">مدفوعات معلقة {pendingPayments > 99 ? "99+" : pendingPayments}</span>
+            </Button>
+          )}
           {isAdmin && <Button asChild variant="ghost" size="icon" className="text-primary sm:hidden" aria-label={isAdminArea ? "لوحة الموظف" : "لوحة المدير"}><Link to={isAdminArea ? "/dashboard" : "/admin"}>{isAdminArea ? <LayoutDashboard className="size-4" /> : <ShieldCheck className="size-4" />}</Link></Button>}
-          <Button asChild variant="ghost" size="icon" aria-label="حالة الطلبات"><Link to="/orders"><ClipboardList className="size-4" /></Link></Button>
+          {!isAdminArea && <Button asChild variant="ghost" size="icon" aria-label="حالة الطلبات"><Link to="/orders"><ClipboardList className="size-4" /></Link></Button>}
           <NotificationCenter />
           <LanguageToggle />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("logout")}><LogOut className="size-4" /></Button>
+          <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("logout")} className="text-foreground hover:bg-accent hover:text-accent-foreground"><LogOut className="size-4" /></Button>
         </div>
       </div>
     </header>
@@ -59,7 +98,7 @@ export function AppTopbar({ title, extra }: { title: string; extra?: ReactNode }
 }
 
 export function StatCard({ label, value, hint, tone = "default" }: { label: string; value: ReactNode; hint?: string; tone?: "default" | "primary" | "ink" }) {
-  return <div className={cn("animate-fade-up rounded-2xl p-6", tone === "primary" && "surface-blue shadow-luxe", tone === "ink" && "surface-ink shadow-luxe", tone === "default" && "panel")}><p className={cn("text-xs font-semibold uppercase tracking-widest", tone === "default" ? "text-muted-foreground" : "opacity-70")}>{label}</p><p className="mt-3 font-display text-3xl font-extrabold">{value}</p>{hint && <p className={cn("mt-1 text-xs", tone === "default" ? "text-muted-foreground" : "opacity-60")}>{hint}</p>}</div>;
+  return <div className={cn("animate-fade-up rounded-2xl p-6", tone === "primary" && "surface-blue shadow-luxe", tone === "ink" && "surface-ink shadow-luxe", tone === "default" && "panel dark:bg-card dark:text-card-foreground")}><p className={cn("text-xs font-semibold uppercase tracking-widest", tone === "default" ? "text-muted-foreground" : "opacity-70")}>{label}</p><p className="mt-3 font-display text-3xl font-extrabold text-foreground">{value}</p>{hint && <p className={cn("mt-1 text-xs", tone === "default" ? "text-muted-foreground" : "opacity-60")}>{hint}</p>}</div>;
 }
 
 export function AdminNav({ items }: { items: { to: string; label: string; icon: React.ElementType }[] }) {
