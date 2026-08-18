@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LogOut, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { NotificationCenter } from "@/components/app/NotificationCenter";
 import { Button } from "@/components/ui/button";
 import { LanguageToggle, ThemeToggle } from "@/components/site/Chrome";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,7 @@ export function AppTopbar({ title, extra }: { title: string; extra?: ReactNode }
         <h1 className="truncate text-sm font-semibold text-muted-foreground">{title}</h1>
         <div className="ms-auto flex items-center gap-2">
           {extra}
+          <NotificationCenter />
           <LanguageToggle />
           <ThemeToggle />
           <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("logout")}>
