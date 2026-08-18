@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Camera, Truck, RefreshCw, X } from "lucide-react";
+import { Download, Camera, Truck, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -130,7 +130,7 @@ function AdminOverview() {
             </div>
             <div>
               <div className="mb-3 flex items-center gap-2"><Camera className="size-5 text-primary" /><h4 className="font-bold">صور هذا الأوردر</h4><Badge variant="outline">{selectedPhotos.length}</Badge></div>
-              {selectedPhotos.length === 0 ? <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">لم يتم رفع صور لهذا الأوردر حتى الآن.</p> : <div className="grid gap-4 sm:grid-cols-2"><div><h5 className="mb-2 font-semibold">قبل الغسيل</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "before").map((p) => <img key={p.id} src={p.url} alt="قبل الغسيل" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "before").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p>}</div></div><div><h5 className="mb-2 font-semibold">بعد التنظيف</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "after").map((p) => <img key={p.id} src={p.url} alt="بعد التنظيف" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "after").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p>}</div></div></div>}
+              {selectedPhotos.length === 0 ? <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">لم يتم رفع صور لهذا الأوردر حتى الآن.</p> : <div className="grid gap-4 sm:grid-cols-2"><div><h5 className="mb-2 font-semibold">قبل الغسيل</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "before").map((p) => <img key={p.id} src={p.url} alt="قبل الغسيل" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "before").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p>}</div></div><div><h5 className="mb-2 font-semibold">بعد التنظيف</h5><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === "after").map((p) => <img key={p.id} src={p.url} alt="بعد التنظيف" className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === "after").length === 0 && <p className="text-sm text-muted-foreground">لا توجد صورة.</p></div></div></div>}
             </div>
           </>}
         </DialogContent>
