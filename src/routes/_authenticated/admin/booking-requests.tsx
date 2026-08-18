@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClipboardCheck, MapPin, Send } from "lucide-react";
+import { ClipboardCheck, MapPin, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ function BookingRequests() {
 
   const assign = async (r: any, employeeId: string) => {
     const emp = employees.find((e: any) => e.id === employeeId);
-    if (!emp) return;
+    if (!emp || r.status === "rejected") return;
 
     try {
       let customerId: string | null = null;
@@ -122,6 +122,37 @@ function BookingRequests() {
     }
   };
 
+  const reject = async (r: any) => {
+    if (r.status === "assigned" || r.status === "rejected") return;
+
+    const confirmed = window.confirm(
+      pick(
+        "Are you sure you want to reject this booking request?",
+        "هل أنت متأكد أنك تريد رفض طلب الحجز ده؟",
+      ),
+    );
+    if (!confirmed) return;
+
+    try {
+      const { error } = await (supabase as any)
+        .from("booking_requests")
+        .update({ status: "rejected" })
+        .eq("id", r.id)
+        .in("status", ["pending", "new", "confirmed"]);
+
+      if (error) {
+        console.error("Booking rejection failed", error);
+        return toast.error(error.message || pick("Could not reject the booking", "تعذر رفض طلب الحجز"));
+      }
+
+      toast.success(pick("Booking request rejected", "تم رفض طلب الحجز"));
+      refetch();
+    } catch (error: any) {
+      console.error("Unexpected booking rejection error", error);
+      toast.error(error?.message || pick("Could not reject the booking", "تعذر رفض طلب الحجز"));
+    }
+  };
+
   const payment = (r: any) =>
     r.payment_method === "cash"
       ? pick("Cash", "كاش")
@@ -161,10 +192,16 @@ function BookingRequests() {
             </div>
             {r.notes && <p className="mt-3 rounded-lg bg-muted p-3 text-sm">{r.notes}</p>}
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <select className="h-10 min-w-52 rounded-md border bg-background px-3" defaultValue="" onChange={e => { if (e.target.value) assign(r, e.target.value); }} disabled={r.status === "assigned"}>
-                <option value="">{r.status === "assigned" ? pick("Already assigned", "تم التكليف") : pick("Choose employee", "اختر الموظف")}</option>
+              <select className="h-10 min-w-52 rounded-md border bg-background px-3" defaultValue="" onChange={e => { if (e.target.value) assign(r, e.target.value); }} disabled={r.status === "assigned" || r.status === "rejected"}>
+                <option value="">{r.status === "assigned" ? pick("Already assigned", "تم التكليف") : r.status === "rejected" ? pick("Booking rejected", "تم رفض الحجز") : pick("Choose employee", "اختر الموظف")}</option>
                 {employees.map((e: any) => <option key={e.id} value={e.id}>{e.full_name || e.email}</option>)}
               </select>
+              {r.status !== "assigned" && r.status !== "rejected" && (
+                <Button variant="destructive" onClick={() => reject(r)}>
+                  <XCircle className="me-1 size-4" />
+                  {pick("Reject booking", "رفض الحجز")}
+                </Button>
+              )}
               {r.location_url && <Button variant="outline" onClick={() => window.open(r.location_url, "_blank", "noopener,noreferrer")}><MapPin className="me-1 size-4" />{pick("Open location", "فتح الموقع")}</Button>}
               <Button variant="outline" onClick={() => navigator.clipboard?.writeText(r.customer_phone || "")}><Send className="me-1 size-4" />{pick("Copy phone", "نسخ الرقم")}</Button>
             </div>
