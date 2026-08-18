@@ -1,0 +1,17 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Archive, Search, CalendarDays } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
+
+export const Route = createFileRoute("/_authenticated/admin/archive")({ component: AdminArchive });
+
+function AdminArchive() {
+  const { pick } = useI18n();
+  const [date, setDate] = useState(""); const [search, setSearch] = useState(""); const [rows, setRows] = useState<any[]>([]); const [loading, setLoading] = useState(false);
+  const load = async () => { if (!date) return; setLoading(true); const start=`${date}T00:00:00.000Z`,end=`${date}T23:59:59.999Z`; const [{data:t},{data:b},{data:p}]=await Promise.all([supabase.from("employee_tasks").select("*").gte("created_at",start).lte("created_at",end),supabase.from("booking_requests").select("*").gte("created_at",start).lte("created_at",end),supabase.from("payments").select("*").gte("created_at",start).lte("created_at",end)]); setRows([...(t??[]).map(x=>({...x,_type:"order",_ref:x.serial_number||x.id})),...(b??[]).map(x=>({...x,_type:"booking",_ref:x.id})),...(p??[]).map(x=>({...x,_type:"payment",_ref:x.order_id||x.id}))]); setLoading(false); };
+  const q=search.trim().toLowerCase(); const filtered=useMemo(()=>rows.filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q)),[rows,q]);
+  return <div className="space-y-6"><div className="flex items-center gap-2"><Archive className="size-6 text-primary"/><div><h1 className="text-2xl font-bold">{pick("Daily archive", "أرشيف الأيام")}</h1><p className="text-sm text-muted-foreground">{pick("Previous orders, bookings and payments are preserved by date.", "الأوردرات وطلبات الحجز والمدفوعات السابقة محفوظة حسب اليوم ولا يتم حذفها.")}</p></div></div><div className="panel p-5"><div className="grid gap-3 md:grid-cols-[auto_1fr_auto]"><div className="relative"><CalendarDays className="absolute start-3 top-3 size-4 text-muted-foreground"/><Input type="date" className="ps-9" value={date} onChange={e=>setDate(e.target.value)}/></div><div className="relative"><Search className="absolute start-3 top-3 size-4 text-muted-foreground"/><Input className="ps-9" value={search} onChange={e=>setSearch(e.target.value)} placeholder={pick("Search by order number, customer, phone or payment reference", "ابحث برقم الأوردر أو العميل أو الهاتف أو مرجع الدفع")}/></div><Button onClick={()=>void load()} disabled={!date||loading}>{loading?pick("Loading...","جاري التحميل..."):pick("Show day","عرض اليوم")}</Button></div></div><section className="panel p-5"><div className="mb-4 flex items-center justify-between"><h2 className="font-bold">{date||pick("Choose a date","اختر يومًا")}</h2><span className="text-sm text-muted-foreground">{filtered.length} {pick("records","سجل")}</span></div><div className="space-y-2">{filtered.map(x=><div key={`${x._type}-${x.id}`} className="rounded-xl border border-border p-3"><b>{x._type === "order"?"🚗":x._type === "booking"?"📋":"💳"} #{x._ref}</b><span className="ms-2 text-sm text-muted-foreground">{x.customer_name||x.name||x.email||x.amount||"—"}</span><span className="float-end text-sm text-muted-foreground">{x.status||"—"}</span></div>)}{date&&!filtered.length&&<p className="text-sm text-muted-foreground">{pick("No records for this date/search.","لا توجد سجلات لهذا اليوم أو البحث.")}</p>}</div></section></div>;
+}
