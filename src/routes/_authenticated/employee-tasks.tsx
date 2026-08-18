@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, CheckCircle2, Clock3, KeyRound, LogOut, MapPin, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,7 @@ function EmployeeTasks() {
   const [scanning, setScanning] = useState(false);
   const [ordersView, setOrdersView] = useState<"current" | "previous">("current");
   const [loading, setLoading] = useState<string | null>(null);
+  const locationWatchRef = useRef<number | null>(null);
 
   useEffect(() => { if (profile) setProfileForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "" }); }, [profile]);
   useEffect(() => { if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => setMap({ lat: p.coords.latitude, lng: p.coords.longitude }), () => undefined, { enableHighAccuracy: true, timeout: 8000 }); }, []);
@@ -51,6 +52,34 @@ function EmployeeTasks() {
   const mine = roles.includes("employee") ? (tasks as any[]).filter(t => t.employee_id === user?.id) : [];
   const active = mine.filter(t => ["pending", "accepted", "in_progress"].includes(t.status));
   const completed = mine.filter(t => t.status === "completed");
+  const activeTaskKey = active.map(t => String(t.id)).sort().join(",");
+
+  useEffect(() => {
+    if (!user?.id || !activeTaskKey || !navigator.geolocation) return;
+    let lastSentAt = 0;
+    const sendLocation = async (position: GeolocationPosition) => {
+      const now = Date.now();
+      if (now - lastSentAt < 10000) return;
+      lastSentAt = now;
+      setMap({ lat: position.coords.latitude, lng: position.coords.longitude });
+      const rows = active.map((task: any) => ({
+        task_id: task.id,
+        employee_id: user.id,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy ?? null,
+        heading: position.coords.heading ?? null,
+        speed: position.coords.speed ?? null,
+        updated_at: new Date().toISOString(),
+      }));
+      if (rows.length) {
+        const { error } = await (supabase as any).from("employee_locations").upsert(rows, { onConflict: "task_id" });
+        if (error) console.warn("Driver location update failed", error);
+      }
+    };
+    locationWatchRef.current = navigator.geolocation.watchPosition(sendLocation, () => undefined, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+    return () => { if (locationWatchRef.current != null) navigator.geolocation.clearWatch(locationWatchRef.current); locationWatchRef.current = null; };
+  }, [user?.id, activeTaskKey]);
 
   const toggleTheme = () => { const next = !document.documentElement.classList.contains("dark"); document.documentElement.classList.toggle("dark", next); localStorage.setItem("tapwash-theme", next ? "dark" : "light"); setDark(next); };
   const setStatus = async (id: string, status: string) => { setLoading(id); const { error } = await (supabase as any).from("employee_tasks").update({ status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id).eq("employee_id", user?.id); setLoading(null); if (error) toast.error(error.message); else { toast.success(pick("Order updated", "تم تحديث الأوردر")); refetch(); } };
