@@ -1,4 +1,7 @@
 -- Notify the admin notification stream whenever a payment changes state.
+-- The earlier pending-only trigger is removed so each payment event creates one alert.
+drop trigger if exists notify_admins_payment on public.payments;
+
 create or replace function public.notify_admins_on_payment_status_change()
 returns trigger
 language plpgsql
