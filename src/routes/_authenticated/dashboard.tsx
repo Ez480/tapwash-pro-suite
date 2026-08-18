@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Bell, CreditCard, Droplets, KeyRound, MessageCircle, Phone, RefreshCw, ShieldCheck, UserCog, Tag } from "lucide-react";
+import { Bell, CarFront, CreditCard, Droplets, KeyRound, MessageCircle, Phone, RefreshCw, ShieldCheck, UserCog, Tag, UserRound, BriefcaseBusiness, IdCard } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,9 @@ import { useSession, useUserRoles } from "@/lib/auth";
 import { useMyCards, useMyNotifications, useMySubscription, useMyWashes, useOffers, usePackages, useProfile, useSettings } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: CustomerDashboard });
+
+type CurrentOrder = Record<string, any>;
+type EmployeeInfo = { employee_id: string | null; national_id: string | null; card_number: string | null; job_title: string | null; branch: string | null; full_name: string | null };
 
 function CustomerDashboard() {
   const { t, pick, fmtDate, lang, setLang } = useI18n();
@@ -35,6 +38,8 @@ function CustomerDashboard() {
   const [passOpen, setPassOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", phone: "", avatar_url: "" });
   const [password, setPassword] = useState("");
+  const [currentOrder, setCurrentOrder] = useState<CurrentOrder | null>(null);
+  const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null);
 
   useEffect(() => {
     if (profile) setForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "", avatar_url: profile.avatar_url ?? "" });
@@ -55,6 +60,29 @@ function CustomerDashboard() {
   const activeOffers = (offers ?? []).filter((o) => o.status === "active");
   const money = (value: number | string) => `${Number(value).toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${t("egp")}`;
 
+  useEffect(() => {
+    if (!user?.id) return;
+    let mounted = true;
+    const loadOrder = async () => {
+      const { data } = await (supabase as any).from("employee_tasks").select("*").eq("customer_id", user.id).in("status", ["pending", "accepted", "in_progress"]).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+      if (mounted) setCurrentOrder(data ?? null);
+    };
+    void loadOrder();
+    const channel = supabase.channel(`customer-order-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks", filter: `customer_id=eq.${user.id}` }, () => void loadOrder()).subscribe();
+    return () => { mounted = false; void supabase.removeChannel(channel); };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isEmployee || !user?.email) return;
+    let mounted = true;
+    const loadEmployee = async () => {
+      const { data } = await (supabase as any).from("employees").select("employee_id,national_id,card_number,job_title,branch,full_name").eq("email", user.email).maybeSingle();
+      if (mounted) setEmployeeInfo(data ?? null);
+    };
+    void loadEmployee();
+    return () => { mounted = false; };
+  }, [isEmployee, user?.email]);
+
   const saveProfile = async () => {
     const { error } = await supabase.from("profiles").update({ ...form, language: lang }).eq("id", user!.id);
     if (error) return void toast.error(error.message);
@@ -71,6 +99,8 @@ function CustomerDashboard() {
     toast.success(t("renew_requested"));
   };
   const statusLabel = (s?: string | null) => s === "active" ? t("active") : s === "expired" ? t("expired") : s === "cancelled" ? t("cancelled") : s === "pending" ? t("pending") : t("none");
+  const orderStatus = (s?: string | null) => ({ pending: pick("Waiting for acceptance", "في انتظار قبول الطلب"), accepted: pick("Order accepted", "تم استلام الطلب"), in_progress: pick("Wash in progress", "جاري تنفيذ الغسيل"), completed: pick("Completed", "مكتمل"), cancelled: pick("Cancelled", "ملغي") } as Record<string, string>)[s ?? ""] ?? (s || pick("Unknown", "غير محدد"));
+  const deliveryStatus = (s?: string | null) => ({ not_started: pick("Preparing pickup", "جاري التجهيز للاستلام"), picked_up: pick("Picked up by driver", "استلمه المندوب"), on_the_way: pick("On the way", "المندوب في الطريق"), delivered: pick("Delivered", "تم التسليم"), cancelled: pick("Delivery cancelled", "تم إلغاء التوصيل") } as Record<string, string>)[s ?? ""] ?? null;
 
   return (
     <div className="customer-dashboard min-h-screen bg-background">
@@ -93,6 +123,10 @@ function CustomerDashboard() {
             <Dialog open={passOpen} onOpenChange={setPassOpen}><DialogTrigger asChild><Button variant="outline"><KeyRound className="me-1.5 size-4" />{t("change_password")}</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>{t("change_password")}</DialogTitle></DialogHeader><div className="space-y-2"><Label>{t("new_password")}</Label><Input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div><DialogFooter><Button onClick={changePassword} disabled={password.length < 6}>{t("save")}</Button></DialogFooter></DialogContent></Dialog>
           </div>
         </div>
+
+        {isEmployee && employeeInfo ? <section className="panel mt-6 p-6"><div className="mb-4 flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("These fields are managed by management and are read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط ولا يمكن للموظف تعديلها.")}</p></div></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Card number", "رقم البطاقة")}</span><p className="mt-1 font-semibold">{employeeInfo.card_number || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("National ID", "الرقم القومي")}</span><p className="mt-1 font-semibold">{employeeInfo.national_id || "—"}</p></div></div></section> : null}
+
+        {currentOrder ? <section className="panel mt-6 overflow-hidden p-0"><div className="border-b bg-primary/5 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{pick("Current order", "الطلب الحالي")}</p><h3 className="mt-1 text-xl font-bold">{currentOrder.title || pick("Car wash order", "طلب غسيل سيارة")}</h3></div><Badge className="px-3 py-1">{orderStatus(currentOrder.status)}</Badge></div></div><div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4"><div><span className="text-xs text-muted-foreground">{pick("Order number", "رقم الطلب")}</span><p className="mt-1 font-semibold">{currentOrder.serial_number ? `#${currentOrder.serial_number}` : String(currentOrder.id).slice(0, 8)}</p></div><div><span className="text-xs text-muted-foreground">{pick("Delivery", "التوصيل")}</span><p className="mt-1 font-semibold">{deliveryStatus(currentOrder.delivery_status) || "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Scheduled", "الموعد")}</span><p className="mt-1 font-semibold">{currentOrder.scheduled_at ? fmtDate(currentOrder.scheduled_at) : "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Last update", "آخر تحديث")}</span><p className="mt-1 font-semibold">{currentOrder.updated_at ? fmtDate(currentOrder.updated_at) : "—"}</p></div></div><div className="px-6 pb-6"><div className="grid grid-cols-4 gap-2"><div className={`h-2 rounded-full ${["pending","accepted","in_progress","completed"].includes(currentOrder.status) ? "bg-primary" : "bg-muted"}`} /><div className={`h-2 rounded-full ${["accepted","in_progress","completed"].includes(currentOrder.status) ? "bg-primary" : "bg-muted"}`} /><div className={`h-2 rounded-full ${["in_progress","completed"].includes(currentOrder.status) ? "bg-primary" : "bg-muted"}`} /><div className={`h-2 rounded-full ${currentOrder.status === "completed" ? "bg-primary" : "bg-muted"}`} /></div><div className="mt-2 grid grid-cols-4 gap-2 text-center text-[11px] text-muted-foreground"><span>{pick("Pending","انتظار")}</span><span>{pick("Accepted","استلام")}</span><span>{pick("Washing","غسيل")}</span><span>{pick("Done","تم")}</span></div></div></section> : null}
 
         {sub ? <><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard tone="ink" label={t("package")} value={sub.packages ? pick(sub.packages.title_en, sub.packages.title_ar) : t("none")} hint={`${total} ${pick("washes", "غسلة")}`} /><StatCard tone="primary" label={t("remaining_washes")} value={remaining} hint={`${used} ${pick("used", "مستخدمة")}`} /><StatCard label={t("subscription_status")} value={statusLabel(sub.status)} /><StatCard label={t("last_wash")} value={fmtDate(lastWash)} /></div><div className="panel mt-6 p-6"><div className="flex items-center justify-between text-sm"><span className="font-semibold">{t("used_washes")}</span><span className="text-muted-foreground">{used} / {total}</span></div><Progress value={total ? (used / total) * 100 : 0} className="mt-3" /><div className="mt-6 grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("start_date")}</p><p className="mt-1 font-semibold">{fmtDate(sub.start_date)}</p></div><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("end_date")}</p><p className="mt-1 font-semibold">{fmtDate(sub.end_date)}</p></div></div></div></> : <div className="panel mt-6 p-8 text-center"><h3 className="text-xl font-bold">{t("no_subscription")}</h3><p className="mt-2 text-sm text-muted-foreground">{t("no_subscription_d")}</p><Button asChild className="mt-5"><Link to="/packages">{t("hero_cta")}</Link></Button></div>}
 
