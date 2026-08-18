@@ -19,10 +19,6 @@ function BookingRequests() {
     const emp = employees.find((e: any) => e.id === employeeId);
     if (!emp) return;
 
-    // booking_requests.customer_id is the authenticated profile id, while
-    // employee_tasks.customer_id references public.customers.id. Resolve it
-    // by email so the foreign key is always valid. If there is no customer
-    // record yet, keep the task customer_id null and retain the copied data.
     let customerId: string | null = null;
     if (r.customer_email) {
       const { data: customer } = await (supabase as any)
@@ -47,6 +43,7 @@ function BookingRequests() {
     const serial = `TW-${Date.now().toString(36).toUpperCase()}`;
     const { error } = await (supabase as any).from("employee_tasks").insert({
       serial_number: serial,
+      booking_request_id: r.id,
       collection_amount: Number(r.amount ?? 0),
       title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type,
       wash_type: r.wash_type,
