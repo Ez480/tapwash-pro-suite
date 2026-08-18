@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { AppTopbar, StatCard } from "@/components/app/Shell";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { useIsAdmin, useSession, useUserRoles } from "@/lib/auth";
+import { useSession, useUserRoles } from "@/lib/auth";
 import { useMyCards, useMyNotifications, useMySubscription, useMyWashes, useOffers, usePackages, useProfile, useSettings } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: CustomerDashboard });
@@ -72,7 +72,7 @@ function CustomerDashboard() {
   const statusLabel = (s?: string | null) => s === "active" ? t("active") : s === "expired" ? t("expired") : s === "cancelled" ? t("cancelled") : s === "pending" ? t("pending") : t("none");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="customer-dashboard min-h-screen bg-background">
       <AppTopbar title={t("my_membership")} extra={isAdmin ? <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex"><Link to="/admin"><ShieldCheck className="me-1.5 size-4" />{t("nav_admin")}</Link></Button> : null} />
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <div className="panel animate-fade-up flex flex-wrap items-center gap-5 p-6">
