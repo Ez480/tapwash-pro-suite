@@ -48,12 +48,12 @@ begin
       end;
 
       customer_message := case status_label
-        when 'paid' then 'تم تأكيد دفعتك بنجاح، وتم اعتماد الاشتراك المرتبط بها.'
-        when 'cancelled' then 'لم يتم تأكيد دفعتك. يمكنك التواصل مع الإدارة أو إعادة المحاولة.'
-        when 'pending' then 'تم استلام بيانات الدفع الخاصة بك، وسيتم مراجعتها من الإدارة.'
-        when 'awaiting' then 'تم استلام بيانات الدفع الخاصة بك والدفع الآن قيد المراجعة.'
-        when 'unpaid' then 'الدفع لم يتم تأكيده بعد.'
-        else 'تم تحديث حالة دفعتك إلى: ' || status_label || '.'
+        when 'paid' then 'تم تأكيد دفعتك بنجاح، وتم اعتماد الاشتراك المرتبط بها. [payment:' || new.id::text || ']'
+        when 'cancelled' then 'لم يتم تأكيد دفعتك. يمكنك التواصل مع الإدارة أو إعادة المحاولة. [payment:' || new.id::text || ']'
+        when 'pending' then 'تم استلام بيانات الدفع الخاصة بك، وسيتم مراجعتها من الإدارة. [payment:' || new.id::text || ']'
+        when 'awaiting' then 'تم استلام بيانات الدفع الخاصة بك والدفع الآن قيد المراجعة. [payment:' || new.id::text || ']'
+        when 'unpaid' then 'الدفع لم يتم تأكيده بعد. [payment:' || new.id::text || ']'
+        else 'تم تحديث حالة دفعتك إلى: ' || status_label || '. [payment:' || new.id::text || ']'
       end;
 
       insert into public.notifications (customer_id, title, message, is_read)
@@ -77,12 +77,12 @@ begin
       end;
 
       customer_message := case status_label
-        when 'paid' then 'تم تأكيد دفعتك بنجاح، وتم اعتماد الاشتراك المرتبط بها.'
-        when 'cancelled' then 'لم يتم تأكيد دفعتك. يمكنك التواصل مع الإدارة أو إعادة المحاولة.'
-        when 'pending' then 'تم وضع دفعتك في حالة انتظار المراجعة.'
-        when 'awaiting' then 'تم استلام بيانات الدفع والدفع الآن قيد المراجعة.'
-        when 'unpaid' then 'الدفع لم يتم تأكيده بعد.'
-        else 'تم تحديث حالة دفعتك إلى: ' || status_label || '.'
+        when 'paid' then 'تم تأكيد دفعتك بنجاح، وتم اعتماد الاشتراك المرتبط بها. [payment:' || new.id::text || ']'
+        when 'cancelled' then 'لم يتم تأكيد دفعتك. يمكنك التواصل مع الإدارة أو إعادة المحاولة. [payment:' || new.id::text || ']'
+        when 'pending' then 'تم وضع دفعتك في حالة انتظار المراجعة. [payment:' || new.id::text || ']'
+        when 'awaiting' then 'تم استلام بيانات الدفع والدفع الآن قيد المراجعة. [payment:' || new.id::text || ']'
+        when 'unpaid' then 'الدفع لم يتم تأكيده بعد. [payment:' || new.id::text || ']'
+        else 'تم تحديث حالة دفعتك إلى: ' || status_label || '. [payment:' || new.id::text || ']'
       end;
 
       insert into public.notifications (customer_id, title, message, is_read)
