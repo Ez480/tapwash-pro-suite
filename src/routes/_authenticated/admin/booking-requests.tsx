@@ -19,62 +19,106 @@ function BookingRequests() {
     const emp = employees.find((e: any) => e.id === employeeId);
     if (!emp) return;
 
-    let customerId: string | null = null;
-    if (r.customer_email) {
-      const { data: customer } = await (supabase as any)
-        .from("customers")
-        .select("id")
-        .ilike("email", r.customer_email)
-        .maybeSingle();
-      customerId = customer?.id ?? null;
-    }
+    try {
+      let customerId: string | null = null;
+      if (r.customer_email) {
+        const { data: customer, error: customerError } = await (supabase as any)
+          .from("customers")
+          .select("id")
+          .ilike("email", r.customer_email)
+          .maybeSingle();
 
-    let packageName: string | null = null;
-    let offerName: string | null = null;
-    if (r.package_id) {
-      const { data: pkg } = await (supabase as any).from("packages").select("title_ar,title_en,name").eq("id", r.package_id).maybeSingle();
-      packageName = pkg?.title_ar || pkg?.title_en || pkg?.name || null;
-    }
-    if (r.offer_id) {
-      const { data: offer } = await (supabase as any).from("offers").select("title_ar,title_en,name").eq("id", r.offer_id).maybeSingle();
-      offerName = offer?.title_ar || offer?.title_en || offer?.name || null;
-    }
+        if (customerError) {
+          console.error("Customer lookup failed while assigning booking", customerError);
+          return toast.error(pick("Could not find the customer record", "تعذر العثور على سجل العميل"));
+        }
+        customerId = customer?.id ?? null;
+      }
 
-    const serial = `TW-${Date.now().toString(36).toUpperCase()}`;
-    const { error } = await (supabase as any).from("employee_tasks").insert({
-      serial_number: serial,
-      booking_request_id: r.id,
-      collection_amount: Number(r.amount ?? 0),
-      title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type,
-      wash_type: r.wash_type,
-      employee_id: employeeId,
-      customer_id: customerId,
-      package_name: packageName,
-      offer_name: offerName,
-      customer_name: r.customer_name,
-      customer_phone: r.customer_phone,
-      customer_email: r.customer_email,
-      location_text: r.address,
-      location_url: r.location_url,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      scheduled_at: r.scheduled_at,
-      notes: r.notes,
-      status: "pending",
-      created_by: (await supabase.auth.getUser()).data.user?.id ?? null,
-    });
+      let packageName: string | null = null;
+      let offerName: string | null = null;
 
-    if (error) return toast.error(error.message);
+      // packages/offers do not have a `name` column in the current schema.
+      // Only query columns that actually exist to prevent PGRST204 errors.
+      if (r.package_id) {
+        const { data: pkg, error: packageError } = await (supabase as any)
+          .from("packages")
+          .select("title_ar,title_en")
+          .eq("id", r.package_id)
+          .maybeSingle();
 
-    const { error: updateError } = await (supabase as any)
-      .from("booking_requests")
-      .update({ status: "assigned" })
-      .eq("id", r.id);
+        if (packageError) {
+          console.error("Package lookup failed while assigning booking", packageError);
+          return toast.error(pick("Could not load the package", "تعذر تحميل الباقة"));
+        }
+        packageName = pkg?.title_ar || pkg?.title_en || null;
+      }
 
-    if (updateError) toast.error(updateError.message);
-    else {
+      if (r.offer_id) {
+        const { data: offer, error: offerError } = await (supabase as any)
+          .from("offers")
+          .select("title_ar,title_en")
+          .eq("id", r.offer_id)
+          .maybeSingle();
+
+        if (offerError) {
+          console.error("Offer lookup failed while assigning booking", offerError);
+          return toast.error(pick("Could not load the offer", "تعذر تحميل العرض"));
+        }
+        offerName = offer?.title_ar || offer?.title_en || null;
+      }
+
+      const userResult = await supabase.auth.getUser();
+      const createdBy = userResult.data.user?.id ?? null;
+
+      if (!createdBy) {
+        return toast.error(pick("Your session has expired. Please sign in again.", "انتهت جلسة تسجيل الدخول، سجل الدخول مرة أخرى."));
+      }
+
+      const serial = `TW-${Date.now().toString(36).toUpperCase()}`;
+      const { error } = await (supabase as any).from("employee_tasks").insert({
+        serial_number: serial,
+        booking_request_id: r.id,
+        collection_amount: Number(r.amount ?? 0),
+        title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type,
+        wash_type: r.wash_type,
+        employee_id: employeeId,
+        customer_id: customerId,
+        package_name: packageName,
+        offer_name: offerName,
+        customer_name: r.customer_name,
+        customer_phone: r.customer_phone,
+        customer_email: r.customer_email,
+        location_text: r.address,
+        location_url: r.location_url,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        scheduled_at: r.scheduled_at,
+        notes: r.notes,
+        status: "pending",
+        created_by: createdBy,
+      });
+
+      if (error) {
+        console.error("Employee task assignment failed", error);
+        return toast.error(error.message || pick("Could not assign the order", "تعذر تكليف الموظف بالأوردر"));
+      }
+
+      const { error: updateError } = await (supabase as any)
+        .from("booking_requests")
+        .update({ status: "assigned" })
+        .eq("id", r.id);
+
+      if (updateError) {
+        console.error("Booking status update after assignment failed", updateError);
+        return toast.error(updateError.message || pick("Order was assigned but status could not be updated", "تم تكليف الموظف لكن تعذر تحديث حالة الطلب"));
+      }
+
       toast.success(pick("Order sent to employee", "تم إرسال الأوردر للموظف"));
       refetch();
+    } catch (error: any) {
+      console.error("Unexpected employee assignment error", error);
+      toast.error(error?.message || pick("Could not assign the order", "تعذر تكليف الموظف بالأوردر"));
     }
   };
 
