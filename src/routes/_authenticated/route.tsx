@@ -18,12 +18,21 @@ export const Route = createFileRoute("/_authenticated")({
     const roleNames = (roles ?? []).map((item) => item.role as string);
     const isEmployee = roleNames.includes("employee");
     const isAdmin = roleNames.includes("admin");
+    const isCustomer = roleNames.includes("customer") || (!isEmployee && !isAdmin);
+
+    if (location.pathname === "/employee-tasks" && !isEmployee) {
+      throw redirect({ to: isAdmin ? "/admin" : "/dashboard" });
+    }
 
     if (isEmployee && !isAdmin && location.pathname !== "/employee-tasks") {
       throw redirect({ to: "/employee-tasks" });
     }
 
-    return { user: data.user };
+    if (location.pathname.startsWith("/admin") && !isAdmin) {
+      throw redirect({ to: isEmployee ? "/employee-tasks" : "/dashboard" });
+    }
+
+    return { user: data.user, roles: roleNames, isCustomer };
   },
   component: () => <><Outlet /><AuthenticatedMediaTools /></>,
 });
