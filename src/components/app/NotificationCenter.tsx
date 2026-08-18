@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/lib/auth";
+import { useIsAdmin, useSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 type NotificationRow = {
@@ -20,6 +20,8 @@ type NotificationRow = {
 
 export function NotificationCenter() {
   const { user } = useSession();
+  const { data: roles } = useIsAdmin(user?.id);
+  const isAdmin = (roles ?? []).includes("admin");
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -27,36 +29,49 @@ export function NotificationCenter() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase
+
+    let query = supabase
       .from("notifications")
       .select("id, customer_id, title, message, is_read, created_at")
       .order("created_at", { ascending: false })
       .limit(20);
+
+    // Admin notifications are intentionally stored with customer_id = null.
+    // Customers must only receive their own customer_id notifications.
+    query = isAdmin ? query.is("customer_id", null) : query.eq("customer_id", user.id);
+
+    const { data } = await query;
     setItems((data ?? []) as NotificationRow[]);
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !roles) return;
     void load();
 
     const channel = supabase
       .channel(`tapwash-notifications-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, (payload) => {
         const next = payload.new as NotificationRow;
-        if (next.customer_id === null || next.customer_id === user.id) {
+        const belongsToCurrentUser = isAdmin ? next.customer_id === null : next.customer_id === user.id;
+
+        if (belongsToCurrentUser) {
           setItems((current) => [next, ...current].slice(0, 20));
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
             new Notification(next.title, { body: next.message });
           }
         }
       })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => void load())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, (payload) => {
+        const next = payload.new as NotificationRow;
+        const belongsToCurrentUser = isAdmin ? next.customer_id === null : next.customer_id === user.id;
+        if (belongsToCurrentUser) void load();
+      })
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, isAdmin, Boolean(roles)]);
 
   const requestPermission = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -86,7 +101,7 @@ export function NotificationCenter() {
         <div className="flex items-center justify-between border-b border-border p-4">
           <div>
             <p className="font-semibold">الإشعارات</p>
-            <p className="text-xs text-muted-foreground">تحديثات فورية من TapWash</p>
+            <p className="text-xs text-muted-foreground">{isAdmin ? "إشعارات الإدارة والطلبات والمدفوعات" : "تحديثات طلباتك في TapWash"}</p>
           </div>
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" onClick={requestPermission} aria-label="تفعيل إشعارات الجهاز">
@@ -117,7 +132,7 @@ export function NotificationCenter() {
         </div>
         <div className="border-t border-border p-3">
           <Button asChild variant="outline" className="w-full" onClick={() => setOpen(false)}>
-            <Link to="/orders">متابعة حالة الطلبات</Link>
+            <Link to={isAdmin ? "/admin/booking-requests" : "/orders"}>{isAdmin ? "فتح طلبات الحجز" : "متابعة حالة الطلبات"}</Link>
           </Button>
         </div>
       </PopoverContent>
