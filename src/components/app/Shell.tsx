@@ -65,16 +65,39 @@ export function StatCard({ label, value, hint, tone = "default" }: { label: stri
 export function AdminNav({ items }: { items: { to: string; label: string; icon: React.ElementType }[] }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [pendingPayments, setPendingPayments] = useState(0);
+  const [pendingBookings, setPendingBookings] = useState(0);
 
   useEffect(() => {
     const load = async () => {
-      const { count } = await supabase.from("payments").select("id", { count: "exact", head: true }).in("status", ["pending", "awaiting", "unpaid"]);
-      setPendingPayments(count ?? 0);
+      const [{ count: paymentCount }, { count: bookingCount }] = await Promise.all([
+        supabase.from("payments").select("id", { count: "exact", head: true }).in("status", ["pending", "awaiting", "unpaid"]),
+        supabase.from("booking_requests").select("id", { count: "exact", head: true }).in("status", ["pending", "new", "awaiting"]),
+      ]);
+      setPendingPayments(paymentCount ?? 0);
+      setPendingBookings(bookingCount ?? 0);
     };
+
     void load();
-    const channel = supabase.channel("admin-payment-nav-badge").on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => void load()).subscribe();
+    const channel = supabase
+      .channel("admin-nav-badges")
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_requests" }, () => void load())
+      .subscribe();
+
     return () => { void supabase.removeChannel(channel); };
   }, []);
 
-  return <nav className="flex gap-1 overflow-x-auto pb-1">{items.map((i) => { const active = pathname === i.to; const isPayments = i.to === "/admin/payments"; return <Link key={i.to} to={i.to} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors", active ? "bg-primary text-primary-foreground shadow-card" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}><i.icon className="size-4" />{i.label}{isPayments && pendingPayments > 0 && <span className={cn("inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold", active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground")}>{pendingPayments > 99 ? "99+" : pendingPayments}</span>}</Link>; })}</nav>;
+  return <nav className="flex gap-1 overflow-x-auto pb-1">{items.map((i) => {
+    const active = pathname === i.to;
+    const isPayments = i.to === "/admin/payments";
+    const isBookings = i.to === "/admin/booking-requests";
+    const badgeCount = isPayments ? pendingPayments : isBookings ? pendingBookings : 0;
+    return <Link key={i.to} to={i.to} className={cn("flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors", active ? "bg-primary text-primary-foreground shadow-card" : "text-muted-foreground hover:bg-secondary hover:text-foreground")}>
+      <i.icon className="size-4" />
+      {i.label}
+      {badgeCount > 0 && <span className={cn("inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold", active ? "bg-primary-foreground text-primary" : "bg-destructive text-destructive-foreground")}>
+        {badgeCount > 99 ? "99+" : badgeCount}
+      </span>;
+    </Link>;
+  })}</nav>;
 }
