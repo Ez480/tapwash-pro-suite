@@ -1,26 +1,121 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Camera, RefreshCw, Search, Truck } from "lucide-react";
+import { Camera, MapPinned, RefreshCw, Search, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DeliveryMap } from "@/components/app/DeliveryMap";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/live-orders")({ component: LiveOrdersPage });
 type Task = Record<string, any>;
 type Photo = { id: string; task_id: string; kind: string; url: string; created_at: string };
+type Location = { task_id: string; employee_id: string; latitude: number; longitude: number; accuracy?: number | null; heading?: number | null; speed?: number | null; updated_at: string };
 
 function LiveOrdersPage() {
   const { fmtDate } = useI18n();
-  const [tasks, setTasks] = useState<Task[]>([]); const [photos, setPhotos] = useState<Photo[]>([]); const [selected, setSelected] = useState<string | null>(null); const [query, setQuery] = useState(""); const [refreshing, setRefreshing] = useState(false);
-  const load = async () => { const [{ data: td, error: te }, { data: pd, error: pe }] = await Promise.all([(supabase as any).from("employee_tasks").select("*").order("updated_at", { ascending: false }).limit(100), (supabase as any).from("order_photos").select("id,task_id,kind,url,created_at").order("created_at", { ascending: false }).limit(500)]); if (te) toast.error(te.message); if (pe) toast.error(pe.message); setTasks(td ?? []); setPhotos(pd ?? []); return !te && !pe; };
-  useEffect(() => { void load(); const ch = supabase.channel("manager-live-orders-page").on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks" }, () => void load()).on("postgres_changes", { event: "*", schema: "public", table: "order_photos" }, () => void load()).subscribe(); return () => { void supabase.removeChannel(ch); }; }, []);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = async () => {
+    const [{ data: td, error: te }, { data: pd, error: pe }, { data: ld, error: le }] = await Promise.all([
+      (supabase as any).from("employee_tasks").select("*").order("updated_at", { ascending: false }).limit(100),
+      (supabase as any).from("order_photos").select("id,task_id,kind,url,created_at").order("created_at", { ascending: false }).limit(500),
+      (supabase as any).from("employee_locations").select("task_id,employee_id,latitude,longitude,accuracy,heading,speed,updated_at").limit(100),
+    ]);
+    if (te) toast.error(te.message);
+    if (pe) toast.error(pe.message);
+    if (le) toast.error(le.message);
+    setTasks(td ?? []);
+    setPhotos(pd ?? []);
+    setLocations(ld ?? []);
+    return !te && !pe && !le;
+  };
+
+  useEffect(() => {
+    void load();
+    const ch = supabase
+      .channel("manager-live-orders-page")
+      .on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_photos" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "employee_locations" }, (payload: any) => {
+        const row = payload.new as Location;
+        if (!row?.task_id) return;
+        setLocations((current) => {
+          const next = current.filter((item) => item.task_id !== row.task_id);
+          return [...next, row];
+        });
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, []);
+
   const refresh = async () => { setRefreshing(true); const ok = await load(); setRefreshing(false); if (ok) toast.success("تم تحديث الأوردرات بنجاح"); };
   const visible = useMemo(() => { const q = query.trim().toLowerCase(); if (!q) return tasks; return tasks.filter((x) => [x.id, x.serial_number, x.title, x.customer_name, x.employee_id, x.delivery_status, x.status].some((v) => String(v ?? "").toLowerCase().includes(q))); }, [tasks, query]);
-  const selectedTask = tasks.find((x) => String(x.id) === selected) ?? null; const selectedPhotos = photos.filter((p) => String(p.task_id) === selected);
-  const status = (s: string) => ({ pending: "قيد الانتظار", accepted: "تم الاستلام", in_progress: "جاري التنفيذ", completed: "مكتمل" } as any)[s] ?? s; const delivery = (s: string) => ({ not_started: "لم يبدأ الدليفري", picked_up: "تم الاستلام", on_the_way: "في الطريق", delivered: "تم التسليم", cancelled: "ملغي" } as any)[s] ?? s;
-  return <div className="space-y-6"><div className="panel p-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="flex items-center gap-2 text-xl font-bold"><Truck className="size-5 text-primary" />متابعة الأوردرات والدليفري Live</h2><p className="mt-1 text-sm text-muted-foreground">كل تحديثات الحالات والصور تظهر هنا لحظة بلحظة.</p></div><Button variant="outline" onClick={refresh} disabled={refreshing} className="gap-2">{refreshing ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}<span>{refreshing ? "جاري التحديث..." : "تحديث"}</span></Button></div><div className="relative mt-4"><Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ابحث برقم الأوردر أو العميل أو الموظف..." className="ps-9" /></div></div><div className="grid gap-3 lg:grid-cols-2">{visible.map((task) => { const count = photos.filter((p) => String(p.task_id) === String(task.id)).length; return <button key={String(task.id)} onClick={() => setSelected(String(task.id))} className="rounded-2xl border bg-card p-5 text-start transition hover:border-primary/50 hover:shadow-md"><div className="flex flex-wrap items-center gap-2"><b>{task.title || "أوردر"}</b><Badge>{status(String(task.status ?? ""))}</Badge><Badge variant="outline">{delivery(String(task.delivery_status ?? ""))}</Badge></div><p className="mt-2 text-sm">{task.customer_name || "—"}</p><div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>#{task.serial_number || task.id}</span><span>{count} صورة • {fmtDate(task.updated_at)}</span></div></button>; })}{visible.length === 0 && <p className="text-sm text-muted-foreground">لا توجد أوردرات مطابقة.</p>}</div><Dialog open={!!selectedTask} onOpenChange={(o) => !o && setSelected(null)}><DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">{selectedTask && <><DialogHeader><DialogTitle>{selectedTask.title || "تفاصيل الأوردر"}</DialogTitle><DialogDescription>تفاصيل وحالة الدليفري والصور الخاصة بهذا الأوردر.</DialogDescription></DialogHeader><div className="grid gap-3 rounded-xl border bg-muted/20 p-4 sm:grid-cols-3"><div><small className="text-muted-foreground">العميل</small><p className="font-semibold">{selectedTask.customer_name || "—"}</p></div><div><small className="text-muted-foreground">حالة الأوردر</small><p className="font-semibold">{status(String(selectedTask.status ?? ""))}</p></div><div><small className="text-muted-foreground">الدليفري</small><p className="font-semibold">{delivery(String(selectedTask.delivery_status ?? ""))}</p></div><div><small className="text-muted-foreground">رقم الأوردر</small><p className="font-semibold">#{selectedTask.serial_number || selectedTask.id}</p></div><div><small className="text-muted-foreground">آخر تحديث</small><p className="font-semibold">{fmtDate(selectedTask.updated_at)}</p></div><div><small className="text-muted-foreground">الموظف</small><p className="font-semibold">{selectedTask.employee_id || "—"}</p></div></div><div><h3 className="mb-3 flex items-center gap-2 font-bold"><Camera className="size-5 text-primary" />صور الأوردر</h3><div className="grid gap-4 sm:grid-cols-2">{["before", "after"].map((kind) => <div key={kind}><h4 className="mb-2 font-semibold">{kind === "before" ? "قبل الغسيل" : "بعد التنظيف"}</h4><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === kind).map((p) => <img key={p.id} src={p.url} alt={kind === "before" ? "قبل الغسيل" : "بعد التنظيف"} className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === kind).length === 0 && <p className="text-sm text-muted-foreground">لا توجد صور.</p>}</div></div>)}</div></div></>}</DialogContent></Dialog></div>;
+  const selectedTask = tasks.find((x) => String(x.id) === selected) ?? null;
+  const selectedPhotos = photos.filter((p) => String(p.task_id) === selected);
+  const selectedLocation = locations.find((item) => String(item.task_id) === selected) ?? null;
+  const status = (s: string) => ({ pending: "قيد الانتظار", accepted: "تم الاستلام", in_progress: "جاري التنفيذ", completed: "مكتمل" } as any)[s] ?? s;
+  const delivery = (s: string) => ({ not_started: "لم يبدأ الدليفري", picked_up: "تم الاستلام", on_the_way: "في الطريق", delivered: "تم التسليم", cancelled: "ملغي" } as any)[s] ?? s;
+  const hasDestination = selectedTask?.latitude != null && selectedTask?.longitude != null;
+
+  return <div className="space-y-6">
+    <div className="panel p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div><h2 className="flex items-center gap-2 text-xl font-bold"><Truck className="size-5 text-primary" />متابعة الأوردرات والدليفري Live</h2><p className="mt-1 text-sm text-muted-foreground">الحالات والصور وموقع الدليفري تتحدث لحظة بلحظة.</p></div>
+        <Button variant="outline" onClick={refresh} disabled={refreshing} className="gap-2">{refreshing ? <RefreshCw className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}<span>{refreshing ? "جاري التحديث..." : "تحديث"}</span></Button>
+      </div>
+      <div className="relative mt-4"><Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ابحث برقم الأوردر أو العميل أو الموظف..." className="ps-9" /></div>
+    </div>
+
+    <div className="grid gap-3 lg:grid-cols-2">
+      {visible.map((task) => {
+        const count = photos.filter((p) => String(p.task_id) === String(task.id)).length;
+        const location = locations.find((item) => String(item.task_id) === String(task.id));
+        return <article key={String(task.id)} className="rounded-2xl border bg-card p-5 text-start transition hover:border-primary/50 hover:shadow-md">
+          <button onClick={() => setSelected(String(task.id))} className="w-full text-start">
+            <div className="flex flex-wrap items-center gap-2"><b>{task.title || "أوردر"}</b><Badge>{status(String(task.status ?? ""))}</Badge><Badge variant="outline">{delivery(String(task.delivery_status ?? ""))}</Badge></div>
+            <p className="mt-2 text-sm">{task.customer_name || "—"}</p>
+            <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>#{task.serial_number || task.id}</span><span>{count} صورة • {fmtDate(task.updated_at)}</span></div>
+          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => setSelected(String(task.id))}><MapPinned className="me-1 size-4" />خريطة الدليفري</Button>
+            {location ? <span className="text-xs text-emerald-600">الدليفري متصل • آخر تحديث {new Date(location.updated_at).toLocaleTimeString()}</span> : <span className="text-xs text-muted-foreground">موقع الدليفري غير متاح حالياً</span>}
+          </div>
+        </article>;
+      })}
+      {visible.length === 0 && <p className="text-sm text-muted-foreground">لا توجد أوردرات مطابقة.</p>}
+    </div>
+
+    <Dialog open={!!selectedTask} onOpenChange={(o) => !o && setSelected(null)}>
+      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+        {selectedTask && <>
+          <DialogHeader><DialogTitle>{selectedTask.title || "تفاصيل الأوردر"}</DialogTitle><DialogDescription>خريطة مباشرة لموقع الدليفري بالنسبة لموقع العميل، مع تحديثات لحظية.</DialogDescription></DialogHeader>
+          <div className="grid gap-3 rounded-xl border bg-muted/20 p-4 sm:grid-cols-3">
+            <div><small className="text-muted-foreground">العميل</small><p className="font-semibold">{selectedTask.customer_name || "—"}</p></div>
+            <div><small className="text-muted-foreground">حالة الأوردر</small><p className="font-semibold">{status(String(selectedTask.status ?? ""))}</p></div>
+            <div><small className="text-muted-foreground">الدليفري</small><p className="font-semibold">{delivery(String(selectedTask.delivery_status ?? ""))}</p></div>
+            <div><small className="text-muted-foreground">رقم الأوردر</small><p className="font-semibold">#{selectedTask.serial_number || selectedTask.id}</p></div>
+            <div><small className="text-muted-foreground">آخر تحديث</small><p className="font-semibold">{fmtDate(selectedTask.updated_at)}</p></div>
+            <div><small className="text-muted-foreground">الموظف</small><p className="font-semibold">{selectedTask.employee_id || "—"}</p></div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-bold"><MapPinned className="size-5 text-primary" />خريطة الدليفري Live</h3>{selectedLocation && <Badge variant="secondary">متصل الآن</Badge>}</div>
+            {hasDestination ? <DeliveryMap destination={{ lat: Number(selectedTask.latitude), lng: Number(selectedTask.longitude) }} driver={selectedLocation ? { lat: Number(selectedLocation.latitude), lng: Number(selectedLocation.longitude), updatedAt: selectedLocation.updated_at } : null} height="420px" /> : <div className="rounded-2xl border p-8 text-center text-sm text-muted-foreground">لا يوجد موقع GPS مسجل للعميل في هذا الأوردر.</div>}
+            <p className="text-xs text-muted-foreground">{selectedLocation ? `آخر إحداثيات للدليفري: ${Number(selectedLocation.latitude).toFixed(6)}, ${Number(selectedLocation.longitude).toFixed(6)} • الدقة ${selectedLocation.accuracy ? `${Math.round(selectedLocation.accuracy)}م` : "غير متاحة"}` : "عند تشغيل GPS من جهاز الموظف سيظهر موقعه هنا تلقائياً."}</p>
+          </div>
+
+          <div><h3 className="mb-3 flex items-center gap-2 font-bold"><Camera className="size-5 text-primary" />صور الأوردر</h3><div className="grid gap-4 sm:grid-cols-2">{["before", "after"].map((kind) => <div key={kind}><h4 className="mb-2 font-semibold">{kind === "before" ? "قبل الغسيل" : "بعد التنظيف"}</h4><div className="grid gap-3">{selectedPhotos.filter((p) => p.kind === kind).map((p) => <img key={p.id} src={p.url} alt={kind === "before" ? "قبل الغسيل" : "بعد التنظيف"} className="w-full rounded-xl border object-cover" />)}{selectedPhotos.filter((p) => p.kind === kind).length === 0 && <p className="text-sm text-muted-foreground">لا توجد صور.</p>}</div></div>)}</div></div>
+        </>}
+      </DialogContent>
+    </Dialog>
+  </div>;
 }
