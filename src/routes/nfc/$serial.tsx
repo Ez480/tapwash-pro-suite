@@ -32,15 +32,12 @@ function NfcCardLookup() {
       const identifier = decodeURIComponent(serial).trim().toUpperCase();
       if (!identifier) { setError("NFC card identifier is missing."); setLoading(false); return; }
 
-      // First read the card. This must work even before attempting a wash.
       const { data, error: lookupError } = await supabase.rpc("public_nfc_lookup", { p_uid: identifier });
       if (!active) return;
       if (lookupError) { setError(lookupError.message); setLoading(false); return; }
       if (!data) { setError("This NFC card is not linked to a TapWash customer."); setLoading(false); return; }
       setResult(data as LookupResult);
 
-      // The URL itself is the NFC scan event. Prevent a browser refresh from
-      // charging the same wash again in the same tab.
       const scanKey = `tapwash:nfc-scan:${identifier}`;
       if (sessionStorage.getItem(scanKey) !== "1") {
         const { data: scanData, error: scanError } = await supabase.rpc("public_nfc_scan", { p_uid: identifier });
@@ -53,7 +50,6 @@ function NfcCardLookup() {
         setScan(scanData as ScanResult);
         sessionStorage.setItem(scanKey, "1");
 
-        // Refresh the displayed subscription after the successful deduction.
         const { data: refreshed } = await supabase.rpc("public_nfc_lookup", { p_uid: identifier });
         if (active && refreshed) setResult(refreshed as LookupResult);
       }
@@ -62,6 +58,8 @@ function NfcCardLookup() {
     void handleCard();
     return () => { active = false; };
   }, [serial]);
+
+  const hasWashes = (result?.subscription?.remaining_washes ?? 0) > 0;
 
   return (
     <main className="min-h-screen bg-background px-4 py-8 text-foreground">
@@ -74,7 +72,7 @@ function NfcCardLookup() {
           {scan?.success && <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4"><div className="font-semibold text-green-600">تم تسجيل الغسلة بنجاح</div><p className="mt-1 text-sm">المتبقي: {scan.remaining_washes} غسلة</p></div>}
           <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Customer</div><div className="mt-1 text-xl font-bold">{result.customer?.full_name ?? scan?.customer_name ?? "—"}</div></section>
           <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Vehicle</div><div className="mt-1 font-semibold">{[result.car?.brand, result.car?.model].filter(Boolean).join(" ") || "—"}</div><div className="mt-1 text-sm text-muted-foreground">{[result.car?.color, result.car?.plate_number].filter(Boolean).join(" • ") || "—"}</div></section>
-          <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Subscription</div><div className="mt-1 font-semibold">{result.subscription?.package?.title_ar || result.subscription?.package?.title_en || "—"}</div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Remaining washes</div><div className="mt-1 text-2xl font-bold">{result.subscription?.remaining_washes ?? 0}</div></div><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Status</div><div className="mt-1 font-bold capitalize">{result.subscription?.status ?? "—"}</div></div></div><div className="mt-4 text-sm text-muted-foreground">Valid until: {result.subscription?.end_date ?? "—"}</div></section>
+          <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Subscription</div><div className="mt-1 font-semibold">{result.subscription?.package?.title_ar || result.subscription?.package?.title_en || "—"}</div>{hasWashes && <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Remaining washes</div><div className="mt-1 text-2xl font-bold">{result.subscription?.remaining_washes ?? 0}</div></div><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Status</div><div className="mt-1 font-bold capitalize">{result.subscription?.status ?? "—"}</div></div></div>}<div className="mt-4 text-sm text-muted-foreground">Valid until: {result.subscription?.end_date ?? "—"}</div></section>
           <div className="text-center text-xs text-muted-foreground">NFC: {result.card?.uid || result.card?.serial_number}</div>
         </div> : null}
       </div></div>
