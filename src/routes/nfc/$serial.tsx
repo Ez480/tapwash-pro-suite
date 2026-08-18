@@ -3,126 +3,55 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/nfc/$serial")({
-  component: NfcCardLookup,
-});
+export const Route = createFileRoute("/nfc/$serial")({ component: NfcCardLookup });
 
-type NfcCard = {
-  id: string;
-  serial_number: string;
-  uid: string | null;
-  card_type: string;
-  status: string;
-  customer_id: string | null;
-  activation_date: string | null;
+type LookupResult = {
+  card: { uid: string | null; serial_number: string; status: string; activation_date: string | null } | null;
+  customer: { id: string; full_name: string } | null;
+  car: { brand: string | null; model: string | null; color: string | null; plate_number: string | null } | null;
+  subscription: {
+    id: string; status: string; total_washes: number; used_washes: number; remaining_washes: number;
+    start_date: string | null; end_date: string | null;
+    package: { title_ar: string | null; title_en: string | null; washes_count: number | null } | null;
+  } | null;
 };
 
 function NfcCardLookup() {
   const { serial } = Route.useParams();
-  const [card, setCard] = useState<NfcCard | null>(null);
+  const [result, setResult] = useState<LookupResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-
     async function lookupCard() {
-      setLoading(true);
-      setError(null);
-      setCard(null);
-
-      const normalizedSerial = decodeURIComponent(serial).trim().toUpperCase();
-
-      if (!normalizedSerial) {
-        if (active) {
-          setError("NFC card serial is missing.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      const { data, error: queryError } = await supabase
-        .from("nfc_cards")
-        .select(
-          "id, serial_number, uid, card_type, status, customer_id, activation_date",
-        )
-        .eq("serial_number", normalizedSerial)
-        .maybeSingle();
-
+      setLoading(true); setError(null); setResult(null);
+      const identifier = decodeURIComponent(serial).trim().toUpperCase();
+      const { data, error: queryError } = await supabase.rpc("public_nfc_lookup", { p_uid: identifier });
       if (!active) return;
-
-      if (queryError) {
-        setError(queryError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!data) {
-        setError(`No NFC card was found for ${normalizedSerial}.`);
-        setLoading(false);
-        return;
-      }
-
-      setCard(data as NfcCard);
+      if (queryError) setError(queryError.message);
+      else if (!data) setError("This NFC card is not linked to a TapWash customer.");
+      else setResult(data as LookupResult);
       setLoading(false);
     }
-
     void lookupCard();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [serial]);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto w-full max-w-lg">
-        <div className="panel p-6 sm:p-8">
-          <p className="text-sm font-medium text-primary">TapWash NFC</p>
-          <h1 className="mt-2 text-2xl font-bold">NFC Card Lookup</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Temporary route for testing NFC tags against the TapWash database.
-          </p>
-
-          <div className="mt-6 rounded-xl border p-4">
-            <div className="text-xs text-muted-foreground">Card serial</div>
-            <div className="mt-1 font-mono text-lg font-semibold">
-              {decodeURIComponent(serial)}
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="mt-6 rounded-xl border p-4 text-sm text-muted-foreground">
-              Searching Supabase for this NFC card…
-            </div>
-          ) : error ? (
-            <div className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-4">
-              <div className="font-semibold text-destructive">Lookup failed</div>
-              <p className="mt-1 text-sm text-muted-foreground">{error}</p>
-            </div>
-          ) : card ? (
-            <div className="mt-6 space-y-3 rounded-xl border p-4 text-sm">
-              <div className="font-semibold text-green-600">Card found in Supabase</div>
-              <div>
-                <span className="text-muted-foreground">Serial:</span> {card.serial_number}
-              </div>
-              <div>
-                <span className="text-muted-foreground">UID:</span> {card.uid ?? "—"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Type:</span> {card.card_type}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Status:</span> {card.status}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Customer ID:</span>{" "}
-                {card.customer_id ?? "—"}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
+    <main className="min-h-screen bg-background px-4 py-8 text-foreground">
+      <div className="mx-auto w-full max-w-lg"><div className="panel p-6 sm:p-8">
+        <p className="text-sm font-medium text-primary">TapWash</p>
+        <h1 className="mt-2 text-3xl font-bold">Customer Wash Card</h1>
+        {loading ? <div className="mt-6 rounded-xl border p-4 text-sm text-muted-foreground">Loading card details…</div> :
+         error ? <div className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-4"><div className="font-semibold text-destructive">Card not found</div><p className="mt-1 text-sm text-muted-foreground">{error}</p></div> :
+         result ? <div className="mt-6 space-y-4">
+          <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Customer</div><div className="mt-1 text-xl font-bold">{result.customer?.full_name ?? "—"}</div></section>
+          <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Vehicle</div><div className="mt-1 font-semibold">{[result.car?.brand, result.car?.model].filter(Boolean).join(" ") || "—"}</div><div className="mt-1 text-sm text-muted-foreground">{[result.car?.color, result.car?.plate_number].filter(Boolean).join(" • ") || "—"}</div></section>
+          <section className="rounded-xl border p-4"><div className="text-sm text-muted-foreground">Subscription</div><div className="mt-1 font-semibold">{result.subscription?.package?.title_ar || result.subscription?.package?.title_en || "—"}</div><div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Remaining washes</div><div className="mt-1 text-2xl font-bold">{result.subscription?.remaining_washes ?? 0}</div></div><div className="rounded-lg bg-muted/50 p-3"><div className="text-xs text-muted-foreground">Status</div><div className="mt-1 font-bold capitalize">{result.subscription?.status ?? "—"}</div></div></div><div className="mt-4 text-sm text-muted-foreground">Valid until: {result.subscription?.end_date ?? "—"}</div></section>
+          <div className="text-center text-xs text-muted-foreground">NFC: {result.card?.uid || result.card?.serial_number}</div>
+        </div> : null}
+      </div></div>
     </main>
   );
 }
