@@ -22,17 +22,15 @@ const links = [
 export function LanguageToggle() {
   const { lang, setLang } = useI18n();
   return (
-    <div className="flex items-center rounded-full border border-border bg-secondary/60 p-0.5 text-xs font-semibold">
-      {(["ar", "en"] as const).map((l) => (
+    <div className="glass-soft flex items-center rounded-full p-0.5 text-xs font-semibold">
+      {["ar", "en"] as const}.map((l) => (
         <button
           key={l}
           onClick={() => setLang(l)}
           aria-label={l === "ar" ? "العربية" : "English"}
           className={cn(
             "rounded-full px-2.5 py-1 transition-colors",
-            lang === l
-              ? "bg-primary text-primary-foreground shadow-card"
-              : "text-muted-foreground hover:text-foreground",
+            lang === l ? "bg-primary text-primary-foreground shadow-card" : "text-muted-foreground hover:text-foreground",
           )}
         >
           {l === "ar" ? "ع" : "EN"}
@@ -78,27 +76,17 @@ export function Header() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/70 shadow-sm backdrop-blur-2xl supports-[backdrop-filter]:bg-background/55">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2.5">
           {settings?.logo_url ? (
-            <img
-              src={settings.logo_url}
-              alt={pick(settings.company_name_en, settings.company_name_ar)}
-              className="size-9 rounded-xl object-cover"
-            />
+            <img src={settings.logo_url} alt={pick(settings.company_name_en, settings.company_name_ar)} className="size-9 rounded-xl object-cover shadow-card" />
           ) : (
-            <span className="surface-blue flex size-9 items-center justify-center rounded-xl shadow-luxe">
-              <Sparkles className="size-4" />
-            </span>
+            <span className="surface-blue flex size-9 items-center justify-center rounded-xl shadow-luxe"><Sparkles className="size-4" /></span>
           )}
           <span className="flex flex-col leading-none">
-            <span className="font-display text-base font-bold tracking-tight">
-              {settings ? pick(settings.company_name_en, settings.company_name_ar) : t("brand")}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              {t("tagline")}
-            </span>
+            <span className="font-display text-base font-bold tracking-tight text-foreground">{settings ? pick(settings.company_name_en, settings.company_name_ar) : t("brand")}</span>
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{t("tagline")}</span>
           </span>
         </Link>
 
@@ -108,27 +96,15 @@ export function Header() {
           <LanguageToggle />
           <ThemeToggle />
           {user ? (
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/dashboard">{t("nav_dashboard")}</Link>
-            </Button>
+            <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/dashboard">{t("nav_dashboard")}</Link></Button>
           ) : (
-            <Button asChild size="sm" className="hidden sm:inline-flex">
-              <Link to="/login">{t("nav_login")}</Link>
-            </Button>
+            <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/login">{t("nav_login")}</Link></Button>
           )}
           <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Menu">
-                <Menu className="size-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="top" className="pt-12">
+            <SheetTrigger asChild><Button variant="ghost" size="icon" className="lg:hidden" aria-label="Menu"><Menu className="size-5" /></Button></SheetTrigger>
+            <SheetContent side="top" className="glass-card pt-12">
               <nav className="flex flex-col gap-5 text-lg">{nav}</nav>
-              <Button asChild className="mt-6 w-full">
-                <Link to={user ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>
-                  {user ? t("nav_dashboard") : t("nav_login")}
-                </Link>
-              </Button>
+              <Button asChild className="mt-6 w-full"><Link to={user ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>{user ? t("nav_dashboard") : t("nav_login")}</Link></Button>
             </SheetContent>
           </Sheet>
         </div>
@@ -142,63 +118,34 @@ export function Footer() {
   const { data: s } = useSettings();
 
   return (
-    <footer className="surface-ink mt-24">
+    <footer className="customer-footer mt-24 border-t border-border/70 bg-card/48 text-foreground backdrop-blur-2xl">
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
-          <p className="font-display text-2xl font-bold">
-            {s ? pick(s.company_name_en, s.company_name_ar) : t("brand")}
-          </p>
-          <p className="mt-3 max-w-sm text-sm text-ink-foreground/70">
-            {pick(
-              "NFC-powered car wash memberships across Cairo & Giza.",
-              "عضويات غسيل سيارات بتقنية NFC في القاهرة والجيزة.",
-            )}
-          </p>
+          <p className="font-display text-2xl font-bold text-foreground">{s ? pick(s.company_name_en, s.company_name_ar) : t("brand")}</p>
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">{pick("NFC-powered car wash memberships across Cairo & Giza.", "عضويات غسيل سيارات بتقنية NFC في القاهرة والجيزة.")}</p>
         </div>
         <div className="space-y-2 text-sm">
-          {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="block text-ink-foreground/70 transition-colors hover:text-ink-foreground"
-            >
-              {t(l.key)}
-            </Link>
-          ))}
+          {links.map((l) => <Link key={l.to} to={l.to} className="block text-muted-foreground transition-colors hover:text-foreground">{t(l.key)}</Link>)}
         </div>
-        <div className="space-y-2 text-sm text-ink-foreground/70">
+        <div className="space-y-2 text-sm text-muted-foreground">
           {s?.phone && <p>{s.phone}</p>}
           {s?.email && <p>{s.email}</p>}
           {s && <p>{pick(s.address_en ?? "", s.address_ar ?? "")}</p>}
           <div className="flex gap-4 pt-2">
-            {s?.facebook_url && (
-              <a href={s.facebook_url} className="hover:text-ink-foreground">
-                Facebook
-              </a>
-            )}
-            {s?.instagram_url && (
-              <a href={s.instagram_url} className="hover:text-ink-foreground">
-                Instagram
-              </a>
-            )}
-            {s?.tiktok_url && (
-              <a href={s.tiktok_url} className="hover:text-ink-foreground">
-                TikTok
-              </a>
-            )}
+            {s?.facebook_url && <a href={s.facebook_url} className="hover:text-foreground">Facebook</a>}
+            {s?.instagram_url && <a href={s.instagram_url} className="hover:text-foreground">Instagram</a>}
+            {s?.tiktok_url && <a href={s.tiktok_url} className="hover:text-foreground">TikTok</a>}
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 py-5 text-center text-xs text-ink-foreground/50">
-        © {new Date().getFullYear()} {s ? pick(s.company_name_en, s.company_name_ar) : "TapWash"}
-      </div>
+      <div className="border-t border-border/70 py-5 text-center text-xs text-muted-foreground">© {new Date().getFullYear()} {s ? pick(s.company_name_en, s.company_name_ar) : "TapWash"}</div>
     </footer>
   );
 }
 
 export function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="customer-site flex min-h-screen flex-col bg-background text-foreground">
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
@@ -206,29 +153,13 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function PageHero({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow?: string | undefined;
-  title: string;
-  subtitle?: string | null | undefined;
-}) {
+export function PageHero({ eyebrow, title, subtitle }: { eyebrow?: string | undefined; title: string; subtitle?: string | null | undefined }) {
   return (
-    <section className="surface-hero border-b border-border">
+    <section className="surface-hero border-b border-border/70">
       <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 md:py-24">
-        {eyebrow && (
-          <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-            {eyebrow}
-          </p>
-        )}
-        <h1 className="animate-fade-up mt-4 max-w-3xl text-4xl font-bold text-balance-tight md:text-6xl">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="animate-fade-up mt-5 max-w-2xl text-lg text-muted-foreground">{subtitle}</p>
-        )}
+        {eyebrow && <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.25em] text-primary">{eyebrow}</p>}
+        <h1 className="animate-fade-up mt-4 max-w-3xl text-4xl font-bold text-balance-tight text-foreground md:text-6xl">{title}</h1>
+        {subtitle && <p className="animate-fade-up mt-5 max-w-2xl text-lg text-muted-foreground">{subtitle}</p>}
       </div>
     </section>
   );
