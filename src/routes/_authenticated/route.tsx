@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthenticatedMediaTools } from "@/components/app/AuthenticatedMediaTools";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -18,14 +19,11 @@ export const Route = createFileRoute("/_authenticated")({
     const isEmployee = roleNames.includes("employee");
     const isAdmin = roleNames.includes("admin");
 
-    // Employees should be routed to their dedicated dashboard, but never
-    // redirect /employee-tasks back to itself (which caused a redirect loop
-    // and the "go back / retry" error page).
     if (isEmployee && !isAdmin && location.pathname !== "/employee-tasks") {
       throw redirect({ to: "/employee-tasks" });
     }
 
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: () => <><Outlet /><AuthenticatedMediaTools /></>,
 });
