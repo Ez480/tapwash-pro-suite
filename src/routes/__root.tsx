@@ -57,7 +57,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0b1020" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "TapWash" },
       { title: "TapWash CRM — NFC Car Wash Memberships in Egypt" },
       { name: "description", content: "TapWash is Egypt's NFC-powered car wash membership platform. Tap your card, keychain or sticker and track every wash." },
       { property: "og:type", content: "website" },
@@ -66,6 +71,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: darkModeCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icons/tapwash.svg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" },
@@ -89,6 +96,40 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    let registration: ServiceWorkerRegistration | undefined;
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const registerPwa = async () => {
+      try {
+        registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        await registration.update();
+
+        registration.addEventListener("updatefound", () => {
+          const worker = registration?.installing;
+          if (!worker) return;
+          worker.addEventListener("statechange", () => {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+              worker.postMessage({ type: "SKIP_WAITING" });
+            }
+          });
+        });
+
+        interval = setInterval(() => registration?.update(), 5 * 60 * 1000);
+      } catch (error) {
+        console.warn("TapWash PWA registration failed", error);
+      }
+    };
+
+    void registerPwa();
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
