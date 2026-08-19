@@ -10,7 +10,7 @@ import { ProfileEditor } from "@/components/app/ProfileEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useSession, useUserRoles } from "@/lib/auth";
-import { useMyCards, useMySubscription, useMyWashes, useOffers, usePackages, useProfile, useSettings } from "@/lib/data";
+import { useMyCards, useMyEmployee, useMySubscription, useMyWashes, useOffers, usePackages, useProfile, useSettings } from "@/lib/data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: CustomerDashboard });
 type CurrentOrder = Record<string, any>;
@@ -47,6 +47,7 @@ function CustomerDashboard() {
   const { data: packages } = usePackages();
   const { data: offers } = useOffers();
   const { data: settings } = useSettings();
+  const { data: employeeData, isLoading: employeeQueryLoading, refetch: refetchEmployee } = useMyEmployee(user?.id);
   const [currentOrder, setCurrentOrder] = useState<CurrentOrder | null>(null);
   const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null);
   const [employeeLoading, setEmployeeLoading] = useState(false);
@@ -54,6 +55,10 @@ function CustomerDashboard() {
   useEffect(() => {
     if (profile?.language && (profile.language === "ar" || profile.language === "en") && profile.language !== lang) setLang(profile.language);
   }, [profile?.language, lang, setLang]);
+
+  useEffect(() => {
+    setEmployeeInfo((employeeData as EmployeeInfo | null) ?? null);
+  }, [employeeData]);
 
   const isAdmin = (roles ?? []).includes("admin");
   const isEmployee = !isAdmin && (roles ?? []).includes("employee");
@@ -70,20 +75,8 @@ function CustomerDashboard() {
     if (!user?.id) return;
     setEmployeeLoading(true);
     try {
-      let employee: EmployeeInfo | null = null;
-      const rpc = await (supabase as any).rpc("get_my_employee");
-      if (!rpc.error) employee = (Array.isArray(rpc.data) ? rpc.data[0] : rpc.data) ?? null;
-
-      if (!employee) {
-        const direct = await (supabase as any).from("employees").select("employee_id,national_id,card_number,job_title,branch,full_name").eq("user_id", user.id).maybeSingle();
-        if (!direct.error) employee = direct.data ?? null;
-      }
-
-      if (!employee && user.email) {
-        const byEmail = await (supabase as any).from("employees").select("employee_id,national_id,card_number,job_title,branch,full_name").eq("email", user.email.toLowerCase()).maybeSingle();
-        if (!byEmail.error) employee = byEmail.data ?? null;
-      }
-
+      const result = await refetchEmployee();
+      const employee = (result.data as EmployeeInfo | null) ?? null;
       setEmployeeInfo(employee);
       if (!employee && isEmployee) toast.error(pick("No employee record is linked to this account.", "لا يوجد سجل موظف مرتبط بهذا الحساب."));
     } catch (error) {
@@ -95,15 +88,13 @@ function CustomerDashboard() {
     }
   };
 
-  useEffect(() => { void loadEmployee(); }, [user?.id]);
-
   useEffect(() => {
     if (!user?.id) return;
     const channel = supabase.channel(`employee-data-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "employees", filter: `user_id=eq.${user.id}` }, () => void loadEmployee())
+      .on("postgres_changes", { event: "*", schema: "public", table: "employees" }, () => void refetchEmployee())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [user?.id]);
+  }, [user?.id, refetchEmployee]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -129,7 +120,7 @@ function CustomerDashboard() {
   return <div className="customer-dashboard min-h-screen bg-background"><AppTopbar title={t("my_membership")} extra={isAdmin ? <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex"><Link to="/admin"><ShieldCheck className="me-1.5 size-4" />{t("nav_admin")}</Link></Button> : null} /><div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
     <div className="panel animate-fade-up flex flex-wrap items-center gap-5 p-6">{profile?.avatar_url ? <img src={profile.avatar_url} alt={profile.full_name || "avatar"} className="size-16 rounded-2xl object-cover" /> : <div className="surface-blue flex size-16 items-center justify-center rounded-2xl font-display text-xl font-bold shadow-luxe">{(profile?.full_name || user?.email || "T").slice(0, 1).toUpperCase()}</div>}<div className="min-w-0"><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("welcome_back")}</p><h2 className="truncate text-2xl font-bold">{profile?.full_name || user?.email}</h2><div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Badge variant={profile?.status === "active" ? "default" : "destructive"}>{profile?.status === "active" ? t("active") : t("suspended")}</Badge>{isEmployee && <Badge variant="secondary">{pick("Employee", "موظف")}</Badge>}{isAdmin && <Badge variant="secondary">{pick("Admin", "مدير")}</Badge>}{profile?.phone && <span>{profile.phone}</span>}</div></div><div className="ms-auto flex flex-wrap gap-2"><ProfileEditor /></div></div>
 
-    {(isEmployee || employeeInfo) && <section className="panel mt-6 p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("Managed by management and read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط.")}</p></div></div><Button variant="outline" size="sm" onClick={() => void loadEmployee()} disabled={employeeLoading}><RefreshCw className={`me-1.5 size-4 ${employeeLoading ? "animate-spin" : ""}`} />{pick("Refresh", "تحديث")}</Button></div>{employeeInfo ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Card number", "رقم البطاقة")}</span><p className="mt-1 font-semibold">{employeeInfo.card_number || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div></div> : <div className="rounded-xl border p-5 text-sm text-muted-foreground">{employeeLoading ? pick("Loading employee information...", "جاري تحميل بيانات الموظف...") : pick("No employee information is linked to this account yet.", "لا توجد بيانات موظف مرتبطة بهذا الحساب حتى الآن.")}</div>}</section>}
+    {(isEmployee || employeeInfo) && <section className="panel mt-6 p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("Managed by management and read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط.")}</p></div></div><Button variant="outline" size="sm" onClick={() => void loadEmployee()} disabled={employeeLoading || employeeQueryLoading}><RefreshCw className={`me-1.5 size-4 ${(employeeLoading || employeeQueryLoading) ? "animate-spin" : ""}`} />{pick("Refresh", "تحديث")}</Button></div>{employeeInfo ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Card number", "رقم البطاقة")}</span><p className="mt-1 font-semibold">{employeeInfo.card_number || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div></div> : <div className="rounded-xl border p-5 text-sm text-muted-foreground">{employeeLoading || employeeQueryLoading ? pick("Loading employee information...", "جاري تحميل بيانات الموظف...") : pick("No employee information is linked to this account yet.", "لا توجد بيانات موظف مرتبطة بهذا الحساب حتى الآن.")}</div>}</section>}
 
     {currentOrder ? <section className="panel mt-6 overflow-hidden p-0"><div className="border-b bg-primary/5 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{pick("Current order", "الطلب الحالي")}</p><h3 className="mt-1 text-xl font-bold">{currentOrder.title || pick("Car wash order", "طلب غسيل سيارة")}</h3></div><Badge className="px-3 py-1">{pick(currentStage.en, currentStage.ar)}</Badge></div></div><div className="p-6"><div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div><span className="text-xs text-muted-foreground">{pick("Order number", "رقم الطلب")}</span><p className="mt-1 font-semibold">{currentOrder.serial_number ? `#${currentOrder.serial_number}` : String(currentOrder.id).slice(0, 8)}</p></div><div><span className="text-xs text-muted-foreground">{pick("Scheduled", "الموعد")}</span><p className="mt-1 font-semibold">{currentOrder.scheduled_at ? fmtDate(currentOrder.scheduled_at) : "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Payment", "الدفع")}</span><p className="mt-1 font-semibold">{currentOrder.payment_status || "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Last update", "آخر تحديث")}</span><p className="mt-1 font-semibold">{currentOrder.updated_at ? fmtDate(currentOrder.updated_at) : "—"}</p></div></div><div className="space-y-3">{orderStages.map((stage, i) => { const done = i <= currentIndex; const active = i === currentIndex; return <div key={stage.key} className="flex items-center gap-3"><div className={`flex size-9 shrink-0 items-center justify-center rounded-full border ${done ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground"}`}>{stage.icon}</div><div className={`flex-1 rounded-xl px-3 py-2 ${active ? "bg-primary/10 font-bold" : done ? "text-foreground" : "text-muted-foreground"}`}><p>{pick(stage.en, stage.ar)}</p>{active && <p className="mt-0.5 text-xs font-normal text-primary">{pick("Current status", "الحالة الحالية")}</p>}</div></div>; })}</div></div></section> : null}
 
