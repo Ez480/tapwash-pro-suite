@@ -222,16 +222,6 @@ export function useAdminTable<T extends string>(
     refetchOnReconnect: true,
 
     queryFn: async () => {
-      if (table === "employees") {
-        const { data, error } = await supabase.rpc(
-          "admin_list_employees"
-        );
-
-        if (error) throw error;
-
-        return (data ?? []) as any[];
-      }
-
       const { data, error } = await supabase
         .from(table as any)
         .select(select)
