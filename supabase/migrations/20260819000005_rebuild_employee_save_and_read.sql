@@ -1,6 +1,6 @@
--- Rebuild employee dashboard data flow around the three fields used by the UI.
--- National ID is intentionally optional; employee dashboard uses:
--- employee_id, card_number, job_title.
+-- Rebuild employee save/read flow.
+-- The employee dashboard uses Employee ID, Card Number and Job Title.
+-- National ID remains stored for compatibility but is optional.
 
 create or replace function public.admin_save_employee(
   p_id uuid default null,
@@ -108,11 +108,18 @@ $$;
 
 grant execute on function public.admin_save_employee(uuid,text,text,text,text,text,text,text,text,text) to authenticated;
 
-create or replace function public.get_my_employee()
+-- The previous function had a different RETURNS TABLE signature, so it must be
+-- dropped before recreating it with the same six fields used by the dashboard.
+drop function if exists public.get_my_employee();
+
+create function public.get_my_employee()
 returns table (
   employee_id text,
+  national_id text,
   card_number text,
-  job_title text
+  job_title text,
+  branch text,
+  full_name text
 )
 language sql
 security definer
@@ -120,8 +127,11 @@ set search_path = public
 as $$
   select
     e.employee_id::text,
+    e.national_id::text,
     e.card_number::text,
-    e.job_title::text
+    e.job_title::text,
+    e.branch::text,
+    e.full_name::text
   from public.employees e
   where e.user_id = auth.uid()
      or lower(coalesce(e.email, '')) = lower(coalesce(auth.jwt() ->> 'email', ''))
