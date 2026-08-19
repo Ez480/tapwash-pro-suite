@@ -14,6 +14,34 @@ export const Route = createFileRoute("/_authenticated/admin/live-orders")({ comp
 type Task = Record<string, any>;
 type Photo = { id: string; task_id: string; kind: string; url: string; created_at: string };
 type Location = { task_id: string; employee_id: string; latitude: number; longitude: number; accuracy?: number | null; heading?: number | null; speed?: number | null; updated_at: string };
+type Point = { lat: number; lng: number };
+
+function parseCustomerLocation(task: Task): Point | null {
+  const lat = Number(task?.latitude);
+  const lng = Number(task?.longitude);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+
+  const url = String(task?.location_url ?? "");
+  if (!url) return null;
+
+  try {
+    const decoded = decodeURIComponent(url);
+    const candidates = [
+      decoded.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/),
+      decoded.match(/[?&](?:q|ll|query|center)=(-?\d+(?:\.\d+)?)[,%20]+(-?\d+(?:\.\d+)?)/i),
+      decoded.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/),
+    ];
+    for (const match of candidates) {
+      if (!match) continue;
+      const parsedLat = Number(match[1]);
+      const parsedLng = Number(match[2]);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng) && Math.abs(parsedLat) <= 90 && Math.abs(parsedLng) <= 180) return { lat: parsedLat, lng: parsedLng };
+    }
+  } catch {
+    // Ignore malformed map links and keep the explicit GPS fields as the source of truth.
+  }
+  return null;
+}
 
 function LiveOrdersPage() {
   const { fmtDate } = useI18n();
@@ -62,9 +90,9 @@ function LiveOrdersPage() {
   const selectedTask = tasks.find((x) => String(x.id) === selected) ?? null;
   const selectedPhotos = photos.filter((p) => String(p.task_id) === selected);
   const selectedLocation = locations.find((item) => String(item.task_id) === selected) ?? null;
+  const selectedCustomerPoint = selectedTask ? parseCustomerLocation(selectedTask) : null;
   const status = (s: string) => ({ pending: "قيد الانتظار", accepted: "تم الاستلام", in_progress: "جاري التنفيذ", completed: "مكتمل" } as any)[s] ?? s;
   const delivery = (s: string) => ({ not_started: "لم يبدأ الدليفري", picked_up: "تم الاستلام", on_the_way: "في الطريق", delivered: "تم التسليم", cancelled: "ملغي" } as any)[s] ?? s;
-  const hasDestination = selectedTask?.latitude != null && selectedTask?.longitude != null;
 
   return <div className="space-y-6">
     <div className="panel p-6">
@@ -79,6 +107,7 @@ function LiveOrdersPage() {
       {visible.map((task) => {
         const count = photos.filter((p) => String(p.task_id) === String(task.id)).length;
         const location = locations.find((item) => String(item.task_id) === String(task.id));
+        const customerPoint = parseCustomerLocation(task);
         return <article key={String(task.id)} className="rounded-2xl border bg-card p-5 text-start transition hover:border-primary/50 hover:shadow-md">
           <button onClick={() => setSelected(String(task.id))} className="w-full text-start">
             <div className="flex flex-wrap items-center gap-2"><b>{task.title || "أوردر"}</b><Badge>{status(String(task.status ?? ""))}</Badge><Badge variant="outline">{delivery(String(task.delivery_status ?? ""))}</Badge></div>
@@ -88,6 +117,7 @@ function LiveOrdersPage() {
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" onClick={() => setSelected(String(task.id))}><MapPinned className="me-1 size-4" />خريطة الدليفري</Button>
             {location ? <span className="text-xs text-emerald-600">الدليفري متصل • آخر تحديث {new Date(location.updated_at).toLocaleTimeString()}</span> : <span className="text-xs text-muted-foreground">موقع الدليفري غير متاح حالياً</span>}
+            {customerPoint && <span className="text-xs text-primary">موقع العميل مربوط</span>}
           </div>
         </article>;
       })}
@@ -109,7 +139,8 @@ function LiveOrdersPage() {
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-bold"><MapPinned className="size-5 text-primary" />خريطة الدليفري Live</h3>{selectedLocation && <Badge variant="secondary">متصل الآن</Badge>}</div>
-            {hasDestination ? <DeliveryMap destination={{ lat: Number(selectedTask.latitude), lng: Number(selectedTask.longitude) }} driver={selectedLocation ? { lat: Number(selectedLocation.latitude), lng: Number(selectedLocation.longitude), updatedAt: selectedLocation.updated_at } : null} height="420px" /> : <div className="rounded-2xl border p-8 text-center text-sm text-muted-foreground">لا يوجد موقع GPS مسجل للعميل في هذا الأوردر.</div>}
+            {selectedCustomerPoint ? <DeliveryMap destination={selectedCustomerPoint} driver={selectedLocation ? { lat: Number(selectedLocation.latitude), lng: Number(selectedLocation.longitude), updatedAt: selectedLocation.updated_at } : null} height="420px" /> : <div className="rounded-2xl border p-8 text-center text-sm text-muted-foreground">لا يوجد موقع GPS أو إحداثيات قابلة للاستخراج من لينك موقع العميل في هذا الأوردر.</div>}
+            {selectedTask.location_url && <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" onClick={() => window.open(String(selectedTask.location_url), "_blank", "noopener,noreferrer")}><MapPinned className="me-1 size-4" />فتح موقع العميل في الخرائط</Button><span className="text-xs text-muted-foreground">لو اللينك من Google Maps يحتوي على إحداثيات، يتم ربطه تلقائياً بالخريطة أعلاه.</span></div>}
             <p className="text-xs text-muted-foreground">{selectedLocation ? `آخر إحداثيات للدليفري: ${Number(selectedLocation.latitude).toFixed(6)}, ${Number(selectedLocation.longitude).toFixed(6)} • الدقة ${selectedLocation.accuracy ? `${Math.round(selectedLocation.accuracy)}م` : "غير متاحة"}` : "عند تشغيل GPS من جهاز الموظف سيظهر موقعه هنا تلقائياً."}</p>
           </div>
 
