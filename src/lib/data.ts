@@ -121,11 +121,20 @@ export function useMyEmployee(userId?: string | null) {
     queryKey: ["my-employee", userId],
     enabled: !!userId,
     staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_my_employee");
+      const { data, error } = await supabase
+        .from("employees")
+        .select("employee_id,national_id,card_number,job_title,branch,full_name,email,user_id,updated_at")
+        .eq("user_id", userId!)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       if (error) throw error;
-      return (data?.[0] ?? null) as any;
+      return data ?? null;
     },
   });
 }
