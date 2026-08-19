@@ -21,26 +21,17 @@ export function AuthenticatedMediaTools() {
   const [employeeOpen, setEmployeeOpen] = useState(false);
   const [tasks, setTasks] = useState<any[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
-
   const isEmployee = roles.includes("employee");
 
   const loadTasks = async () => {
     if (!user?.id || !isEmployee) return;
-    const { data, error } = await (supabase as any)
-      .from("employee_tasks")
-      .select("id,title,serial_number,status,delivery_status,customer_name")
-      .eq("employee_id", user.id)
-      .order("created_at", { ascending: false });
+    const { data, error } = await (supabase as any).from("employee_tasks").select("id,title,serial_number,status,delivery_status,customer_name").eq("employee_id", user.id).order("created_at", { ascending: false });
     if (!error) setTasks(data ?? []);
   };
-
   useEffect(() => {
     void loadTasks();
     if (!isEmployee) return;
-    const channel = supabase
-      .channel(`employee-media-tools-${user?.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks", filter: `employee_id=eq.${user?.id}` }, () => void loadTasks())
-      .subscribe();
+    const channel = supabase.channel(`employee-media-tools-${user?.id}`).on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks", filter: `employee_id=eq.${user?.id}` }, () => void loadTasks()).subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [user?.id, isEmployee]);
 
@@ -85,12 +76,7 @@ export function AuthenticatedMediaTools() {
   return (
     <>
       <div className="fixed bottom-4 end-4 z-50 flex flex-col gap-2">
-        <Button size="sm" variant="outline" className="rounded-full border-primary/30 bg-background/95 shadow-lg backdrop-blur" onClick={() => setProfileOpen(true)}>
-          <UserRound className="me-1.5 size-4" />{pick("Profile photo", "صورة البروفايل")}
-        </Button>
-        {isEmployee && <Button size="sm" className="rounded-full shadow-lg" onClick={() => setEmployeeOpen(true)}>
-          <Camera className="me-1.5 size-4" />{pick("Vehicle photos", "صور العربية")}
-        </Button>}
+        {isEmployee && <Button size="sm" className="rounded-full shadow-lg" onClick={() => setEmployeeOpen(true)}><Camera className="me-1.5 size-4" />{pick("Vehicle photos", "صور العربية")}</Button>}
       </div>
 
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
@@ -98,10 +84,7 @@ export function AuthenticatedMediaTools() {
           <DialogHeader><DialogTitle>{pick("Profile photo", "صورة البروفايل")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             {profile?.avatar_url ? <img src={profile.avatar_url} alt="profile" className="mx-auto size-32 rounded-3xl object-cover" /> : <div className="mx-auto flex size-32 items-center justify-center rounded-3xl bg-muted"><UserRound className="size-10" /></div>}
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-sm hover:bg-muted">
-              <ImagePlus className="size-5" />{pick("Choose from phone", "اختيار من الهاتف")}
-              <Input type="file" accept="image/*" className="hidden" disabled={busy === "profile"} onChange={(e) => { const file = e.target.files?.[0]; if (file) void saveProfileImage(file); e.currentTarget.value = ""; }} />
-            </label>
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-sm hover:bg-muted"><ImagePlus className="size-5" />{pick("Choose from phone", "اختيار من الهاتف")}<Input type="file" accept="image/*" className="hidden" disabled={busy === "profile"} onChange={(e) => { const file = e.target.files?.[0]; if (file) void saveProfileImage(file); e.currentTarget.value = ""; }} /></label>
           </div>
         </DialogContent>
       </Dialog>
@@ -119,9 +102,7 @@ export function AuthenticatedMediaTools() {
                   <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-sm hover:bg-muted"><Camera className="size-4" />{pick("Take before photo", "تصوير قبل الغسيل")}<Input type="file" accept="image/*" capture="environment" className="hidden" disabled={busy === `${task.id}:before`} onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadCarPhoto(task, "before", file); e.currentTarget.value = ""; }} /></label>
                   <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-sm hover:bg-muted"><Camera className="size-4" />{pick("Take after photo", "تصوير بعد التنظيف")}<Input type="file" accept="image/*" capture="environment" className="hidden" disabled={busy === `${task.id}:after`} onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadCarPhoto(task, "after", file); e.currentTarget.value = ""; }} /></label>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {[["picked_up", pick("Picked up", "تم الاستلام")], ["on_the_way", pick("On the way", "في الطريق")], ["delivered", pick("Delivered", "تم التسليم")]].map(([status, label]) => <Button key={status} size="sm" variant={task.delivery_status === status ? "default" : "outline"} disabled={busy === `${task.id}:delivery`} onClick={() => void setDeliveryStatus(task, status as string)}>{task.delivery_status === status && <CheckCircle2 className="me-1 size-4" />}{label}</Button>)}
-                </div>
+                <div className="mt-3 flex flex-wrap gap-2">{[["picked_up", pick("Picked up", "تم الاستلام")], ["on_the_way", pick("On the way", "في الطريق")], ["delivered", pick("Delivered", "تم التسليم")]].map(([status, label]) => <Button key={status} size="sm" variant={task.delivery_status === status ? "default" : "outline"} disabled={busy === `${task.id}:delivery`} onClick={() => void setDeliveryStatus(task, status as string)}>{task.delivery_status === status && <CheckCircle2 className="me-1 size-4" />}{label}</Button>)}</div>
               </div>
             ))}
           </div>
