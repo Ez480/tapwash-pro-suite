@@ -116,9 +116,25 @@ export function useMyNotifications(userId?: string | null) {
   });
 }
 
+export function useMyEmployee(userId?: string | null) {
+  return useQuery({
+    queryKey: ["my-employee", userId],
+    enabled: !!userId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_employee");
+      if (error) throw error;
+      return (data?.[0] ?? null) as any;
+    },
+  });
+}
+
 export function useAdminTable<T extends string>(table: T, select = "*", orderBy = "created_at") {
   return useQuery({
     queryKey: ["admin", table],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       if (table === "employees") {
         const { data, error } = await supabase.rpc("admin_list_employees");
