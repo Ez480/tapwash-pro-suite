@@ -13,9 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
 
-export const Route = createFileRoute("/_authenticated/admin/employees")({ component: AdminEmployees });
-
 type Employee = { id:string; employee_id:string; national_id:string|null; card_number:string|null; full_name:string; email:string|null; phone:string|null; job_title:string|null; branch:string|null; status:string; user_id:string|null; created_at:string };
+
+export const Route = createFileRoute("/_authenticated/admin/employees")({ component: AdminEmployees });
 
 function AdminEmployees() {
   const { t, pick } = useI18n();
@@ -29,11 +29,20 @@ function AdminEmployees() {
     if(!form.employee_id||!form.full_name||!form.national_id||!form.card_number){toast.error(pick("Employee ID, name, National ID and card number are required.","رقم الموظف والاسم والرقم القومي ورقم البطاقة حقول مطلوبة."));return;}
     setSaving(true);
     try{
-      const payload={employee_id:String(form.employee_id).trim(),national_id:form.national_id?String(form.national_id).trim():null,card_number:form.card_number?String(form.card_number).trim():null,full_name:String(form.full_name).trim(),email:form.email?String(form.email).trim().toLowerCase():null,phone:form.phone?String(form.phone).trim():null,job_title:form.job_title?String(form.job_title).trim():null,branch:form.branch?String(form.branch).trim():null,status:form.status||"active"};
-      const result=editing
-        ?await(supabase as any).from("employees").update(payload).eq("id",editing.id).select("*").single()
-        :await(supabase as any).from("employees").insert(payload).select("*").single();
-      if(result.error)throw result.error;
+      const { data, error } = await supabase.rpc("admin_save_employee", {
+        p_id: editing?.id ?? null,
+        p_employee_id: String(form.employee_id).trim(),
+        p_national_id: form.national_id ? String(form.national_id).trim() : null,
+        p_card_number: form.card_number ? String(form.card_number).trim() : null,
+        p_full_name: String(form.full_name).trim(),
+        p_email: form.email ? String(form.email).trim().toLowerCase() : null,
+        p_phone: form.phone ? String(form.phone).trim() : null,
+        p_job_title: form.job_title ? String(form.job_title).trim() : null,
+        p_branch: form.branch ? String(form.branch).trim() : null,
+        p_status: String(form.status || "active"),
+      });
+      if(error) throw error;
+      if(!data) throw new Error(pick("Employee was not returned by the database.","قاعدة البيانات لم تُرجع الموظف بعد الحفظ."));
       toast.success(pick("Employee saved successfully","تم حفظ بيانات الموظف بنجاح"));
       setOpen(false);
       await queryClient.invalidateQueries({queryKey:["admin","employees"]});
