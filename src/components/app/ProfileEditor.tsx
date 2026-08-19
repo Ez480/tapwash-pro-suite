@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadImage } from "@/lib/media";
 import { useI18n } from "@/lib/i18n";
-import { useProfile, useSession } from "@/lib/data";
+import { useProfile } from "@/lib/data";
+import { useSession } from "@/lib/auth";
 
 export function ProfileEditor({ compact = false }: { compact?: boolean }) {
   const { pick, t } = useI18n();
