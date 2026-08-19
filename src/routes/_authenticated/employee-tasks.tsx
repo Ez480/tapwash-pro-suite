@@ -1,36 +1,145 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { redirect } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, Clock3, KeyRound, LogOut, MapPin, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
+import { CheckCircle2, Clock3, LogOut, MapPin, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useSession, useUserRoles } from "@/lib/auth";
 import { useAdminTable, useMyEmployee, useProfile } from "@/lib/data";
 
 declare global { interface Window { NDEFReader?: any } }
-export const Route = createFileRoute("/_authenticated/employee-tasks")({ beforeLoad: async () => { const { data } = await supabase.auth.getUser(); if (!data.user) throw redirect({ to: "/login" }); const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id); const roleNames = (roleRows ?? []).map((row) => String(row.role)); if (!roleNames.includes("employee")) throw redirect({ to: roleNames.includes("admin") ? "/admin" : "/dashboard" }); }, component: EmployeeTasks });
+
+export const Route = createFileRoute("/_authenticated/employee-tasks")({
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/login" });
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
+    const roleNames = (roleRows ?? []).map((row) => String(row.role));
+    if (!roleNames.includes("employee")) throw redirect({ to: roleNames.includes("admin") ? "/admin" : "/dashboard" });
+  },
+  component: EmployeeTasks,
+});
+
 function EmployeeTasks() {
- const { pick, fmtDate, lang, setLang } = useI18n(); const { user } = useSession(); const { data: roles = [] } = useUserRoles(user?.id); const { data: profile, refetch: refetchProfile } = useProfile(user?.id); const { data: tasks = [], refetch } = useAdminTable("employee_tasks", "*", "created_at"); const { data: employee, refetch: refetchEmployee } = useMyEmployee(user?.id);
- const [profileOpen,setProfileOpen]=useState(false),[passwordOpen,setPasswordOpen]=useState(false),[profileForm,setProfileForm]=useState({full_name:"",phone:""}),[password,setPassword]=useState(""),[avatarBusy,setAvatarBusy]=useState(false),[dark,setDark]=useState(()=>document.documentElement.classList.contains("dark")),[map,setMap]=useState<{lat:number;lng:number}|null>(null),[card,setCard]=useState<any>(null),[scanning,setScanning]=useState(false),[ordersView,setOrdersView]=useState<"current"|"previous">("current"),[loading,setLoading]=useState<string|null>(null); const locationWatchRef=useRef<number|null>(null);
- useEffect(()=>{if(profile)setProfileForm({full_name:profile.full_name??"",phone:profile.phone??"")}},[profile]); useEffect(()=>{if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>setMap({lat:p.coords.latitude,lng:p.coords.longitude}),()=>undefined,{enableHighAccuracy:true,timeout:8000})},[]);
- useEffect(()=>{if(!user?.id)return;const ch=supabase.channel(`employee-self-${user.id}`).on("postgres_changes",{event:"*",schema:"public",table:"employees",filter:`user_id=eq.${user.id}`},()=>void refetchEmployee()).subscribe();return()=>{void supabase.removeChannel(ch)}},[user?.id,refetchEmployee]);
- const mine=roles.includes("employee")?(tasks as any[]).filter(t=>t.employee_id===user?.id):[]; const active=mine.filter(t=>["pending","accepted","in_progress"].includes(t.status)); const completed=mine.filter(t=>t.status==="completed"); const inProgress=mine.filter(t=>t.status==="in_progress"); const activeTaskKey=active.map(t=>String(t.id)).sort().join(",");
- useEffect(()=>{if(!user?.id||!activeTaskKey||!navigator.geolocation)return;let lastSentAt=0;const send=async(p:GeolocationPosition)=>{const now=Date.now();if(now-lastSentAt<10000)return;lastSentAt=now;setMap({lat:p.coords.latitude,lng:p.coords.longitude});const rows=active.map((task:any)=>({task_id:task.id,employee_id:user.id,latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy??null,heading:p.coords.heading??null,speed:p.coords.speed??null,updated_at:new Date().toISOString()}));if(rows.length)await(supabase as any).from("employee_locations").upsert(rows,{onConflict:"task_id"})};locationWatchRef.current=navigator.geolocation.watchPosition(send,()=>undefined,{enableHighAccuracy:true,maximumAge:5000,timeout:15000});return()=>{if(locationWatchRef.current!=null)navigator.geolocation.clearWatch(locationWatchRef.current);locationWatchRef.current=null}},[user?.id,activeTaskKey]);
- const toggleTheme=()=>{const n=!document.documentElement.classList.contains("dark");document.documentElement.classList.toggle("dark",n);localStorage.setItem("tapwash-theme",n?"dark":"light");setDark(n)}; const setStatus=async(id:string,status:string)=>{setLoading(id);const{error}=await(supabase as any).from("employee_tasks").update({status,...(status==="completed"?{completed_at:new Date().toISOString()}: {})}).eq("id",id).eq("employee_id",user?.id);setLoading(null);if(error)toast.error(error.message);else{toast.success(pick("Order updated","تم تحديث الأوردر"));refetch()}};
- const saveProfile=async()=>{if(!user)return;const{error}=await supabase.from("profiles").update({full_name:profileForm.full_name,phone:profileForm.phone,language:lang}).eq("id",user.id);if(error)return toast.error(error.message);toast.success(pick("Profile updated","تم تحديث البروفايل"));setProfileOpen(false);refetchProfile()}; const logout=async()=>{await supabase.auth.signOut();window.location.href="/login"}; const openLocation=(t:any)=>{const u=t.location_url||(t.latitude!=null&&t.longitude!=null?`https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}`:t.location_text?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}`:null);if(u)window.open(u,"_blank","noopener,noreferrer")};
- const scanNfc=async()=>{if(!window.NDEFReader)return toast.error(pick("Web NFC is not supported here.","المتصفح لا يدعم NFC."));try{setScanning(true);const reader=new window.NDEFReader();await reader.scan();toast.info(pick("Bring the customer NFC card close to the phone.","قرّب كارت العميل من الموبايل."));reader.onreading=async(event:any)=>{let raw="";for(const record of event.message.records){try{raw+=new TextDecoder(record.encoding||"utf-8").decode(record.data)}catch{}}let data:any;try{data=JSON.parse(raw)}catch{data={card_serial:raw}}setCard(data);setScanning(false);toast.success(pick("Customer card scanned","تمت قراءة كارت العميل"))}}catch(e){setScanning(false);toast.error(e instanceof Error?e.message:pick("NFC scan failed","فشل مسح NFC"))}};
- const renderOrder=(t:any)=><article key={t.id} className="panel p-4 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{t.title||pick("Order","أوردر")}</h3><Badge>{t.status}</Badge><Badge variant="outline">#{t.serial_number||String(t.id).slice(0,8).toUpperCase()}</Badge></div><p className="text-sm text-muted-foreground">{t.wash_type||"—"}</p></div>{t.scheduled_at&&<span className="flex items-center gap-1 text-sm text-muted-foreground"><Clock3 className="size-4"/>{fmtDate(t.scheduled_at)}</span>}</div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Customer","العميل")}</p><p className="font-bold">{t.customer_name||"—"}</p><p>{t.customer_phone||"—"}</p><p className="text-sm">{t.customer_email||"—"}</p></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Subscription / offer","الاشتراك / العرض")}</p><p className="font-bold">{t.package_name||t.offer_name||"—"}</p><p>{t.remaining_washes!=null?`${t.remaining_washes} ${pick("remaining","متبقي")}`:"—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-4"/>{t.location_text||t.location_url||"—"}</p>{(t.location_url||t.location_text||t.latitude!=null)&&<Button className="mt-2" size="sm" variant="outline" onClick={()=>openLocation(t)}><Navigation className="me-1 size-4"/>{pick("Open location","فتح الموقع")}</Button>}</div></div><div className="mt-4 flex flex-wrap gap-2">{t.status==="pending"&&<Button disabled={loading===t.id} onClick={()=>setStatus(t.id,"accepted")}>{pick("Accept order","استلام الأوردر")}</Button>}{t.status==="accepted"&&<Button disabled={loading===t.id} onClick={()=>setStatus(t.id,"in_progress")}>{pick("Start","بدء التنفيذ")}</Button>}{t.status==="in_progress"&&<Button disabled={loading===t.id} onClick={()=>setStatus(t.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete order","إنهاء الأوردر")}</Button>}</div></article>;
- return <div className="min-h-screen w-full overflow-x-hidden bg-background text-foreground"><header className="sticky top-0 z-20 w-full border-b border-border/70 bg-background/75 backdrop-blur-2xl"><div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2 px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-6 sm:py-3"><div className="flex min-w-0 shrink-0 items-center gap-2"><div className="glass-soft flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/40 shadow-sm sm:size-10">T</div><div className="min-w-0"><p className="truncate font-bold">TapWash</p><p className="hidden text-xs text-muted-foreground sm:block">{pick("Employee dashboard","لوحة الموظف")}</p></div></div><div className="flex w-full min-w-0 flex-wrap items-center gap-1.5 sm:ms-auto sm:w-auto sm:flex-nowrap sm:gap-2"><Button variant="outline" size="sm" onClick={()=>setLang(lang==="ar"?"en":"ar")}>{lang==="ar"?"English":"العربية"}</Button><Button variant="outline" size="sm" onClick={()=>map?window.open(`https://www.google.com/maps/search/?api=1&query=${map.lat},${map.lng}`,"_blank"):toast.info(pick("Location unavailable","الموقع غير متاح"))}><MapPin className="me-1 size-4"/>{pick("My location","موقعي")}</Button><Button variant="ghost" size="icon" onClick={toggleTheme}>{dark?<Sun className="size-5"/>:<Moon className="size-5"/>}</Button><Button variant="outline" size="sm" onClick={logout}><LogOut className="me-1 size-4"/>{pick("Logout","خروج")}</Button></div></div></header>
- <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6">
-  <section className="panel mb-4 p-4 sm:mb-6 sm:p-5"><div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center"><div className="relative shrink-0 self-start sm:self-auto"><div>{profile?.avatar_url?<img src={profile.avatar_url} alt={profile.full_name||"Employee"} className="size-16 rounded-2xl border border-white/40 object-cover shadow-md sm:size-20"/>:<div className="glass-soft flex size-16 items-center justify-center rounded-2xl border border-white/40 text-2xl font-bold shadow-md sm:size-20">{(profile?.full_name||user?.email||"E").slice(0,1).toUpperCase()}</div>}</div></div><div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-muted-foreground">{pick("Employee account","حساب الموظف")}</p><h1 className="truncate text-xl font-bold sm:text-2xl">{profile?.full_name||user?.email}</h1><Badge variant="secondary">{pick("Employee","موظف")}</Badge></div><div className="grid w-full grid-cols-1 gap-2 sm:ms-auto sm:min-w-0 sm:flex-1 sm:grid-cols-2 sm:max-w-2xl"><div className="min-w-0 rounded-xl border bg-background/35 p-3"><p className="truncate text-xs text-muted-foreground">{pick("Employee ID","رقم ID الموظف")}</p><p className="truncate font-bold">{employee?.employee_id||"—"}</p></div><div className="min-w-0 rounded-xl border bg-background/35 p-3"><p className="truncate text-xs text-muted-foreground">{pick("Job title","المسمى الوظيفي")}</p><p className="truncate font-bold">{employee?.job_title||pick("Employee","موظف")}</p></div></div></div></section>
-  <section className="mb-4 grid gap-3 sm:mb-6 sm:grid-cols-2 lg:grid-cols-4"><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Total orders","إجمالي الأوردرات")}</p><p className="mt-1 text-2xl font-bold">{mine.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Current orders","الأوردرات الحالية")}</p><p className="mt-1 text-2xl font-bold">{active.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("In progress","قيد التنفيذ")}</p><p className="mt-1 text-2xl font-bold">{inProgress.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Completed","الأوردرات المكتملة")}</p><p className="mt-1 text-2xl font-bold">{completed.length}</p></div></section>
-  <section className="panel mb-4 p-4 sm:mb-6 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><ScanLine className="size-5 text-primary"/>{pick("Scan customer NFC card","مسح كارت العميل NFC")}</h2><p className="text-sm text-muted-foreground">{pick("Read the customer data stored on the card.","اقرأ بيانات العميل المخزنة على الكارت.")}</p></div><Button size="lg" onClick={scanNfc} disabled={scanning}>{scanning?pick("Bring card closer...","قرّب الكارت..."):pick("Scan NFC","مسح NFC")}</Button></div>{card&&<div className="mt-5 grid gap-3 rounded-2xl border p-4 sm:grid-cols-2 lg:grid-cols-4"><div><p className="text-xs text-muted-foreground">{pick("Customer","العميل")}</p><b>{card.name||card.full_name||"—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Phone","الهاتف")}</p><b>{card.phone||"—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Package","الباقة")}</p><b>{card.package||card.package_name||"—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Remaining washes","الغسلات المتبقية")}</p><b className="text-2xl text-primary">{card.remaining_washes??card.remaining??"—"}</b></div></div>}</section>
-  <section className="panel p-4 sm:p-5"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><UserCog className="size-5 text-primary"/>{pick("My orders","أوردراتي")}</h2><p className="text-sm text-muted-foreground">{pick("Current orders and completed orders are kept separately.","الأوردرات الحالية والمنتهية منفصلة ويتم الاحتفاظ بالسجل السابق.")}</p></div><div className="flex w-full gap-2 sm:w-auto"><Button className="flex-1 sm:flex-none" variant={ordersView==="current"?"default":"outline"} onClick={()=>setOrdersView("current")}>{pick("Current","الأوردرات الحالية")} <Badge variant={ordersView==="current"?"secondary":"outline"} className="ms-1">{active.length}</Badge></Button><Button className="flex-1 sm:flex-none" variant={ordersView==="previous"?"default":"outline"} onClick={()=>setOrdersView("previous")}>{pick("Previous","الأوردرات السابقة")} <Badge variant={ordersView==="previous"?"secondary":"outline"} className="ms-1">{completed.length}</Badge></Button></div></div><div className="space-y-4">{(ordersView==="current"?active:completed).length?(ordersView==="current"?active:completed).map(renderOrder):<p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders","لا توجد أوردرات")}</p>}</div></section>
- </main></div>;
+  const { pick, fmtDate, lang, setLang } = useI18n();
+  const { user } = useSession();
+  const { data: roles = [] } = useUserRoles(user?.id);
+  const { data: profile, refetch: refetchProfile } = useProfile(user?.id);
+  const { data: tasks = [], refetch } = useAdminTable("employee_tasks", "*", "created_at");
+  const { data: employee, refetch: refetchEmployee } = useMyEmployee(user?.id);
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
+  const [map, setMap] = useState<{ lat: number; lng: number } | null>(null);
+  const [card, setCard] = useState<any>(null);
+  const [scanning, setScanning] = useState(false);
+  const [ordersView, setOrdersView] = useState<"current" | "previous">("current");
+  const [loading, setLoading] = useState<string | null>(null);
+  const locationWatchRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (profile) setProfileForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "" });
+  }, [profile]);
+
+  useEffect(() => {
+    if (navigator.geolocation) navigator.geolocation.getCurrentPosition(
+      (p) => setMap({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => undefined,
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase.channel(`employee-self-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "employees", filter: `user_id=eq.${user.id}` }, () => void refetchEmployee())
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [user?.id, refetchEmployee]);
+
+  const mine = roles.includes("employee") ? (tasks as any[]).filter((t) => t.employee_id === user?.id) : [];
+  const active = mine.filter((t) => ["pending", "accepted", "in_progress"].includes(t.status));
+  const completed = mine.filter((t) => t.status === "completed");
+  const inProgress = mine.filter((t) => t.status === "in_progress");
+  const activeTaskKey = active.map((t) => String(t.id)).sort().join(",");
+
+  useEffect(() => {
+    if (!user?.id || !activeTaskKey || !navigator.geolocation) return;
+    let lastSentAt = 0;
+    const send = async (p: GeolocationPosition) => {
+      const now = Date.now();
+      if (now - lastSentAt < 10000) return;
+      lastSentAt = now;
+      setMap({ lat: p.coords.latitude, lng: p.coords.longitude });
+      const rows = active.map((task: any) => ({ task_id: task.id, employee_id: user.id, latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy: p.coords.accuracy ?? null, heading: p.coords.heading ?? null, speed: p.coords.speed ?? null, updated_at: new Date().toISOString() }));
+      if (rows.length) await (supabase as any).from("employee_locations").upsert(rows, { onConflict: "task_id" });
+    };
+    locationWatchRef.current = navigator.geolocation.watchPosition(send, () => undefined, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+    return () => { if (locationWatchRef.current != null) navigator.geolocation.clearWatch(locationWatchRef.current); locationWatchRef.current = null; };
+  }, [user?.id, activeTaskKey]);
+
+  const toggleTheme = () => {
+    const n = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", n);
+    localStorage.setItem("tapwash-theme", n ? "dark" : "light");
+    setDark(n);
+  };
+
+  const setStatus = async (id: string, status: string) => {
+    setLoading(id);
+    const { error } = await (supabase as any).from("employee_tasks").update({ status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id).eq("employee_id", user?.id);
+    setLoading(null);
+    if (error) toast.error(error.message);
+    else { toast.success(pick("Order updated", "تم تحديث الأوردر")); refetch(); }
+  };
+
+  const saveProfile = async () => {
+    if (!user) return;
+    const { error } = await supabase.from("profiles").update({ full_name: profileForm.full_name, phone: profileForm.phone, language: lang }).eq("id", user.id);
+    if (error) return toast.error(error.message);
+    toast.success(pick("Profile updated", "تم تحديث البروفايل"));
+    refetchProfile();
+  };
+
+  const logout = async () => { await supabase.auth.signOut(); window.location.href = "/login"; };
+
+  const openLocation = (t: any) => {
+    const u = t.location_url || (t.latitude != null && t.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}` : t.location_text ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}` : null);
+    if (u) window.open(u, "_blank", "noopener,noreferrer");
+  };
+
+  const scanNfc = async () => {
+    if (!window.NDEFReader) return toast.error(pick("Web NFC is not supported here.", "المتصفح لا يدعم NFC."));
+    try {
+      setScanning(true);
+      const reader = new window.NDEFReader();
+      await reader.scan();
+      toast.info(pick("Bring the customer NFC card close to the phone.", "قرّب كارت العميل من الموبايل."));
+      reader.onreading = async (event: any) => {
+        let raw = "";
+        for (const record of event.message.records) { try { raw += new TextDecoder(record.encoding || "utf-8").decode(record.data); } catch {} }
+        let data: any;
+        try { data = JSON.parse(raw); } catch { data = { card_serial: raw }; }
+        setCard(data); setScanning(false); toast.success(pick("Customer card scanned", "تمت قراءة كارت العميل"));
+      };
+    } catch (e) { setScanning(false); toast.error(e instanceof Error ? e.message : pick("NFC scan failed", "فشل مسح NFC")); }
+  };
+
+  const renderOrder = (t: any) => <article key={t.id} className="panel p-4 sm:p-5">
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{t.title || pick("Order", "أوردر")}</h3><Badge>{t.status}</Badge><Badge variant="outline">#{t.serial_number || String(t.id).slice(0, 8).toUpperCase()}</Badge></div><p className="text-sm text-muted-foreground">{t.wash_type || "—"}</p></div>{t.scheduled_at && <span className="flex items-center gap-1 text-sm text-muted-foreground"><Clock3 className="size-4" />{fmtDate(t.scheduled_at)}</span>}</div>
+    <div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><p className="font-bold">{t.customer_name || "—"}</p><p>{t.customer_phone || "—"}</p><p className="text-sm">{t.customer_email || "—"}</p></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Subscription / offer", "الاشتراك / العرض")}</p><p className="font-bold">{t.package_name || t.offer_name || "—"}</p><p>{t.remaining_washes != null ? `${t.remaining_washes} ${pick("remaining", "متبقي")}` : "—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-4" />{t.location_text || t.location_url || "—"}</p>{(t.location_url || t.location_text || t.latitude != null) && <Button className="mt-2" size="sm" variant="outline" onClick={() => openLocation(t)}><Navigation className="me-1 size-4" />{pick("Open location", "فتح الموقع")}</Button>}</div></div>
+    <div className="mt-4 flex flex-wrap gap-2">{t.status === "pending" && <Button disabled={loading === t.id} onClick={() => setStatus(t.id, "accepted")}>{pick("Accept order", "استلام الأوردر")}</Button>}{t.status === "accepted" && <Button disabled={loading === t.id} onClick={() => setStatus(t.id, "in_progress")}>{pick("Start", "بدء التنفيذ")}</Button>}{t.status === "in_progress" && <Button disabled={loading === t.id} onClick={() => setStatus(t.id, "completed")}><CheckCircle2 className="me-1 size-4" />{pick("Complete order", "إنهاء الأوردر")}</Button>}</div>
+  </article>;
+
+  return <div className="min-h-screen w-full overflow-x-hidden bg-background text-foreground">
+    <header className="sticky top-0 z-20 w-full border-b border-border/70 bg-background/75 backdrop-blur-2xl"><div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2 px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-6 sm:py-3"><div className="flex min-w-0 shrink-0 items-center gap-2"><div className="glass-soft flex size-9 shrink-0 items-center justify-center rounded-xl border border-white/40 shadow-sm sm:size-10">T</div><div className="min-w-0"><p className="truncate font-bold">TapWash</p><p className="hidden text-xs text-muted-foreground sm:block">{pick("Employee dashboard", "لوحة الموظف")}</p></div></div><div className="flex w-full min-w-0 flex-wrap items-center gap-1.5 sm:ms-auto sm:w-auto sm:flex-nowrap sm:gap-2"><Button variant="outline" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>{lang === "ar" ? "English" : "العربية"}</Button><Button variant="outline" size="sm" onClick={() => map ? window.open(`https://www.google.com/maps/search/?api=1&query=${map.lat},${map.lng}`, "_blank") : toast.info(pick("Location unavailable", "الموقع غير متاح"))}><MapPin className="me-1 size-4" />{pick("My location", "موقعي")}</Button><Button variant="ghost" size="icon" onClick={toggleTheme}>{dark ? <Sun className="size-5" /> : <Moon className="size-5" />}</Button><Button variant="outline" size="sm" onClick={logout}><LogOut className="me-1 size-4" />{pick("Logout", "خروج")}</Button></div></div></header>
+    <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6">
+      <section className="panel mb-4 p-4 sm:mb-6 sm:p-5"><div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center"><div className="relative shrink-0 self-start sm:self-auto"><div>{profile?.avatar_url ? <img src={profile.avatar_url} alt={profile.full_name || "Employee"} className="size-16 rounded-2xl border border-white/40 object-cover shadow-md sm:size-20" /> : <div className="glass-soft flex size-16 items-center justify-center rounded-2xl border border-white/40 text-2xl font-bold shadow-md sm:size-20">{(profile?.full_name || user?.email || "E").slice(0, 1).toUpperCase()}</div>}</div></div><div className="min-w-0 flex-1"><p className="text-xs uppercase tracking-widest text-muted-foreground">{pick("Employee account", "حساب الموظف")}</p><h1 className="truncate text-xl font-bold sm:text-2xl">{profile?.full_name || user?.email}</h1><Badge variant="secondary">{pick("Employee", "موظف")}</Badge></div><div className="grid w-full grid-cols-1 gap-2 sm:ms-auto sm:min-w-0 sm:flex-1 sm:grid-cols-2 sm:max-w-2xl"><div className="min-w-0 rounded-xl border bg-background/35 p-3"><p className="truncate text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</p><p className="truncate font-bold">{employee?.employee_id || "—"}</p></div><div className="min-w-0 rounded-xl border bg-background/35 p-3"><p className="truncate text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</p><p className="truncate font-bold">{employee?.job_title || pick("Employee", "موظف")}</p></div></div></div></section>
+      <section className="mb-4 grid gap-3 sm:mb-6 sm:grid-cols-2 lg:grid-cols-4"><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Total orders", "إجمالي الأوردرات")}</p><p className="mt-1 text-2xl font-bold">{mine.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Current orders", "الأوردرات الحالية")}</p><p className="mt-1 text-2xl font-bold">{active.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("In progress", "قيد التنفيذ")}</p><p className="mt-1 text-2xl font-bold">{inProgress.length}</p></div><div className="panel p-4"><p className="text-xs text-muted-foreground">{pick("Completed", "الأوردرات المكتملة")}</p><p className="mt-1 text-2xl font-bold">{completed.length}</p></div></section>
+      <section className="panel mb-4 p-4 sm:mb-6 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><ScanLine className="size-5 text-primary" />{pick("Scan customer NFC card", "مسح كارت العميل NFC")}</h2><p className="text-sm text-muted-foreground">{pick("Read the customer data stored on the card.", "اقرأ بيانات العميل المخزنة على الكارت.")}</p></div><Button size="lg" onClick={scanNfc} disabled={scanning}>{scanning ? pick("Bring card closer...", "قرّب الكارت...") : pick("Scan NFC", "مسح NFC")}</Button></div>{card && <div className="mt-5 grid gap-3 rounded-2xl border p-4 sm:grid-cols-2 lg:grid-cols-4"><div><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><b>{card.name || card.full_name || "—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Phone", "الهاتف")}</p><b>{card.phone || "—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Package", "الباقة")}</p><b>{card.package || card.package_name || "—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Remaining washes", "الغسلات المتبقية")}</p><b className="text-2xl text-primary">{card.remaining_washes ?? card.remaining ?? "—"}</b></div></div>}</section>
+      <section className="panel p-4 sm:p-5"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><UserCog className="size-5 text-primary" />{pick("My orders", "أوردراتي")}</h2><p className="text-sm text-muted-foreground">{pick("Current orders and completed orders are kept separately.", "الأوردرات الحالية والمنتهية منفصلة ويتم الاحتفاظ بالسجل السابق.")}</p></div><div className="flex w-full gap-2 sm:w-auto"><Button className="flex-1 sm:flex-none" variant={ordersView === "current" ? "default" : "outline"} onClick={() => setOrdersView("current")}>{pick("Current", "الأوردرات الحالية")} <Badge variant={ordersView === "current" ? "secondary" : "outline"} className="ms-1">{active.length}</Badge></Button><Button className="flex-1 sm:flex-none" variant={ordersView === "previous" ? "default" : "outline"} onClick={() => setOrdersView("previous")}>{pick("Previous", "الأوردرات السابقة")} <Badge variant={ordersView === "previous" ? "secondary" : "outline"} className="ms-1">{completed.length}</Badge></Button></div></div><div className="space-y-4">{(ordersView === "current" ? active : completed).length ? (ordersView === "current" ? active : completed).map(renderOrder) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>}</div></section>
+    </main>
+  </div>;
 }
