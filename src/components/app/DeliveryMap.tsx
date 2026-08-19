@@ -93,14 +93,32 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
 
     if (destination) {
       points.push([destination.lat, destination.lng]);
-      if (!destinationMarkerRef.current) destinationMarkerRef.current = L.marker([destination.lat, destination.lng]).addTo(map);
+      if (!destinationMarkerRef.current) {
+        const icon = L.divIcon({
+          className: "tapwash-map-icon",
+          html: '<div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.96);border:3px solid #2563eb;box-shadow:0 8px 24px rgba(37,99,235,.28);display:flex;align-items:center;justify-content:center;font-size:20px">📍</div>',
+          iconSize: [42, 42],
+          iconAnchor: [21, 42],
+          popupAnchor: [0, -38],
+        });
+        destinationMarkerRef.current = L.marker([destination.lat, destination.lng], { icon }).addTo(map);
+      }
       destinationMarkerRef.current.setLatLng([destination.lat, destination.lng]);
       destinationMarkerRef.current.bindPopup("موقع العميل / مكان تنفيذ الأوردر");
     }
 
     if (driver) {
       points.push([driver.lat, driver.lng]);
-      if (!driverMarkerRef.current) driverMarkerRef.current = L.marker([driver.lat, driver.lng]).addTo(map);
+      if (!driverMarkerRef.current) {
+        const icon = L.divIcon({
+          className: "tapwash-driver-icon",
+          html: '<div style="position:relative;width:50px;height:50px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(16,185,129,.18);animation:tapwashPulse 1.8s ease-out infinite"></div><div style="position:absolute;left:7px;top:7px;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);border:3px solid white;box-shadow:0 8px 22px rgba(5,150,105,.35);display:flex;align-items:center;justify-content:center;color:white;font-size:18px">🚗</div></div><style>@keyframes tapwashPulse{0%{transform:scale(.65);opacity:.9}70%{transform:scale(1.25);opacity:0}100%{transform:scale(1.25);opacity:0}}</style>',
+          iconSize: [50, 50],
+          iconAnchor: [25, 25],
+          popupAnchor: [0, -25],
+        });
+        driverMarkerRef.current = L.marker([driver.lat, driver.lng], { icon, zIndexOffset: 1000 }).addTo(map);
+      }
       driverMarkerRef.current.setLatLng([driver.lat, driver.lng]);
       driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${new Date(driver.updatedAt).toLocaleTimeString()}` : "الدليفري الآن");
     } else if (driverMarkerRef.current) {
@@ -109,9 +127,18 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
     }
 
     if (points.length === 1) map.setView(points[0], 15);
-    if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [35, 35], maxZoom: 16 });
+    if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [45, 45], maxZoom: 16 });
     setTimeout(() => map.invalidateSize(), 50);
   }
 
-  return <div ref={containerRef} style={{ height }} className="w-full overflow-hidden rounded-2xl border bg-muted" aria-label="خريطة تتبع الدليفري" />;
+  return <div className="overflow-hidden rounded-3xl border border-white/20 bg-slate-100 shadow-inner dark:bg-slate-900" style={{ height }}>
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" aria-label="خريطة تتبع الدليفري" />
+      <div className="pointer-events-none absolute bottom-3 start-3 z-[500] flex items-center gap-2 rounded-2xl border border-white/40 bg-white/90 px-3 py-2 text-xs font-medium text-slate-700 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90 dark:text-slate-100">
+        <span className="inline-block size-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,.15)]" /> الدليفري
+        <span className="mx-1 h-4 w-px bg-slate-300 dark:bg-slate-700" />
+        <span className="text-blue-600">📍</span> العميل
+      </div>
+    </div>
+  </div>;
 }
