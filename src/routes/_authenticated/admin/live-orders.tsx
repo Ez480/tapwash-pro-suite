@@ -110,7 +110,7 @@ function LiveOrdersPage() {
         const customerPoint = parseCustomerLocation(task);
         return <article key={String(task.id)} className="rounded-2xl border bg-card p-5 text-start transition hover:border-primary/50 hover:shadow-md">
           <button onClick={() => setSelected(String(task.id))} className="w-full text-start">
-            <div className="flex flex-wrap items-center gap-2"><b>{task.title || "أوردر"}</b><Badge>{status(String(task.status ?? ""))}</Badge><Badge variant="outline">{delivery(String(task.delivery_status ?? ""))}</Badge></div>
+            <div className="flex flex-wrap items-center gap-2"><b>{task.title || "أوردر"}</b><Badge>{status(String(task.status ?? ""))}</Badge></div>
             <p className="mt-2 text-sm">{task.customer_name || "—"}</p>
             <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground"><span>#{task.serial_number || task.id}</span><span>{count} صورة • {fmtDate(task.updated_at)}</span></div>
           </button>
