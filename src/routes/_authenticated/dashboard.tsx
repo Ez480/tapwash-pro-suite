@@ -14,7 +14,7 @@ import { useMyCards, useMyEmployee, useMySubscription, useMyWashes, useOffers, u
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: CustomerDashboard });
 type CurrentOrder = Record<string, any>;
-type EmployeeInfo = { employee_id: string | null; national_id: string | null; card_number: string | null; job_title: string | null; branch: string | null; full_name: string | null };
+type EmployeeInfo = { employee_id: string | null; job_title: string | null; full_name: string | null };
 
 const orderStages = [
   { key: "pending", en: "Your order has been received", ar: "تم استلام طلبك", icon: "📥" },
@@ -24,108 +24,21 @@ const orderStages = [
   { key: "in_progress", en: "Service has started", ar: "بدء التنفيذ", icon: "✨" },
   { key: "completed", en: "Your order is complete", ar: "تم انهاء طلبك", icon: "🏁" },
 ];
-
-function normalizeOrderStatus(status: string | null | undefined) {
-  const value = String(status ?? "pending").toLowerCase();
-  if (["new", "created", "pending", "requested"].includes(value)) return "pending";
-  if (["approved", "confirmed", "accepted", "assigned"].includes(value)) return "confirmed";
-  if (["on_the_way", "on-the-way", "out_for_delivery"].includes(value)) return "on_the_way";
-  if (["arrived", "delivered", "picked_up", "picked-up", "pickup", "collected", "courier_picked_up"].includes(value)) return "arrived";
-  if (["in_progress", "in-progress", "washing", "processing", "started"].includes(value)) return "in_progress";
-  if (["completed", "complete", "finished", "closed"].includes(value)) return "completed";
-  return "pending";
-}
-
+function normalizeOrderStatus(status: string | null | undefined) { const value = String(status ?? "pending").toLowerCase(); if (["new", "created", "pending", "requested"].includes(value)) return "pending"; if (["approved", "confirmed", "accepted", "assigned"].includes(value)) return "confirmed"; if (["on_the_way", "on-the-way", "out_for_delivery"].includes(value)) return "on_the_way"; if (["arrived", "delivered", "picked_up", "picked-up", "pickup", "collected", "courier_picked_up"].includes(value)) return "arrived"; if (["in_progress", "in-progress", "washing", "processing", "started"].includes(value)) return "in_progress"; if (["completed", "complete", "finished", "closed"].includes(value)) return "completed"; return "pending"; }
 function CustomerDashboard() {
-  const { t, pick, fmtDate, lang, setLang } = useI18n();
-  const { user } = useSession();
-  const { data: profile } = useProfile(user?.id);
-  const { data: sub } = useMySubscription(user?.id);
-  const { data: washes } = useMyWashes(user?.id);
-  const { data: cards } = useMyCards(user?.id);
-  const { data: roles } = useUserRoles(user?.id);
-  const { data: packages } = usePackages();
-  const { data: offers } = useOffers();
-  const { data: settings } = useSettings();
-  const { data: employeeData, isLoading: employeeQueryLoading, refetch: refetchEmployee } = useMyEmployee(user?.id);
-  const [currentOrder, setCurrentOrder] = useState<CurrentOrder | null>(null);
-  const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null);
-  const [employeeLoading, setEmployeeLoading] = useState(false);
-
-  useEffect(() => {
-    if (profile?.language && (profile.language === "ar" || profile.language === "en") && profile.language !== lang) setLang(profile.language);
-  }, [profile?.language, lang, setLang]);
-
-  useEffect(() => {
-    setEmployeeInfo((employeeData as EmployeeInfo | null) ?? null);
-  }, [employeeData]);
-
-  const isAdmin = (roles ?? []).includes("admin");
-  const isEmployee = !isAdmin && (roles ?? []).includes("employee");
-  const total = sub?.total_washes ?? 0;
-  const used = sub?.used_washes ?? 0;
-  const remaining = Math.max(total - used, 0);
-  const lastWash = washes?.[0]?.washed_at ?? null;
-  const wa = (settings?.whatsapp ?? "").replace(/[^\d]/g, "");
-  const activePackages = (packages ?? []).filter(p => p.status === "active");
-  const activeOffers = (offers ?? []).filter(o => o.status === "active");
-  const money = (value: number | string) => `${Number(value).toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${t("egp")}`;
-
-  const loadEmployee = async () => {
-    if (!user?.id) return;
-    setEmployeeLoading(true);
-    try {
-      const result = await refetchEmployee();
-      const employee = (result.data as EmployeeInfo | null) ?? null;
-      setEmployeeInfo(employee);
-      if (!employee && isEmployee) toast.error(pick("No employee record is linked to this account.", "لا يوجد سجل موظف مرتبط بهذا الحساب."));
-    } catch (error) {
-      console.error("Employee load failed", error);
-      setEmployeeInfo(null);
-      if (isEmployee) toast.error(pick("Could not load employee information.", "تعذر تحميل بيانات الموظف."));
-    } finally {
-      setEmployeeLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const channel = supabase.channel(`employee-data-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "employees" }, () => void refetchEmployee())
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [user?.id, refetchEmployee]);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    let mounted = true;
-    const loadOrder = async () => {
-      const { data } = await (supabase as any).from("booking_requests").select("*").eq("customer_id", user.id).not("status", "in", "(completed,closed,rejected)").order("updated_at", { ascending: false }).limit(1).maybeSingle();
-      if (mounted) setCurrentOrder(data ?? null);
-    };
-    void loadOrder();
-    const channel = supabase.channel(`customer-booking-order-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "booking_requests", filter: `customer_id=eq.${user.id}` }, () => void loadOrder()).subscribe();
-    return () => { mounted = false; void supabase.removeChannel(channel); };
-  }, [user?.id]);
-
-  const renew = () => {
-    const text = pick(`Hello TapWash, I would like to renew my subscription. Name: ${profile?.full_name ?? ""}`, `مرحباً تاب واش، أرغب في تجديد اشتراكي. الاسم: ${profile?.full_name ?? ""}`);
-    if (wa) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, "_blank");
-    toast.success(t("renew_requested"));
-  };
-  const statusLabel = (s?: string | null) => s === "active" ? t("active") : s === "expired" ? t("expired") : s === "cancelled" ? t("cancelled") : s === "pending" ? t("pending") : t("none");
-  const currentStage = orderStages.find(s => s.key === normalizeOrderStatus(currentOrder?.status)) ?? orderStages[0];
-  const currentIndex = Math.max(orderStages.findIndex(s => s.key === currentStage.key), 0);
-
+  const { t, pick, fmtDate, lang, setLang } = useI18n(); const { user } = useSession(); const { data: profile } = useProfile(user?.id); const { data: sub } = useMySubscription(user?.id); const { data: washes } = useMyWashes(user?.id); const { data: cards } = useMyCards(user?.id); const { data: roles } = useUserRoles(user?.id); const { data: packages } = usePackages(); const { data: offers } = useOffers(); const { data: settings } = useSettings(); const { data: employeeData, isLoading: employeeQueryLoading, refetch: refetchEmployee } = useMyEmployee(user?.id);
+  const [currentOrder, setCurrentOrder] = useState<CurrentOrder | null>(null); const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null); const [employeeLoading, setEmployeeLoading] = useState(false);
+  useEffect(() => { if (profile?.language && (profile.language === "ar" || profile.language === "en") && profile.language !== lang) setLang(profile.language); }, [profile?.language, lang, setLang]); useEffect(() => { setEmployeeInfo((employeeData as EmployeeInfo | null) ?? null); }, [employeeData]);
+  const isAdmin = (roles ?? []).includes("admin"); const isEmployee = !isAdmin && (roles ?? []).includes("employee"); const total = sub?.total_washes ?? 0; const used = sub?.used_washes ?? 0; const remaining = Math.max(total - used, 0); const lastWash = washes?.[0]?.washed_at ?? null; const wa = (settings?.whatsapp ?? "").replace(/[^\d]/g, ""); const activePackages = (packages ?? []).filter(p => p.status === "active"); const activeOffers = (offers ?? []).filter(o => o.status === "active"); const money = (value: number | string) => `${Number(value).toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${t("egp")}`;
+  const loadEmployee = async () => { if (!user?.id) return; setEmployeeLoading(true); try { const result = await refetchEmployee(); const employee = (result.data as EmployeeInfo | null) ?? null; setEmployeeInfo(employee); if (!employee && isEmployee) toast.error(pick("No employee record is linked to this account.", "لا يوجد سجل موظف مرتبط بهذا الحساب.")); } catch (error) { console.error("Employee load failed", error); setEmployeeInfo(null); if (isEmployee) toast.error(pick("Could not load employee information.", "تعذر تحميل بيانات الموظف.")); } finally { setEmployeeLoading(false); } };
+  useEffect(() => { if (!user?.id) return; const channel = supabase.channel(`employee-data-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "employees" }, () => void refetchEmployee()).subscribe(); return () => { void supabase.removeChannel(channel); }; }, [user?.id, refetchEmployee]);
+  useEffect(() => { if (!user?.id) return; let mounted = true; const loadOrder = async () => { const { data } = await (supabase as any).from("booking_requests").select("*").eq("customer_id", user.id).not("status", "in", "(completed,closed,rejected)").order("updated_at", { ascending: false }).limit(1).maybeSingle(); if (mounted) setCurrentOrder(data ?? null); }; void loadOrder(); const channel = supabase.channel(`customer-booking-order-${user.id}`).on("postgres_changes", { event: "*", schema: "public", table: "booking_requests", filter: `customer_id=eq.${user.id}` }, () => void loadOrder()).subscribe(); return () => { mounted = false; void supabase.removeChannel(channel); }; }, [user?.id]);
+  const renew = () => { const text = pick(`Hello TapWash, I would like to renew my subscription. Name: ${profile?.full_name ?? ""}`, `مرحباً تاب واش، أرغب في تجديد اشتراكي. الاسم: ${profile?.full_name ?? ""}`); if (wa) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, "_blank"); toast.success(t("renew_requested")); }; const statusLabel = (s?: string | null) => s === "active" ? t("active") : s === "expired" ? t("expired") : s === "cancelled" ? t("cancelled") : s === "pending" ? t("pending") : t("none"); const currentStage = orderStages.find(s => s.key === normalizeOrderStatus(currentOrder?.status)) ?? orderStages[0]; const currentIndex = Math.max(orderStages.findIndex(s => s.key === currentStage.key), 0);
   return <div className="customer-dashboard min-h-screen bg-background"><AppTopbar title={t("my_membership")} extra={isAdmin ? <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex"><Link to="/admin"><ShieldCheck className="me-1.5 size-4" />{t("nav_admin")}</Link></Button> : null} /><div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
     <div className="panel animate-fade-up flex flex-wrap items-center gap-5 p-6">{profile?.avatar_url ? <img src={profile.avatar_url} alt={profile.full_name || "avatar"} className="size-16 rounded-2xl object-cover" /> : <div className="surface-blue flex size-16 items-center justify-center rounded-2xl font-display text-xl font-bold shadow-luxe">{(profile?.full_name || user?.email || "T").slice(0, 1).toUpperCase()}</div>}<div className="min-w-0"><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("welcome_back")}</p><h2 className="truncate text-2xl font-bold">{profile?.full_name || user?.email}</h2><div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Badge variant={profile?.status === "active" ? "default" : "destructive"}>{profile?.status === "active" ? t("active") : t("suspended")}</Badge>{isEmployee && <Badge variant="secondary">{pick("Employee", "موظف")}</Badge>}{isAdmin && <Badge variant="secondary">{pick("Admin", "مدير")}</Badge>}{profile?.phone && <span>{profile.phone}</span>}</div></div><div className="ms-auto flex flex-wrap gap-2"><ProfileEditor /></div></div>
-
-    {(isEmployee || employeeInfo) && <section className="panel mt-6 p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("Managed by management and read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط.")}</p></div></div><Button variant="outline" size="sm" onClick={() => void loadEmployee()} disabled={employeeLoading || employeeQueryLoading}><RefreshCw className={`me-1.5 size-4 ${(employeeLoading || employeeQueryLoading) ? "animate-spin" : ""}`} />{pick("Refresh", "تحديث")}</Button></div>{employeeInfo ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Card number", "رقم البطاقة")}</span><p className="mt-1 font-semibold">{employeeInfo.card_number || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div></div> : <div className="rounded-xl border p-5 text-sm text-muted-foreground">{employeeLoading || employeeQueryLoading ? pick("Loading employee information...", "جاري تحميل بيانات الموظف...") : pick("No employee information is linked to this account yet.", "لا توجد بيانات موظف مرتبطة بهذا الحساب حتى الآن.")}</div>}</section>}
-
+    {(isEmployee || employeeInfo) && <section className="panel mt-6 p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("Managed by management and read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط.")}</p></div></div><Button variant="outline" size="sm" onClick={() => void loadEmployee()} disabled={employeeLoading || employeeQueryLoading}><RefreshCw className={`me-1.5 size-4 ${(employeeLoading || employeeQueryLoading) ? "animate-spin" : ""}`} />{pick("Refresh", "تحديث")}</Button></div>{employeeInfo ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Full name", "الاسم كامل")}</span><p className="mt-1 font-semibold">{employeeInfo.full_name || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div></div> : <div className="rounded-xl border p-5 text-sm text-muted-foreground">{employeeLoading || employeeQueryLoading ? pick("Loading employee information...", "جاري تحميل بيانات الموظف...") : pick("No employee information is linked to this account yet.", "لا توجد بيانات موظف مرتبطة بهذا الحساب حتى الآن.")}</div>}</section>}
     {currentOrder ? <section className="panel mt-6 overflow-hidden p-0"><div className="border-b bg-primary/5 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{pick("Current order", "الطلب الحالي")}</p><h3 className="mt-1 text-xl font-bold">{currentOrder.title || pick("Car wash order", "طلب غسيل سيارة")}</h3></div><Badge className="px-3 py-1">{pick(currentStage.en, currentStage.ar)}</Badge></div></div><div className="p-6"><div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div><span className="text-xs text-muted-foreground">{pick("Order number", "رقم الطلب")}</span><p className="mt-1 font-semibold">{currentOrder.serial_number ? `#${currentOrder.serial_number}` : String(currentOrder.id).slice(0, 8)}</p></div><div><span className="text-xs text-muted-foreground">{pick("Scheduled", "الموعد")}</span><p className="mt-1 font-semibold">{currentOrder.scheduled_at ? fmtDate(currentOrder.scheduled_at) : "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Payment", "الدفع")}</span><p className="mt-1 font-semibold">{currentOrder.payment_status || "—"}</p></div><div><span className="text-xs text-muted-foreground">{pick("Last update", "آخر تحديث")}</span><p className="mt-1 font-semibold">{currentOrder.updated_at ? fmtDate(currentOrder.updated_at) : "—"}</p></div></div><div className="space-y-3">{orderStages.map((stage, i) => { const done = i <= currentIndex; const active = i === currentIndex; return <div key={stage.key} className="flex items-center gap-3"><div className={`flex size-9 shrink-0 items-center justify-center rounded-full border ${done ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground"}`}>{stage.icon}</div><div className={`flex-1 rounded-xl px-3 py-2 ${active ? "bg-primary/10 font-bold" : done ? "text-foreground" : "text-muted-foreground"}`}><p>{pick(stage.en, stage.ar)}</p>{active && <p className="mt-0.5 text-xs font-normal text-primary">{pick("Current status", "الحالة الحالية")}</p>}</div></div>; })}</div></div></section> : null}
-
     {sub ? <><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard tone="ink" label={t("package")} value={sub.packages ? pick(sub.packages.title_en, sub.packages.title_ar) : t("none")} hint={`${total} ${pick("washes", "غسلة")}`} /><StatCard tone="primary" label={t("remaining_washes")} value={remaining} hint={`${used} ${pick("used", "مستخدمة")}`} /><StatCard label={t("subscription_status")} value={statusLabel(sub.status)} /><StatCard label={t("last_wash")} value={fmtDate(lastWash)} /></div><div className="panel mt-6 p-6"><div className="flex items-center justify-between text-sm"><span className="font-semibold">{t("used_washes")}</span><span className="text-muted-foreground">{used} / {total}</span></div><Progress value={total ? used / total * 100 : 0} className="mt-3" /><div className="mt-6 grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("start_date")}</p><p className="mt-1 font-semibold">{fmtDate(sub.start_date)}</p></div><div><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("end_date")}</p><p className="mt-1 font-semibold">{fmtDate(sub.end_date)}</p></div></div></div></> : <div className="panel mt-6 p-8 text-center"><h3 className="text-xl font-bold">{t("no_subscription")}</h3><p className="mt-2 text-sm text-muted-foreground">{t("no_subscription_d")}</p><Button asChild className="mt-5"><Link to="/packages">{t("hero_cta")}</Link></Button></div>}
-
     <section className="mt-8"><div className="mb-4 flex items-center justify-between"><div><h3 className="flex items-center gap-2 text-xl font-bold"><CreditCard className="size-5 text-primary" /> {pick("Available packages", "الباقات المتاحة")}</h3><p className="mt-1 text-sm text-muted-foreground">{pick("Choose the package that fits your car", "اختر الباقة المناسبة لسيارتك")}</p></div><Button asChild variant="outline" size="sm"><Link to="/packages">{pick("All packages", "كل الباقات")}</Link></Button></div>{activePackages.length === 0 ? <div className="panel p-6 text-sm text-muted-foreground">{pick("No active packages right now.", "لا توجد باقات نشطة حاليًا.")}</div> : <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{activePackages.map(p => <div key={p.id} className="panel p-5"><h4 className="text-lg font-bold">{pick(p.title_en, p.title_ar)}</h4><p className="mt-2 text-sm text-muted-foreground">{pick(p.description_en, p.description_ar)}</p><div className="mt-4 flex items-end justify-between"><span className="text-2xl font-bold">{money(p.price)}</span><span className="text-sm text-muted-foreground">{p.washes_count} {pick("washes", "غسلة")}</span></div><Button asChild className="mt-4 w-full"><Link to="/packages">{pick("View details", "عرض التفاصيل")}</Link></Button></div>)}</div>}</section>
     <section className="mt-8"><div className="mb-4 flex items-center justify-between"><div><h3 className="flex items-center gap-2 text-xl font-bold"><Tag className="size-5 text-primary" /> {pick("Current offers", "العروض الحالية")}</h3><p className="mt-1 text-sm text-muted-foreground">{pick("Latest TapWash offers", "أحدث عروض TapWash")}</p></div><Button asChild variant="outline" size="sm"><Link to="/offers">{pick("All offers", "كل العروض")}</Link></Button></div>{activeOffers.length === 0 ? <div className="panel p-6 text-sm text-muted-foreground">{pick("No active offers right now.", "لا توجد عروض نشطة حاليًا.")}</div> : <div className="grid gap-4 md:grid-cols-2">{activeOffers.slice(0, 4).map(o => <div key={o.id} className="panel p-5"><h4 className="text-lg font-bold">{pick(o.title_en, o.title_ar)}</h4><p className="mt-2 text-sm text-muted-foreground">{pick(o.description_en, o.description_ar)}</p><div className="mt-4 flex items-center gap-3"><span className="text-xl font-bold">{money(o.price)}</span>{o.old_price != null && Number(o.old_price) > Number(o.price) && <span className="text-sm text-muted-foreground line-through">{money(o.old_price)}</span>}</div></div>)}</div>}</section>
     <div className="mt-6 grid gap-3 sm:grid-cols-3"><Button size="lg" onClick={renew}><RefreshCw className="me-1.5 size-4" />{t("renew")}</Button><Button size="lg" variant="outline" asChild disabled={!wa}><a href={wa ? `https://wa.me/${wa}` : "#"} target="_blank" rel="noreferrer"><MessageCircle className="me-1.5 size-4" />{t("whatsapp")}</a></Button><Button size="lg" variant="outline" asChild><a href={`tel:${settings?.phone ?? ""}`}><Phone className="me-1.5 size-4" />{t("call")}</a></Button></div>
