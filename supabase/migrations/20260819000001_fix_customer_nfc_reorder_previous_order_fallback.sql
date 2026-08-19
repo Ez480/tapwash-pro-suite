@@ -123,10 +123,10 @@ begin
     auth.uid(), v_last.package_id, v_last.offer_id,
     coalesce(v_card.car_id, v_last.car_id),
     v_last.wash_type, p_scheduled_at, v_last.customer_name,
-    v_last.customer_phone, v_last.customer_email, v_last.customer_email,
-    v_last.car_type, v_last.car_brand, v_last.car_model, v_last.car_color,
-    v_last.plate_number, v_last.address, v_last.location_url, v_last.latitude,
-    v_last.longitude, v_last.notes, v_last.amount, p_payment_method,
+    v_last.customer_phone, v_last.customer_email, v_last.car_type,
+    v_last.car_brand, v_last.car_model, v_last.car_color, v_last.plate_number,
+    v_last.address, v_last.location_url, v_last.latitude, v_last.longitude,
+    v_last.notes, v_last.amount, p_payment_method,
     case when p_payment_method = 'cash' then 'unpaid' else 'awaiting_proof' end,
     'pending', 'customer_nfc_reorder', v_card.id
   )
