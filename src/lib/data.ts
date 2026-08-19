@@ -116,25 +116,46 @@ export function useMyNotifications(userId?: string | null) {
   });
 }
 
-export function useMyEmployee(userId?: string | null) {
+export function useMyEmployee(userId?: string | null, userEmail?: string | null) {
   return useQuery({
-    queryKey: ["my-employee", userId],
+    queryKey: ["my-employee", userId, userEmail?.toLowerCase() ?? null],
     enabled: !!userId,
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const columns = "employee_id,national_id,card_number,job_title,branch,full_name,email,user_id,updated_at";
+
+      // Primary link: the employee row must belong to the currently signed-in user.
+      const byUser = await supabase
         .from("employees")
-        .select("employee_id,national_id,card_number,job_title,branch,full_name,email,user_id,updated_at")
+        .select(columns)
         .eq("user_id", userId!)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
-      return data ?? null;
+      if (byUser.error) throw byUser.error;
+      if (byUser.data) return byUser.data;
+
+      // Reliable fallback: older employee records may have the correct email
+      // but an empty/stale user_id. The employee SELECT policy allows this link.
+      const email = userEmail?.trim().toLowerCase();
+      if (email) {
+        const byEmail = await supabase
+          .from("employees")
+          .select(columns)
+          .ilike("email", email)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (byEmail.error) throw byEmail.error;
+        if (byEmail.data) return byEmail.data;
+      }
+
+      return null;
     },
   });
 }
