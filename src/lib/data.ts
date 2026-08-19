@@ -116,9 +116,9 @@ export function useMyNotifications(userId?: string | null) {
   });
 }
 
-export function useMyEmployee(userId?: string | null, userEmail?: string | null) {
+export function useMyEmployee(userId?: string | null) {
   return useQuery({
-    queryKey: ["my-employee", userId, userEmail?.toLowerCase() ?? null],
+    queryKey: ["my-employee", userId],
     enabled: !!userId,
     staleTime: 0,
     gcTime: 0,
@@ -127,7 +127,7 @@ export function useMyEmployee(userId?: string | null, userEmail?: string | null)
     queryFn: async () => {
       const columns = "employee_id,national_id,card_number,job_title,branch,full_name,email,user_id,updated_at";
 
-      // Primary link: the employee row must belong to the currently signed-in user.
+      // 1) Prefer the immutable account link.
       const byUser = await supabase
         .from("employees")
         .select(columns)
@@ -139,9 +139,12 @@ export function useMyEmployee(userId?: string | null, userEmail?: string | null)
       if (byUser.error) throw byUser.error;
       if (byUser.data) return byUser.data;
 
-      // Reliable fallback: older employee records may have the correct email
-      // but an empty/stale user_id. The employee SELECT policy allows this link.
-      const email = userEmail?.trim().toLowerCase();
+      // 2) If the manager's record has an old/missing user_id, resolve the
+      // signed-in account email directly and fetch the employee row by email.
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      const email = authData.user?.email?.trim().toLowerCase();
+
       if (email) {
         const byEmail = await supabase
           .from("employees")
@@ -153,6 +156,14 @@ export function useMyEmployee(userId?: string | null, userEmail?: string | null)
 
         if (byEmail.error) throw byEmail.error;
         if (byEmail.data) return byEmail.data;
+      }
+
+      // 3) Last fallback: the existing database function also resolves by
+      // auth.uid/auth email and is kept only as a read fallback.
+      const rpc = await supabase.rpc("get_my_employee");
+      if (!rpc.error) {
+        const row = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+        if (row) return row;
       }
 
       return null;
