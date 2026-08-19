@@ -18,13 +18,16 @@ export function EmployeeDashboardSummary() {
 
   useEffect(() => {
     if (!isEmployeePage || !isEmployee) return;
-    const header = document.querySelector("header");
-    if (!header) return;
 
-    // Put the employee summary directly under the top toolbar instead of before it.
+    const header = document.querySelector("header");
+    const main = document.querySelector("main");
+    const employeeCard = main?.querySelector("section");
+    if (!header || !employeeCard) return;
+
+    // Put the existing employee summary directly below the employee profile card.
     const target = document.createElement("div");
     target.className = "employee-summary-slot w-full";
-    header.insertAdjacentElement("afterend", target);
+    employeeCard.insertAdjacentElement("afterend", target);
     setSlot(target);
 
     // Replace the tiny placeholder T in the employee toolbar with a clear TapWash mark.
