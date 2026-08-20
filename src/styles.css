@@ -35,14 +35,46 @@
 .customer-site .customer-footer p, .customer-site .customer-footer a { color: var(--color-foreground); }
 .customer-site .customer-footer .text-muted-foreground { color: var(--color-muted-foreground); }
 
-.customer-dashboard .panel { background: color-mix(in oklch, var(--color-card) 58%, transparent); border-color: color-mix(in oklch, var(--color-border) 72%, white 28%); box-shadow: 0 18px 55px -28px oklch(0.2 0.08 265 / 0.42), inset 0 1px 0 oklch(1 0 0 / 0.28); backdrop-filter: blur(22px) saturate(135%); -webkit-backdrop-filter: blur(22px) saturate(135%); }
-.customer-dashboard { background-image: radial-gradient(70% 50% at 100% 0%, oklch(0.54 0.216 263 / 0.09), transparent 70%), radial-gradient(60% 50% at 0% 20%, oklch(0.68 0.14 250 / 0.08), transparent 70%); }
+.customer-dashboard .panel { background: color-mix(in oklch, var(--color-card) 48%, transparent); border-color: color-mix(in oklch, var(--color-border) 66%, white 34%); box-shadow: 0 22px 65px -32px oklch(0.2 0.08 265 / 0.48), inset 0 1px 0 oklch(1 0 0 / 0.34); backdrop-filter: blur(26px) saturate(145%); -webkit-backdrop-filter: blur(26px) saturate(145%); }
+.customer-dashboard { background-image: radial-gradient(70% 50% at 100% 0%, oklch(0.54 0.216 263 / 0.11), transparent 70%), radial-gradient(60% 50% at 0% 20%, oklch(0.68 0.14 250 / 0.1), transparent 70%); }
+
+/* Customer mobile/dashboard glass system: all dashboard cards share the same transparent glass language. */
+.customer-dashboard .panel,
+.customer-dashboard .rounded-2xl.border.p-6,
+.customer-dashboard .rounded-xl.border.p-4,
+.customer-dashboard .rounded-xl.border.p-5 {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 54%, transparent), color-mix(in oklch, var(--color-card) 34%, transparent));
+  border-color: color-mix(in oklch, var(--color-border) 58%, white 42%);
+  box-shadow: 0 20px 58px -30px oklch(0.18 0.09 255 / 0.48), inset 0 1px 0 oklch(1 0 0 / 0.38), inset 0 -1px 0 oklch(1 0 0 / 0.08);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.customer-dashboard .rounded-2xl.border.p-6:hover,
+.customer-dashboard .rounded-xl.border.p-4:hover,
+.customer-dashboard .rounded-xl.border.p-5:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklch, var(--color-primary) 34%, white 66%);
+  box-shadow: 0 24px 65px -30px oklch(0.18 0.1 255 / 0.56), inset 0 1px 0 oklch(1 0 0 / 0.44);
+}
+.customer-dashboard .rounded-2xl.border.p-6,
+.customer-dashboard .rounded-xl.border.p-5 { border-radius: 1.35rem; }
+.customer-dashboard .rounded-xl.border.p-4 { border-radius: 1.1rem; }
+.customer-dashboard .border-b.bg-primary\/5 { background: color-mix(in oklch, var(--color-primary) 7%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.customer-dashboard .customer-glass-highlight { background: linear-gradient(135deg, oklch(1 0 0 / 0.3), oklch(0.68 0.14 250 / 0.08)); }
 
 .dark .customer-site .customer-footer p, .dark .customer-site .customer-footer a { color: var(--color-foreground); }
 .dark .customer-site .customer-footer .text-muted-foreground { color: var(--color-muted-foreground); }
 .dark .customer-site .panel, .dark .customer-dashboard .panel { border-color: color-mix(in oklch, var(--color-border) 86%, white 14%); }
+.dark .customer-dashboard .rounded-2xl.border.p-6,
+.dark .customer-dashboard .rounded-xl.border.p-4,
+.dark .customer-dashboard .rounded-xl.border.p-5 {
+  background: linear-gradient(135deg, oklch(1 0 0 / 0.08), oklch(0.55 0.12 260 / 0.08));
+  border-color: oklch(1 0 0 / 0.14);
+  box-shadow: 0 22px 60px -32px oklch(0 0 0 / 0.72), inset 0 1px 0 oklch(1 0 0 / 0.13);
+}
 
-@media (max-width: 640px) { body { padding-bottom: env(safe-area-inset-bottom); } .glass-card { border-radius: 1.15rem; } .customer-site .panel { border-radius: 1.15rem; } }
+@media (max-width: 640px) { body { padding-bottom: env(safe-area-inset-bottom); } .glass-card { border-radius: 1.15rem; } .customer-site .panel { border-radius: 1.15rem; } .customer-dashboard .panel, .customer-dashboard .rounded-2xl.border.p-6, .customer-dashboard .rounded-xl.border.p-5 { border-radius: 1.2rem; } .customer-dashboard .rounded-xl.border.p-4 { border-radius: 1rem; } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
