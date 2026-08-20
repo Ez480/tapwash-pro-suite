@@ -20,11 +20,8 @@ function BookingRequests() {
     try {
       const { error } = await (supabase as any).from("booking_requests").update({ status: "confirmed" }).eq("id", r.id).not("status", "in", "(completed,cancelled,rejected)");
       if (error) throw error;
-      if (r.customer_id) {
-        await (supabase as any).from("notifications").insert({ user_id: r.customer_id, type: "booking_confirmed", title: "Booking confirmed", message: "Your booking has been confirmed by management", data: { booking_request_id: r.id } });
-      }
-      toast.success(pick("Booking confirmed. The customer was notified.", "تم تأكيد الحجز وإبلاغ العميل."));
-      refetch();
+      if (r.customer_id) await (supabase as any).from("notifications").insert({ user_id: r.customer_id, type: "booking_confirmed", title: "Booking confirmed", message: "Your booking has been confirmed by management", data: { booking_request_id: r.id } });
+      toast.success(pick("Booking confirmed. The customer was notified.", "تم تأكيد الحجز وإبلاغ العميل.")); refetch();
     } catch (error: any) { toast.error(error?.message || pick("Could not confirm the booking", "تعذر تأكيد الحجز")); }
   };
 
@@ -53,7 +50,16 @@ function BookingRequests() {
       const createdBy = authData.user?.id ?? null;
       if (!createdBy) return toast.error(pick("Your session has expired. Please sign in again.", "انتهت جلسة تسجيل الدخول، سجل الدخول مرة أخرى."));
       const serial = `TW-${Date.now().toString(36).toUpperCase()}`;
-      const { error } = await (supabase as any).from("employee_tasks").insert({ serial_number: serial, booking_request_id: r.id, collection_amount: Number(r.amount ?? 0), title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type, wash_type: r.wash_type, employee_id: employeeId, customer_id: customerId, package_name: packageName, offer_name: offerName, customer_name: r.customer_name, customer_phone: r.customer_phone, customer_email: r.customer_email, location_text: r.address, location_url: r.location_url, latitude: r.latitude, longitude: r.longitude, scheduled_at: r.scheduled_at, notes: r.notes, status: "pending", created_by: createdBy });
+      const { error } = await (supabase as any).from("employee_tasks").insert({
+        serial_number: serial, booking_request_id: r.id, collection_amount: Number(r.amount ?? 0),
+        payment_method: r.payment_method ?? null, payment_status: r.payment_status ?? null,
+        title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type,
+        wash_type: r.wash_type, employee_id: employeeId, customer_id: customerId,
+        package_name: packageName, offer_name: offerName, customer_name: r.customer_name,
+        customer_phone: r.customer_phone, customer_email: r.customer_email, location_text: r.address,
+        location_url: r.location_url, latitude: r.latitude, longitude: r.longitude,
+        scheduled_at: r.scheduled_at, notes: r.notes, status: "pending", created_by: createdBy
+      });
       if (error) return toast.error(error.message || pick("Could not assign the order", "تعذر تكليف الموظف بالأوردر"));
       const { error: updateError } = await (supabase as any).from("booking_requests").update({ status: "assigned" }).eq("id", r.id);
       if (updateError) return toast.error(updateError.message || pick("Order was assigned but status could not be updated", "تم تكليف الموظف لكن تعذر تحديث حالة الطلب"));
