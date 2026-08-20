@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Banknote, ClipboardList, Clock3, CreditCard } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Banknote, ClipboardList, Clock3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useUserRoles } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
@@ -18,19 +17,14 @@ export function EmployeeDashboardSummary() {
 
   useEffect(() => {
     if (!isEmployeePage || !isEmployee) return;
-
     const header = document.querySelector("header");
     const main = document.querySelector("main");
     const employeeCard = main?.querySelector("section");
     if (!header || !employeeCard) return;
-
-    // Put the existing employee summary directly below the employee profile card.
     const target = document.createElement("div");
     target.className = "employee-summary-slot w-full";
     employeeCard.insertAdjacentElement("afterend", target);
     setSlot(target);
-
-    // Replace the tiny placeholder T in the employee toolbar with a clear TapWash mark.
     const mark = header.querySelector(".glass-soft") as HTMLElement | null;
     if (mark) {
       mark.textContent = "TW";
@@ -38,11 +32,7 @@ export function EmployeeDashboardSummary() {
       mark.setAttribute("aria-label", "TapWash");
       mark.setAttribute("title", "TapWash");
     }
-
-    return () => {
-      target.remove();
-      setSlot(null);
-    };
+    return () => { target.remove(); setSlot(null); };
   }, [isEmployeePage, isEmployee]);
 
   useEffect(() => {
@@ -51,7 +41,7 @@ export function EmployeeDashboardSummary() {
     const load = async () => {
       const { data } = await (supabase as any)
         .from("employee_tasks")
-        .select("id,title,status,employee_id,collection_amount,created_at,scheduled_at,serial_number,booking_request_id,payment_status")
+        .select("id,status,employee_id,collection_amount,created_at,scheduled_at")
         .eq("employee_id", user.id)
         .order("created_at", { ascending: false });
       if (mounted) setTasks(data ?? []);
@@ -72,12 +62,6 @@ export function EmployeeDashboardSummary() {
   const available = tasks.filter(t => ["pending", "accepted", "in_progress"].includes(String(t.status).toLowerCase()));
   const collection = today.reduce((sum, t) => sum + Number(t.collection_amount || 0), 0);
   const money = (v: number) => `${v.toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${pick("EGP", "جنيه")}`;
-  const paymentLabel = (task: any) => {
-    const status = String(task.payment_status || "").toLowerCase();
-    if (status === "paid" || status === "confirmed" || status === "completed") return pick("Paid", "مدفوع");
-    if (status === "awaiting_proof" || status === "pending" || status === "awaiting") return pick("Pending payment", "في انتظار الدفع");
-    return pick("Not specified", "غير محدد");
-  };
 
   if (!isEmployee || !isEmployeePage || !slot) return null;
 
@@ -89,7 +73,6 @@ export function EmployeeDashboardSummary() {
           <div className="panel p-4"><div className="flex items-center gap-3"><span className="surface-blue flex size-10 items-center justify-center rounded-xl"><Banknote className="size-5" /></span><div><p className="text-xs text-muted-foreground">{pick("Today's collection", "إجمالي التحصيل اليوم")}</p><p className="text-2xl font-extrabold">{money(collection)}</p></div></div></div>
           <div className="panel p-4"><div className="flex items-center gap-3"><span className="surface-blue flex size-10 items-center justify-center rounded-xl"><Clock3 className="size-5" /></span><div><p className="text-xs text-muted-foreground">{pick("Available orders", "الطلبات المتاحة")}</p><p className="text-2xl font-extrabold">{available.length}</p></div></div></div>
         </div>
-        {available.length > 0 && <div className="panel mt-3 overflow-hidden"><div className="border-b px-4 py-3 font-bold">{pick("Order payment details", "تفاصيل سعر وحالة دفع الأوردرات")}</div><div className="divide-y">{available.slice(0, 8).map(task => <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"><div className="min-w-0"><p className="truncate font-semibold">{task.title || pick("Order", "أوردر")} <span className="text-xs text-muted-foreground">#{task.serial_number || String(task.id).slice(0, 8).toUpperCase()}</span></p><p className="text-xs text-muted-foreground">{task.scheduled_at ? new Date(task.scheduled_at).toLocaleString(lang === "ar" ? "ar-EG" : "en-US") : "—"}</p></div><div className="flex items-center gap-2"><Badge variant="outline"><CreditCard className="me-1 size-3" />{paymentLabel(task)}</Badge><span className="font-bold">{money(Number(task.collection_amount || 0))}</span></div></div>)}</div></div>}
       </div>
     </section>,
     slot,
