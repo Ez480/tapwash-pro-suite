@@ -40,8 +40,7 @@ function AdminDaily() {
   const q = search.trim().toLowerCase();
   const match = (x: any) => !q || JSON.stringify(x).toLowerCase().includes(q);
   const filteredTasks = useMemo(() => tasks.filter(match), [tasks, q]);
-  // A booking remains in today's booking list after confirmation. It leaves only after an employee is assigned.
-  const filteredBookings = useMemo(() => bookings.filter((x: any) => x.status !== "assigned" && match(x)), [bookings, q]);
+  const filteredBookings = useMemo(() => bookings.filter(match), [bookings, q]);
   const filteredPayments = useMemo(() => payments.filter(match), [payments, q]);
 
   const confirmManualPayment = async (r: any) => {
