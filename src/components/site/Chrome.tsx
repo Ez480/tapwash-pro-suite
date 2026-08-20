@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Moon, Sun, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,7 +20,23 @@ const glassIcon = "border border-white/45 bg-white/28 text-foreground shadow-[0_
 
 export function LanguageToggle() {
   const { lang, setLang } = useI18n();
-  return <div className="glass-soft flex shrink-0 items-center rounded-full border border-white/45 bg-white/28 p-0.5 text-xs font-semibold shadow-[0_3px_12px_rgba(15,23,42,0.10)] backdrop-blur-xl dark:border-white/15 dark:bg-white/[0.07] dark:shadow-[0_3px_14px_rgba(0,0,0,0.30)]">{(["ar", "en"] as const).map((l) => <button key={l} onClick={() => setLang(l)} aria-label={l === "ar" ? "العربية" : "English"} className={cn("rounded-full px-2.5 py-1 transition-all", lang === l ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>{l === "ar" ? "ع" : "EN"}</button>)}</div>;
+  const { user } = useSession();
+  const queryClient = useQueryClient();
+
+  const changeLang = (nextLang: "ar" | "en") => {
+    // Keep the user's language choice client-side and update the cached
+    // profile immediately so the dashboard's profile-language sync cannot
+    // overwrite an explicit UI selection.
+    window.localStorage.setItem("tapwash.lang", nextLang);
+    setLang(nextLang);
+    if (user?.id) {
+      queryClient.setQueryData(["profile", user.id], (profile: any) =>
+        profile ? { ...profile, language: nextLang } : profile,
+      );
+    }
+  };
+
+  return <div className="glass-soft flex shrink-0 items-center rounded-full border border-white/45 bg-white/28 p-0.5 text-xs font-semibold shadow-[0_3px_12px_rgba(15,23,42,0.10)] backdrop-blur-xl dark:border-white/15 dark:bg-white/[0.07] dark:shadow-[0_3px_14px_rgba(0,0,0,0.30)]">{(["ar", "en"] as const).map((l) => <button type="button" key={l} onClick={() => changeLang(l)} aria-label={l === "ar" ? "العربية" : "English"} className={cn("rounded-full px-2.5 py-1 transition-all", lang === l ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>{l === "ar" ? "ع" : "EN"}</button>)}</div>;
 }
 
 export function ThemeToggle() {
