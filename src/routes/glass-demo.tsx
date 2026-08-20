@@ -1,0 +1,176 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, CarFront, ChevronLeft, Droplets, Gauge, Gift, Nfc, Sparkles, Star, Waves } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
+import { useMyCards, useMySubscription, useMyWashes, useProfile } from "@/lib/data";
+
+export const Route = createFileRoute("/glass-demo")({ component: GlassDemo });
+
+type Booking = Record<string, any>;
+
+function GlassCard({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={`relative overflow-hidden rounded-[28px] border border-white/75 bg-white/35 shadow-[0_18px_50px_rgba(27,169,194,0.14)] backdrop-blur-2xl ${className}`}>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/75 via-white/25 to-cyan-100/25" />
+      <div className="pointer-events-none absolute -right-12 -top-16 size-36 rounded-full bg-cyan-200/25 blur-3xl" />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
+function GlassDemo() {
+  const { user } = useSession();
+  const { pick, fmtDate } = useI18n();
+  const { data: profile } = useProfile(user?.id);
+  const { data: sub } = useMySubscription(user?.id);
+  const { data: washes } = useMyWashes(user?.id);
+  const { data: cards } = useMyCards(user?.id);
+  const [booking, setBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let mounted = true;
+    const load = async () => {
+      const { data } = await (supabase as any)
+        .from("booking_requests")
+        .select("*")
+        .eq("customer_id", user.id)
+        .not("status", "in", "(completed,closed,rejected)")
+        .order("scheduled_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (mounted) setBooking(data ?? null);
+    };
+    void load();
+    return () => { mounted = false; };
+  }, [user?.id]);
+
+  const total = sub?.total_washes ?? 0;
+  const used = sub?.used_washes ?? 0;
+  const remaining = Math.max(total - used, 0);
+  const progress = total ? Math.min((remaining / total) * 100, 100) : 0;
+  const card = cards?.[0] as any;
+  const lastWash = washes?.[0] as any;
+  const packageName = sub?.packages ? pick(sub.packages.title_en, sub.packages.title_ar) : pick("No active package", "لا توجد باقة مفعلة");
+  const points = Number((profile as any)?.reward_points ?? (profile as any)?.points ?? 0);
+  const greeting = profile?.full_name ? profile.full_name.split(" ")[0] : pick("there", "بك");
+
+  const bookingDate = useMemo(() => booking?.scheduled_at ? fmtDate(booking.scheduled_at) : pick("No booking yet", "لا يوجد حجز قادم"), [booking?.scheduled_at, fmtDate, pick]);
+
+  return (
+    <main dir="rtl" className="min-h-screen overflow-x-hidden bg-[#e9fbff] text-[#125667]">
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_15%_5%,rgba(255,255,255,.95),transparent_32%),radial-gradient(circle_at_95%_25%,rgba(57,210,235,.18),transparent_30%),linear-gradient(145deg,#f9feff_0%,#e7faff_48%,#f5fdff_100%)]" />
+      <div className="fixed -right-24 top-24 -z-10 size-72 rounded-full bg-cyan-300/15 blur-3xl" />
+      <div className="fixed -left-28 bottom-16 -z-10 size-80 rounded-full bg-white/80 blur-3xl" />
+
+      <div className="mx-auto w-full max-w-md px-4 pb-10 pt-5 sm:max-w-lg">
+        <header className="mb-5 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-[#6b8d96]">{pick("Welcome back", "أهلاً بك")}</p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-[#086f87]">{greeting} 👋</h1>
+          </div>
+          <div className="flex size-12 items-center justify-center rounded-2xl border border-white/80 bg-white/55 shadow-lg shadow-cyan-500/10 backdrop-blur-xl">
+            <CarFront className="size-6 text-[#11a5bf]" />
+          </div>
+        </header>
+
+        <GlassCard className="mb-4 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wide text-[#73919a]">{pick("Subscription status", "حالة الاشتراك")}</p>
+              <h2 className="mt-1 text-xl font-black text-[#075f73]">{packageName}</h2>
+            </div>
+            <Badge className="rounded-full border border-emerald-300/30 bg-emerald-400/15 px-3 py-1 text-emerald-700 shadow-none hover:bg-emerald-400/15">
+              <span className="me-1.5 inline-block size-1.5 rounded-full bg-emerald-500" />
+              {sub?.status === "active" ? pick("Active", "نشط") : pick("Inactive", "غير نشط")}
+            </Badge>
+          </div>
+
+          <div className="my-5 h-px bg-white/70" />
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] text-[#78939b]">{pick("Current package", "الباقة الحالية")}</p>
+              <p className="mt-1 text-sm font-bold text-[#166b7d]">{total} {pick("washes / month", "غسلات / شهر")}</p>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/45 px-4 py-2 text-center shadow-sm">
+              <p className="text-2xl font-black text-[#0a9ab7]">{remaining}</p>
+              <p className="text-[10px] text-[#73929b]">{pick("remaining washes", "غسلات متبقية")}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-cyan-900/10">
+            <div className="h-full rounded-full bg-gradient-to-r from-[#19b8d2] to-[#72ddea] transition-all" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="mt-2 flex justify-between text-[10px] text-[#78949c]">
+            <span>{used} {pick("used", "مستخدمة")}</span>
+            <span>{sub?.end_date ? `${pick("Renews", "التجديد")} ${fmtDate(sub.end_date)}` : pick("No renewal date", "لا يوجد تاريخ تجديد")}</span>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="mb-4 p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-2xl border border-white/80 bg-white/55 shadow-sm">
+              <Nfc className="size-6 text-[#0ba2bd]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] text-[#78939b]">NFC</p>
+              <h2 className="text-lg font-black text-[#075f73]">{pick("Your car card", "بطاقة سيارتك")}</h2>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-600">● {pick("Connected", "متصل")}</span>
+          </div>
+
+          <div className="mt-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] text-[#78939b]">{pick("Card number", "رقم البطاقة")}</p>
+              <p className="mt-1 font-mono text-sm font-bold tracking-wide text-[#166b7d]">{card?.card_number ?? card?.uid ?? card?.id?.slice?.(0, 12) ?? "—"}</p>
+            </div>
+            <div className="text-left">
+              <p className="text-[10px] text-[#78939b]">{pick("Balance", "الرصيد الحالي")}</p>
+              <p className="mt-1 text-2xl font-black text-[#079ab7]">{remaining}<span className="ms-1 text-[10px] font-bold">{pick("washes", "غسلة")}</span></p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-cyan-100/80 bg-cyan-50/45 px-3 py-2.5 text-[10px] text-[#62848e]">
+            <Waves className="size-4 shrink-0 text-[#13a8c1]" />
+            {pick("Tap your phone on the NFC card to start booking", "قرّب هاتفك من كارت NFC لبدء الحجز")}
+          </div>
+        </GlassCard>
+
+        <div className="grid grid-cols-3 gap-2.5">
+          <GlassCard className="min-h-[158px] p-4">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-white/55 text-[#10a3bd]"><Droplets className="size-5" /></div>
+            <p className="mt-4 text-[10px] text-[#78939b]">{pick("Last wash", "آخر غسلة")}</p>
+            <p className="mt-1 text-sm font-black text-[#126a7c]">{lastWash?.washed_at ? pick("Today", "اليوم") : "—"}</p>
+            <p className="mt-1 text-[9px] text-[#8ba1a8]">{lastWash?.washed_at ? fmtDate(lastWash.washed_at) : pick("No wash yet", "لا توجد غسلة")}</p>
+          </GlassCard>
+
+          <GlassCard className="min-h-[158px] p-4">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-white/55 text-amber-500"><Star className="size-5 fill-current" /></div>
+            <p className="mt-4 text-[10px] text-[#78939b]">{pick("Rewards", "المكافآت")}</p>
+            <p className="mt-1 text-sm font-black text-[#126a7c]">{points.toLocaleString("en-US")}</p>
+            <p className="mt-1 text-[9px] text-[#8ba1a8]">{pick("points", "نقطة")}</p>
+          </GlassCard>
+
+          <GlassCard className="min-h-[158px] p-4">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-white/55 text-[#10a3bd]"><CalendarDays className="size-5" /></div>
+            <p className="mt-4 text-[10px] text-[#78939b]">{pick("Next booking", "الحجز القادم")}</p>
+            <p className="mt-1 text-sm font-black text-[#126a7c]">{booking ? pick("Booked", "محجوز") : "—"}</p>
+            <p className="mt-1 text-[9px] text-[#8ba1a8]">{bookingDate}</p>
+          </GlassCard>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white/35 p-4 shadow-[0_15px_40px_rgba(27,169,194,0.10)] backdrop-blur-xl">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-cyan-50/70 text-[#0da2bc]"><Sparkles className="size-5" /></div>
+          <div className="flex-1">
+            <p className="text-xs font-extrabold text-[#176b7c]">{pick("Wash smarter with TapWash", "غسيلك أسهل مع TapWash")}</p>
+            <p className="mt-0.5 text-[10px] text-[#7c989f]">{pick("Book, wash and earn rewards in one place.", "احجز واغسل واجمع نقاطك من مكان واحد.")}</p>
+          </div>
+          <ChevronLeft className="size-4 text-[#78a0aa]" />
+        </div>
+      </div>
+    </main>
+  );
+}
