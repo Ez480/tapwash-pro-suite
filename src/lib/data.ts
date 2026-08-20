@@ -27,8 +27,7 @@ export function useMyEmployee(userId?: string | null) {
 
 export function useAdminTable<T extends string>(table: T, select = "*", orderBy = "created_at") {
   return useQuery({ queryKey: ["admin", table], staleTime: 0, refetchOnWindowFocus: true, refetchOnReconnect: true, queryFn: async () => {
-    let query = supabase.from(table as any).select(select).order(orderBy, { ascending: false });
-    if (table === "booking_requests") query = query.eq("status", "pending") as any;
+    const query = supabase.from(table as any).select(select).order(orderBy, { ascending: false });
     const { data, error } = await query;
     if (error) throw error;
     return (data ?? []) as any[];
