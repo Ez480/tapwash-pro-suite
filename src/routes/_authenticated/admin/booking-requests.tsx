@@ -50,10 +50,13 @@ function BookingRequests() {
       const createdBy = authData.user?.id ?? null;
       if (!createdBy) return toast.error(pick("Your session has expired. Please sign in again.", "انتهت جلسة تسجيل الدخول، سجل الدخول مرة أخرى."));
       const serial = `TW-${Date.now().toString(36).toUpperCase()}`;
+      const amount = Number(r.amount ?? 0);
+      const paymentLabel = r.payment_method === "cash" ? pick("Cash", "كاش") : r.payment_method === "smart_wallet" ? pick("Smart Wallet", "محفظة") : r.payment_method === "instapay" ? "InstaPay" : pick("Bank transfer", "تحويل بنكي");
+      const orderTitle = `${r.wash_type === "car_wash" ? pick("Customer booking", "حجز عميل") : `${pick("Customer booking", "حجز عميل")} - ${r.wash_type}`} · ${amount.toFixed(2)} EGP · ${paymentLabel}`;
       const { error } = await (supabase as any).from("employee_tasks").insert({
-        serial_number: serial, booking_request_id: r.id, collection_amount: Number(r.amount ?? 0),
+        serial_number: serial, booking_request_id: r.id, collection_amount: amount,
         payment_method: r.payment_method ?? null, payment_status: r.payment_status ?? null,
-        title: r.wash_type === "car_wash" ? "Customer booking" : "Customer booking - " + r.wash_type,
+        title: orderTitle,
         wash_type: r.wash_type, employee_id: employeeId, customer_id: customerId,
         package_name: packageName, offer_name: offerName, customer_name: r.customer_name,
         customer_phone: r.customer_phone, customer_email: r.customer_email, location_text: r.address,
