@@ -78,11 +78,9 @@ function BookingPage() {
 
   const [form, setForm] = useState<FormState>(initial);
   const [booked, setBooked] = useState<string[]>([]);
-  const [bookedByDate, setBookedByDate] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const [washChoices, setWashChoices] = useState<WashChoice[]>([]);
 
   const item: any = type === "offer"
     ? (offers ?? []).find((x: any) => x.id === id)
@@ -93,7 +91,6 @@ function BookingPage() {
   const title = item
     ? pick(item.title_en, item.title_ar)
     : pick("Selected service", "الخدمة المختارة");
-  const washCount = Math.max(0, Number(item?.washes_count ?? 0));
   const durationDays = Math.max(1, Number(item?.duration_days ?? 30));
   const maxSubscriptionDate = addDays(today, durationDays - 1);
   const start = (s?.booking_start_time ?? "09:00:00").slice(0, 5);
@@ -109,15 +106,6 @@ function BookingPage() {
       email: profile.email ?? user?.email ?? "",
     }));
   }, [profile, user?.email]);
-
-  useEffect(() => {
-    if (!isSubscription || washCount === 0) return;
-    setWashChoices((current) =>
-      current.length === washCount
-        ? current
-        : Array.from({ length: washCount }, () => ({ date: "", time: "" }))
-    );
-  }, [isSubscription, washCount]);
 
   useEffect(() => {
     if (isSubscription || !form.date) return;
@@ -138,31 +126,6 @@ function BookingPage() {
     return () => { live = false; };
   }, [form.date, isSubscription]);
 
-  const selectedDatesKey = washChoices.map((x) => x.date).join("|");
-  useEffect(() => {
-    if (!isSubscription) return;
-    const dates = [...new Set(washChoices.map((x) => x.date).filter(Boolean))];
-    if (!dates.length) {
-      setBookedByDate({});
-      return;
-    }
-    let live = true;
-    (async () => {
-      const entries = await Promise.all(dates.map(async (date) => {
-        const a = new Date(`${date}T00:00:00`).toISOString();
-        const b = new Date(`${date}T23:59:59`).toISOString();
-        const { data, error } = await (supabase as any).rpc("get_booked_booking_slots", {
-          p_start: a,
-          p_end: b,
-        });
-        if (error) toast.error(error.message);
-        return [date, (data ?? []).map((x: any) => new Date(x.scheduled_at).toTimeString().slice(0, 5))] as const;
-      }));
-      if (live) setBookedByDate(Object.fromEntries(entries));
-    })();
-    return () => { live = false; };
-  }, [isSubscription, selectedDatesKey]);
-
   const slots = useMemo(() => {
     const result: string[] = [];
     let [h, m] = start.split(":").map(Number);
@@ -178,8 +141,6 @@ function BookingPage() {
   }, [start, end, step]);
 
   const set = (key: keyof FormState, value: string) => setForm((f) => ({ ...f, [key]: value }));
-  const setWash = (index: number, key: keyof WashChoice, value: string) =>
-    setWashChoices((current) => current.map((wash, i) => i === index ? { ...wash, [key]: value } : wash));
 
   const paymentConfigured = (method: string) =>
     method === "cash" ||
@@ -224,18 +185,15 @@ function BookingPage() {
     }
 
     if (isSubscription) {
-      if (washChoices.length !== washCount || washChoices.some((w) => !w.date || !w.time)) {
-        return toast.error(pick(`Choose a date and time for all ${washCount} washes.`, `اختار تاريخ ووقت لكل الـ ${washCount} غسلات.`));
+      if (!form.date || !form.time) {
+        return toast.error(pick("Choose the first wash date and time.", "اختار تاريخ ووقت أول غسلة."));
       }
-      if (washChoices.some((w) => w.date < today || w.date > maxSubscriptionDate)) {
-        return toast.error(pick(`Subscription wash dates must be between ${today} and ${maxSubscriptionDate}.`, `مواعيد غسلات الاشتراك لازم تكون من ${today} إلى ${maxSubscriptionDate}.`));
+      if (form.date < today || form.date > maxSubscriptionDate) {
+        return toast.error(pick(`The first wash must be between ${today} and ${maxSubscriptionDate}.`, `ميعاد أول غسلة لازم يكون من ${today} إلى ${maxSubscriptionDate}.`));
       }
-      const duplicate = washChoices.some((wash, index) =>
-        washChoices.some((other, j) => j !== index && other.date === wash.date && other.time === wash.time)
-      );
-      if (duplicate) return toast.error(pick("Each subscription wash needs a different date and time.", "كل غسلة في الاشتراك لازم يكون لها تاريخ ووقت مختلف."));
-      const busy = washChoices.some((w) => (bookedByDate[w.date] ?? []).includes(w.time));
-      if (busy) return toast.error(pick("One of the selected wash times is already booked. Choose another time.", "واحد من مواعيد الغسيل المختارة محجوز بالفعل. اختار موعد تاني."));
+      if (booked.includes(form.time)) {
+        return toast.error(pick("This wash time is already booked. Choose another time.", "موعد الغسلة ده محجوز بالفعل. اختار موعد تاني."));
+      }
     }
 
     if (!isSubscription && (!form.date || !form.time)) {
@@ -247,30 +205,70 @@ function BookingPage() {
       : null;
     setSaving(true);
 
-    const { data: car, error: carError } = await (supabase as any).from("cars").insert({
-      customer_id: user.id,
-      brand: form.brand || null,
-      model: form.model || null,
-      color: form.color || null,
-      plate_number: form.plate || null,
-      notes: form.car_type,
-    }).select("id").single();
+    let carId: string | null = null;
+    const normalizedPlate = form.plate.trim();
 
-    if (carError) {
-      whatsappWindow?.close();
-      setSaving(false);
-      return toast.error(carError.message);
+    if (normalizedPlate) {
+      const { data: existingCar, error: existingCarError } = await (supabase as any)
+        .from("cars")
+        .select("id, customer_id")
+        .eq("plate_number", normalizedPlate)
+        .maybeSingle();
+
+      if (existingCarError) {
+        whatsappWindow?.close();
+        setSaving(false);
+        return toast.error(existingCarError.message);
+      }
+
+      if (existingCar) {
+        if (existingCar.customer_id !== user.id) {
+          whatsappWindow?.close();
+          setSaving(false);
+          return toast.error(pick("This plate number is already registered to another customer.", "رقم اللوحة ده مسجل بالفعل لعميل آخر."));
+        }
+        carId = existingCar.id;
+        const { error: updateCarError } = await (supabase as any).from("cars").update({
+          brand: form.brand || null,
+          model: form.model || null,
+          color: form.color || null,
+          notes: form.car_type,
+        }).eq("id", carId);
+        if (updateCarError) {
+          whatsappWindow?.close();
+          setSaving(false);
+          return toast.error(updateCarError.message);
+        }
+      }
     }
 
-    const carId = car?.id ?? null;
+    if (!carId) {
+      const { data: car, error: carError } = await (supabase as any).from("cars").insert({
+        customer_id: user.id,
+        brand: form.brand || null,
+        model: form.model || null,
+        color: form.color || null,
+        plate_number: normalizedPlate || null,
+        notes: form.car_type,
+      }).select("id").single();
+
+      if (carError) {
+        whatsappWindow?.close();
+        setSaving(false);
+        return toast.error(carError.code === "23505"
+          ? pick("This plate number is already registered. Check the plate and try again.", "رقم اللوحة ده مسجل بالفعل. راجع الرقم وحاول تاني.")
+          : carError.message);
+      }
+      carId = car?.id ?? null;
+    }
 
     if (isSubscription) {
-      const requestedWashes = washChoices.map((wash, index) => ({
-        wash_number: index + 1,
-        date: wash.date,
-        time: wash.time,
-        scheduled_at: new Date(`${wash.date}T${wash.time}:00`).toISOString(),
-      }));
+      const requestedWashes = [{
+        wash_number: 1,
+        date: form.date,
+        time: form.time,
+        scheduled_at: new Date(`${form.date}T${form.time}:00`).toISOString(),
+      }];
 
       const { error } = await (supabase as any).from("subscription_requests").insert({
         customer_id: user.id,
@@ -359,7 +357,7 @@ function BookingPage() {
           {isSubscription && (
             <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
               <PackageCheck className="mx-auto mb-2 size-6 text-primary" />
-              <p>{pick("Your selected wash dates and times were sent with the request. The manager will confirm payment before activation.", "مواعيد وتوقيتات الغسلات اللي اخترتها اتبعتت مع الطلب. المدير هيأكد الدفع قبل تفعيل الاشتراك.")}</p>
+              <p>{pick("Your first wash date and time were sent with the request. The remaining washes will be scheduled by management/system after activation.", "ميعاد ووقت أول غسلة اتبعتوا مع الطلب. باقي الغسلات هيتم تنظيمها بعد تفعيل الاشتراك.")}</p>
             </div>
           )}
           {form.payment_method !== "cash" && (
@@ -384,39 +382,26 @@ function BookingPage() {
           <p className="mt-4 text-3xl font-extrabold text-primary">{fmtMoney(price)}</p>
           {isSubscription && (
             <p className="mt-2 text-sm text-muted-foreground">
-              {pick(`${washCount} washes over ${durationDays} days. Choose a date and time for every wash.`, `اختار تاريخ ووقت لكل غسلة من الـ ${washCount} غسلات خلال ${durationDays} يوم.`)}
+              {pick(`${item?.washes_count ?? 0} washes over ${durationDays} days. Choose the first wash date and time.`, `اختار تاريخ ووقت أول غسلة من الباقة خلال ${durationDays} يوم.`)}
             </p>
           )}
         </div>
 
         {isSubscription ? (
           <section className="panel mb-6 p-6">
-            <h2 className="flex items-center gap-2 text-lg font-bold"><CalendarDays className="size-5 text-primary" />{pick("Choose your wash dates and times", "اختار مواعيد الغسلات")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">{pick(`Choose a date and available time for each of the ${washCount} washes.`, `اختار تاريخ ووقت متاح لكل غسلة من الـ ${washCount}.`)}</p>
-            <div className="mt-5 space-y-4">
-              {washChoices.map((wash, index) => (
-                <div key={index} className="rounded-2xl border border-primary/15 bg-primary/[0.03] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <b>{pick(`Wash ${index + 1}`, `الغسلة ${index + 1}`)}</b>
-                    {wash.date && wash.time && <span className="text-xs text-muted-foreground">{wash.date} · {wash.time}</span>}
-                  </div>
-                  <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1.6fr]">
-                    <div>
-                      <Label>{pick("Date", "التاريخ")}</Label>
-                      <Input className="mt-2" type="date" min={today} max={maxSubscriptionDate} value={wash.date} onChange={(e) => { setWash(index, "date", e.target.value); setWash(index, "time", ""); }} />
-                    </div>
-                    <div>
-                      <Label>{pick("Available time", "الوقت المتاح")}</Label>
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        {slots.map((x) => {
-                          const off = (bookedByDate[wash.date] ?? []).includes(x);
-                          return <Button key={x} type="button" disabled={!wash.date || off} variant={wash.time === x ? "default" : "outline"} onClick={() => setWash(index, "time", x)}>{x}</Button>;
-                        })}
-                      </div>
-                    </div>
-                  </div>
+            <h2 className="flex items-center gap-2 text-lg font-bold"><CalendarDays className="size-5 text-primary" />{pick("Choose first wash date and time", "اختار تاريخ ووقت أول غسلة")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{pick("Only the first wash date and time are required. The remaining washes are handled after activation.", "مطلوب منك ميعاد ووقت أول غسلة فقط، وباقي الغسلات يتم تنظيمها بعد التفعيل.")}</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>{pick("Date", "التاريخ")}</Label>
+                <Input className="mt-2" type="date" min={today} max={maxSubscriptionDate} value={form.date} onChange={(e) => set("date", e.target.value)} />
+              </div>
+              <div>
+                <Label>{pick("Available time", "الوقت المتاح")}</Label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {slots.map((x) => <Button key={x} type="button" disabled={booked.includes(x)} variant={form.time === x ? "default" : "outline"} onClick={() => set("time", x)}>{x}</Button>)}
                 </div>
-              ))}
+              </div>
             </div>
           </section>
         ) : (
