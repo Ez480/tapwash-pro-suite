@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, CalendarClock, Droplets, Package, RefreshCw, ScanLine, ShieldCheck, Sparkles } from "lucide-react";
+import { BriefcaseBusiness, CalendarClock, Droplets, Package, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AppTopbar } from "@/components/app/Shell";
 import { ProfileEditor } from "@/components/app/ProfileEditor";
+import { CustomerNfcGlassCard } from "@/components/app/CustomerNfcGlassCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useSession, useUserRoles } from "@/lib/auth";
@@ -25,41 +26,6 @@ const orderStages = [
   { key: "completed", en: "Your order is complete", ar: "تم انهاء طلبك", icon: "🏁" },
 ];
 function normalizeOrderStatus(status: string | null | undefined) { const value = String(status ?? "pending").toLowerCase(); if (["new", "created", "pending", "requested"].includes(value)) return "pending"; if (["approved", "confirmed", "accepted", "assigned"].includes(value)) return "confirmed"; if (["on_the_way", "on-the-way", "out_for_delivery"].includes(value)) return "on_the_way"; if (["arrived", "delivered", "picked_up", "picked-up", "pickup", "collected", "courier_picked_up"].includes(value)) return "arrived"; if (["in_progress", "in-progress", "washing", "processing", "started"].includes(value)) return "in_progress"; if (["completed", "complete", "finished", "closed"].includes(value)) return "completed"; return "pending"; }
-
-function NfcGlassCard({ cards, pick }: { cards: any[] | undefined; pick: (en: string, ar: string) => string }) {
-  const card = cards?.[0];
-  const active = String(card?.status ?? "active").toLowerCase() === "active";
-  return <section className="relative mt-4 overflow-hidden rounded-[1.8rem] border border-cyan-300/30 bg-gradient-to-br from-cyan-400/20 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:p-4">
-    <div className="pointer-events-none absolute -left-14 -top-16 size-40 rounded-full bg-cyan-300/20 blur-2xl" />
-    <div className="pointer-events-none absolute -bottom-16 -right-14 size-44 rounded-full bg-blue-500/15 blur-2xl" />
-    <div className="relative overflow-hidden rounded-[1.45rem] border border-white/40 bg-white/25 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-cyan-400/10 dark:from-white/10" />
-      <div className="relative flex items-center gap-3 border-b border-white/25 px-3 py-3 sm:px-4">
-        <div className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-200/50 bg-white/35 text-primary shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-          <svg viewBox="0 0 48 48" className="size-9 text-primary" fill="none" aria-hidden="true">
-            <circle cx="24" cy="24" r="3.5" fill="currentColor" />
-            <path d="M16.5 17.5a9.2 9.2 0 0 0 0 13M31.5 17.5a9.2 9.2 0 0 1 0 13" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
-            <path d="M11 12a17 17 0 0 0 0 24M37 12a17 17 0 0 1 0 24" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" opacity=".62" />
-          </svg>
-          <span className={`absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-background ${active ? "bg-blue-500" : "bg-red-500"} ${active ? "animate-pulse" : ""}`} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/75">TapWash NFC</p>
-          <h3 className="truncate text-base font-black sm:text-lg">{pick("NFC card", "كارت NFC")}</h3>
-        </div>
-        <Badge variant={active ? "default" : "destructive"} className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold sm:px-3">{active ? pick("Active", "شغال") : pick("Suspended", "موقوف")}</Badge>
-      </div>
-      <Link to="/nfc-reorder" aria-label={pick("Ready to scan. Tap your card on the phone to continue", "جاهز للمسح. قرّب الكارت من الهاتف للمتابعة")} className="relative flex w-full items-center gap-3 px-3 py-3 text-start transition-colors hover:bg-white/10 active:bg-white/15 sm:px-4">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><ScanLine className="size-5" /></div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold">{pick("Ready to scan", "جاهز للمسح")}</p>
-          <p className="text-[11px] text-muted-foreground">{pick("Tap your card to continue", "قرّب الكارت من الهاتف للمتابعة")}</p>
-        </div>
-        <span className="shrink-0 text-xs font-bold text-primary">{pick("Open", "فتح")}</span>
-      </Link>
-    </div>
-  </section>;
-}
 
 function MembershipGlassCard({ sub, total, remaining, used, statusLabel, pick, t }: { sub: any; total: number; remaining: number; used: number; statusLabel: (s?: string | null) => string; pick: (en: string, ar: string) => string; t: (key: string) => string }) {
   const packageName = sub?.packages ? pick(sub.packages.title_en, sub.packages.title_ar) : t("none");
@@ -97,7 +63,7 @@ function CustomerDashboard() {
   const statusLabel = (s?: string | null) => s === "active" ? t("active") : s === "expired" ? t("expired") : s === "cancelled" ? t("cancelled") : s === "pending" ? t("pending") : t("none"); const currentStage = orderStages.find(s => s.key === normalizeOrderStatus(currentOrder?.status)) ?? orderStages[0]; const currentIndex = Math.max(orderStages.findIndex(s => s.key === currentStage.key), 0);
   return <div className="customer-dashboard min-h-screen bg-background"><AppTopbar title={t("my_membership")} extra={isAdmin ? <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex"><Link to="/admin"><ShieldCheck className="me-1.5 size-4" />{t("nav_admin")}</Link></Button> : null} /><div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
     <div className="panel animate-fade-up flex flex-wrap items-center gap-5 p-6">{profile?.avatar_url ? <img src={profile.avatar_url} alt={profile.full_name || "avatar"} className="size-16 rounded-2xl object-cover" /> : <div className="surface-blue flex size-16 items-center justify-center rounded-2xl font-display text-xl font-bold shadow-luxe">{(profile?.full_name || user?.email || "T").slice(0, 1).toUpperCase()}</div>}<div className="min-w-0"><p className="text-xs uppercase tracking-widest text-muted-foreground">{t("welcome_back")}</p><h2 className="truncate text-2xl font-bold">{profile?.full_name || user?.email}</h2><div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground"><Badge variant={profile?.status === "active" ? "default" : "destructive"}>{profile?.status === "active" ? t("active") : t("suspended")}</Badge>{isEmployee && <Badge variant="secondary">{pick("Employee", "موظف")}</Badge>}{isAdmin && <Badge variant="secondary">{pick("Admin", "مدير")}</Badge>}{profile?.phone && <span>{profile.phone}</span>}</div></div><div className="ms-auto flex flex-wrap gap-2"><ProfileEditor /></div></div>
-    <NfcGlassCard cards={cards} pick={pick} />
+    <CustomerNfcGlassCard cards={cards} />
     {sub && <MembershipGlassCard sub={sub} total={total} remaining={remaining} used={used} statusLabel={statusLabel} pick={pick} t={t} />}
     {activeSubscription && <WashDateCards lastWash={lastWash} nextWash={nextSubscriptionWash} fmtDate={fmtDate} pick={pick} />}
     {(isEmployee || employeeInfo) && <section className="panel mt-6 p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BriefcaseBusiness className="size-5 text-primary" /><div><h3 className="text-lg font-bold">{pick("Employee information", "بيانات الموظف")}</h3><p className="text-sm text-muted-foreground">{pick("Managed by management and read-only for employees.", "هذه البيانات يتم تعديلها من المدير فقط.")}</p></div></div><Button variant="outline" size="sm" onClick={() => void loadEmployee()} disabled={employeeLoading || employeeQueryLoading}><RefreshCw className={`me-1.5 size-4 ${(employeeLoading || employeeQueryLoading) ? "animate-spin" : ""}`} />{pick("Refresh", "تحديث")}</Button></div>{employeeInfo ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Employee ID", "رقم ID الموظف")}</span><p className="mt-1 font-semibold">{employeeInfo.employee_id || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Full name", "الاسم كامل")}</span><p className="mt-1 font-semibold">{employeeInfo.full_name || "—"}</p></div><div className="rounded-xl border p-4"><span className="text-xs text-muted-foreground">{pick("Job title", "المسمى الوظيفي")}</span><p className="mt-1 font-semibold">{employeeInfo.job_title || "—"}</p></div></div> : <div className="rounded-xl border p-5 text-sm text-muted-foreground">{employeeLoading || employeeQueryLoading ? pick("Loading employee information...", "جاري تحميل بيانات الموظف...") : pick("No employee information is linked to this account yet.", "لا توجد بيانات موظف مرتبطة بهذا الحساب حتى الآن.")}</div>}</section>}
