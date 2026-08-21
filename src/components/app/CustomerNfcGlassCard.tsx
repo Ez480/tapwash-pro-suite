@@ -32,14 +32,10 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
         <Link
           to="/nfc-reorder"
           search={{ scan: "1" }}
-          aria-label={pick("Scan NFC card", "مسح كارت NFC")}
+          aria-label="SCAN"
           className="group relative mt-4 flex min-h-28 w-full items-center justify-center overflow-hidden rounded-[1.35rem] border border-white/45 bg-white/25 p-5 shadow-lg backdrop-blur-xl transition-transform duration-150 hover:bg-white/35 active:scale-[0.995] dark:border-white/10 dark:bg-white/[0.06] sm:min-h-32 sm:p-6"
         >
-          <div className="flex flex-col items-center justify-center gap-2 text-center">
-            <Nfc className="size-9 text-primary" />
-            <p className="text-sm font-black sm:text-base">{pick("Ready to scan", "جاهز للمسح")}</p>
-            <p className="text-xs text-muted-foreground">{pick("Bring the card close to the phone to continue", "قرّب الكارت من الهاتف للمتابعة")}</p>
-          </div>
+          <span className="text-sm font-black tracking-[0.16em] sm:text-base">SCAN</span>
         </Link>
       </div>
     </section>
