@@ -7,17 +7,76 @@
   background-color: var(--color-card);
 }
 
-.dark button {
-  color: inherit;
-}
-
+.dark button { color: inherit; }
 .dark input::placeholder,
-.dark textarea::placeholder {
-  color: var(--color-muted-foreground);
-  opacity: 1;
+.dark textarea::placeholder { color: var(--color-muted-foreground); opacity: 1; }
+.dark ::selection { background: color-mix(in oklch, var(--color-primary) 35%, transparent); color: var(--color-foreground); }
+
+/* Customer dashboard glass polish */
+.customer-dashboard > div > section:first-of-type {
+  background: radial-gradient(circle at 12% 18%, oklch(0.68 0.14 250 / 0.18), transparent 34%), radial-gradient(circle at 88% 80%, oklch(0.54 0.216 263 / 0.16), transparent 38%), color-mix(in oklch, var(--color-card) 38%, transparent);
+  border-color: color-mix(in oklch, var(--color-primary) 24%, var(--color-border));
+  backdrop-filter: blur(28px) saturate(155%);
+  -webkit-backdrop-filter: blur(28px) saturate(155%);
 }
 
-.dark ::selection {
-  background: color-mix(in oklch, var(--color-primary) 35%, transparent);
-  color: var(--color-foreground);
+/* Use a recognizable NFC mark instead of the improvised drawing. */
+.customer-dashboard > div > section:first-of-type > div.relative > div.relative.flex > div.flex > div.relative.flex.size-12 > svg { display: none; }
+.customer-dashboard > div > section:first-of-type > div.relative > div.relative.flex > div.flex > div.relative.flex.size-12::before {
+  content: "";
+  width: 34px;
+  height: 34px;
+  display: block;
+  transform: rotate(-12deg);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='black' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M13 18c-9 9-9 19 0 28'/%3E%3Cpath d='M22 24c-5 5-5 11 0 16'/%3E%3Cpath d='M51 18c9 9 9 19 0 28'/%3E%3Cpath d='M42 24c5 5 5 11 0 16'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='5' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='black' stroke-width='5' stroke-linecap='round'%3E%3Cpath d='M13 18c-9 9-9 19 0 28'/%3E%3Cpath d='M22 24c-5 5-5 11 0 16'/%3E%3Cpath d='M51 18c9 9 9 19 0 28'/%3E%3Cpath d='M42 24c5 5 5 11 0 16'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='5' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Keep Scan NFC TapWash intact on small screens. */
+.customer-dashboard > div > section:first-of-type h3 { overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; font-size: clamp(0.86rem, 3.7vw, 1.125rem); letter-spacing: -0.025em; }
+.customer-dashboard > div > section:first-of-type .relative.flex.items-center.justify-between { flex-wrap: wrap; row-gap: 0.75rem; }
+
+/* Membership: blurred outer surface + transparent glass inner cards + glass icon capsules. */
+.customer-dashboard section.panel.relative.mt-6 {
+  background: radial-gradient(circle at 8% 10%, oklch(0.68 0.14 250 / 0.13), transparent 34%), radial-gradient(circle at 92% 90%, oklch(0.54 0.216 263 / 0.12), transparent 38%), color-mix(in oklch, var(--color-card) 38%, transparent);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+}
+.customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 42%, transparent), color-mix(in oklch, var(--color-card) 22%, transparent));
+  border-color: color-mix(in oklch, var(--color-border) 55%, white 45%);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.34), 0 14px 34px -24px oklch(0.15 0.08 260 / 0.65);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+}
+.customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border > .flex.size-10 {
+  border: 1px solid color-mix(in oklch, var(--color-border) 48%, white 52%);
+  background: color-mix(in oklch, var(--color-card) 35%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.38), 0 8px 22px -16px oklch(0.18 0.08 260 / 0.7);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Last wash / next wash: independent glass cards and glass icon capsules. */
+.customer-dashboard [class~="sm:grid-cols-2"] > .panel {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 10% 15%, oklch(0.68 0.14 250 / 0.12), transparent 36%), color-mix(in oklch, var(--color-card) 42%, transparent);
+  border-color: color-mix(in oklch, var(--color-border) 58%, white 42%);
+  box-shadow: 0 18px 48px -28px oklch(0.18 0.08 260 / 0.55), inset 0 1px 0 oklch(1 0 0 / 0.34);
+  backdrop-filter: blur(25px) saturate(150%);
+  -webkit-backdrop-filter: blur(25px) saturate(150%);
+}
+.customer-dashboard [class~="sm:grid-cols-2"] > .panel > .flex.size-12 {
+  border: 1px solid color-mix(in oklch, var(--color-border) 50%, white 50%);
+  background: color-mix(in oklch, var(--color-card) 38%, transparent) !important;
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.4), 0 10px 24px -18px oklch(0.18 0.08 260 / 0.7);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+@media (max-width: 420px) {
+  .customer-dashboard > div > section:first-of-type > div.relative > div.relative.flex > div.flex.min-w-0.items-center { gap: 0.55rem; }
+  .customer-dashboard > div > section:first-of-type > div.relative > div.relative.flex > div.flex.min-w-0.items-center > div.relative.flex.size-12 { width: 2.75rem; height: 2.75rem; }
 }
