@@ -15,13 +15,14 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
     : null;
 
   return (
-    <section className="relative mt-4 overflow-hidden rounded-[2rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-4 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-5">
+    <section className="relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-4">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-primary/10" />
 
-      <div className="relative rounded-[1.6rem] border border-white/35 bg-white/25 p-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-5">
+      <div className="relative rounded-[1.4rem] border border-white/35 bg-white/25 p-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white/30 text-cyan-600 shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-cyan-300">
+            <div className="relative flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white/30 text-cyan-600 shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-cyan-300">
+              <span className={`absolute -top-1 -end-1 size-2.5 rounded-full ${active ? "bg-blue-500" : "bg-red-500"} animate-pulse`} />
               <Nfc className="size-8" />
             </div>
             <div>
@@ -30,23 +31,15 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
             </div>
           </div>
           <Badge variant={active ? "default" : "destructive"} className="rounded-full px-3 py-1">
-            <span className={`me-2 inline-block size-2 rounded-full ${active ? "bg-sky-400 animate-pulse" : "bg-red-400 animate-pulse"}`} />
             {active ? pick("Active", "نشط") : pick("Suspended", "موقوف")}
           </Badge>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/30 bg-white/20 p-3 dark:border-white/10 dark:bg-white/[0.05]">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold text-muted-foreground">كود الكارت</p>
-            <p className="mt-1 truncate text-sm font-black" dir="ltr">{card?.serial_number || card?.uid || "—"}</p>
+        {validUntil && (
+          <div className="mt-4 text-sm font-bold text-muted-foreground">
+            صالح حتى <span className="font-black text-foreground">{validUntil}</span>
           </div>
-          {validUntil && (
-            <div className="min-w-0 text-end">
-              <p className="text-[11px] font-bold text-muted-foreground">صالح حتى</p>
-              <p className="mt-1 text-sm font-black">{validUntil}</p>
-            </div>
-          )}
-        </div>
+        )}
 
         <Link
           to="/nfc-reorder"
@@ -56,6 +49,10 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
         >
           Tap NFC TapWash
         </Link>
+
+        <p className="mt-3 text-center text-sm font-black tracking-wide text-muted-foreground" dir="ltr">
+          {card?.serial_number || card?.uid || "—"}
+        </p>
       </div>
     </section>
   );
