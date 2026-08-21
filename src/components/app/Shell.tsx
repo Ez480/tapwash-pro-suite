@@ -32,7 +32,11 @@ export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
         {extra}
         {isAdmin&&isAdminArea&&<Button type="button" variant="ghost" size="sm" onClick={()=>navigate({to:"/admin/live-orders"})} aria-label="متابعة الأوردرات والدليفري Live" title="متابعة الأوردرات والدليفري Live" className={cn(toolbarButton,"h-9 px-2.5")}><Truck className="size-4 sm:me-1"/><span className="hidden lg:inline">Live</span></Button>}
         {isAdmin&&!isAdminArea&&<Button asChild variant="ghost" size="sm" className={cn(toolbarButton,"h-9 px-2.5")}><Link to="/admin" title={pick("Admin dashboard","لوحة المدير")}><ShieldCheck className="size-4 sm:me-1"/><span className="hidden lg:inline">{pick("Admin","المدير")}</span></Link></Button>}
-        <span className="flex h-9 items-center rounded-xl border border-white/45 bg-white/25 px-0.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]"><NotificationCenter/><LanguageToggle/><ThemeToggle/></span>
+        <div className="flex h-9 items-center gap-1">
+          <NotificationCenter/>
+          <LanguageToggle/>
+          <ThemeToggle/>
+        </div>
         <Button variant="ghost" size="icon" onClick={signOut} aria-label={t("logout")} title={t("logout")} className={cn(toolbarButton,"size-9")}><LogOut className="size-4"/></Button>
       </div>
     </div>
