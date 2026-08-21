@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, CreditCard, Droplets, Loader2, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, Car, CreditCard, Droplets, Loader2, MapPin, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -161,5 +161,65 @@ function NfcCardLookup() {
 
   const carText = [result?.car?.brand, result?.car?.model, result?.car?.color, result?.car?.plate_number].filter(Boolean).join(" · ");
   const amount = Number(defaults?.last_order?.amount ?? 0);
-  return <main className="min-h-screen bg-background px-4 py-8 text-foreground"><div className="mx-auto max-w-lg"><div className="rounded-3xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-2xl dark:bg-white/5"><div className="flex items-center gap-3"><span className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary"><Sparkles className="size-6" /></span><div><p className="text-sm font-medium text-primary">TapWash NFC</p><h1 className="text-2xl font-black">{pick("Book your next wash", "احجز ميعاد الغسيل")}</h1></div></div><div className="mt-6 rounded-2xl border p-4"><p className="font-bold">{result?.customer?.full_name}</p><p className="mt-1 text-sm text-muted-foreground">{carText || "—"}</p><p className="mt-2 text-xs text-muted-foreground">{pick("You are booking directly from your NFC card. No login is required.", "أنت بتحجز مباشرة من كارت NFC، ومش محتاج تسجيل دخول.")}</p>{amount > 0 && <p className="mt-3 font-bold text-primary">{pick("Previous service amount", "قيمة الخدمة السابقة")}: {amount} EGP</p>}</div><div className="mt-6 space-y-5"><div className="space-y-2"><Label><CalendarDays className="me-1 inline size-4" />{pick("Appointment date", "تاريخ الغسيل")}</Label><Input type="date" min={today} value={date} onChange={e => setDate(e.target.value)} /></div><div className="space-y-2"><Label>{pick("Available time", "الموعد المتاح")}</Label><div className="grid grid-cols-3 gap-2">{loadingSlots ? <span className="col-span-3 text-sm text-muted-foreground">{pick("Loading available times…", "جاري تحميل المواعيد…")}</span> : slots.length === 0 ? <span className="col-span-3 text-sm text-muted-foreground">{pick("No free times for this date.", "مفيش مواعيد متاحة في اليوم ده.")}</span> : slots.map(x => <Button key={x} type="button" variant={time === x ? "default" : "outline"} onClick={() => setTime(x)}>{x}</Button>)}</div></div><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>{pick("Phone number", "رقم الهاتف")}</Label><Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="01xxxxxxxxx" /></div><div className="space-y-2"><Label>{pick("Address", "العنوان")}</Label><div className="flex gap-2"><MapPin className="mt-2 size-5 text-primary" /><Input value={address} onChange={e => setAddress(e.target.value)} /></div></div></div><div className="space-y-2"><Label>{pick("Map link", "لينك الموقع")}</Label><Input value={locationUrl} onChange={e => setLocationUrl(e.target.value)} placeholder="https://maps.google.com/..." /></div><div className="space-y-2"><Label>{pick("Notes", "ملاحظات")}</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div><div className="space-y-2"><Label><CreditCard className="me-1 inline size-4" />{pick("Payment method", "طريقة الدفع")}</Label><div className="grid grid-cols-2 gap-2">{paymentOptions.map(([value, label]) => <Button key={value} type="button" variant={payment === value ? "default" : "outline"} onClick={() => setPayment(value)}>{label}</Button>)}</div></div><Button className="w-full" size="lg" disabled={saving || !time} onClick={() => void submitBooking()}>{saving ? <Loader2 className="me-2 size-4 animate-spin" /> : <CalendarDays className="me-2 size-4" />}{saving ? pick("Sending…", "جاري إرسال الحجز…") : pick("Confirm appointment", "تأكيد حجز الموعد")}</Button><p className="text-center text-xs text-muted-foreground">{pick("Scanning the card does not deduct a wash. A wash is deducted only during staff check-in.", "مسح الكارت لا يخصم غسلة. الخصم بيتم فقط عند تسجيل الغسلة بواسطة الموظف.")}</p></div></div></div></main>;
+  const subscriptionStatus = String(result?.subscription?.status ?? "").toLowerCase();
+  const subscriptionActive = subscriptionStatus === "active";
+  const subscriptionLabel = subscriptionActive ? pick("Active", "نشط") : pick("Suspended", "موقوف");
+  const subscriptionDot = subscriptionActive ? "bg-blue-500" : "bg-red-500";
+  const packageName = result?.subscription?.package ? pick(result.subscription.package.title_en ?? "Package", result.subscription.package.title_ar ?? "الباقة") : pick("No active package", "لا توجد باقة نشطة");
+  const remainingWashes = Number(result?.subscription?.remaining_washes ?? 0);
+
+  return <main className="min-h-screen bg-background px-4 py-8 text-foreground"><div className="mx-auto max-w-lg">
+    <div className="rounded-[2rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
+      <div className="relative overflow-hidden rounded-[1.6rem] border border-white/35 bg-white/25 p-5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
+        <div className="pointer-events-none absolute -left-16 -top-20 size-48 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-20 size-56 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="relative">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">TapWash Customer Card</p>
+              <h1 className="mt-1 truncate text-xl font-black">{result?.customer?.full_name || "—"}</h1>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/30 bg-white/25 px-3 py-1.5 text-xs font-black shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
+              <span className={`size-2.5 rounded-full ${subscriptionDot} animate-pulse`} />
+              {subscriptionLabel}
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-white/30 bg-white/20 p-4 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white/30 text-primary shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+                <Car className="size-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{pick("Customer vehicle", "سيارة العميل")}</p>
+                <p className="mt-0.5 truncate font-black">{carText || "—"}</p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-white/25 bg-white/20 p-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="text-[10px] text-muted-foreground">{pick("Package", "الباقة")}</p>
+                <p className="mt-1 truncate text-sm font-bold">{packageName}</p>
+              </div>
+              <div className="rounded-xl border border-white/25 bg-white/20 p-3 dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="text-[10px] text-muted-foreground">{pick("Remaining washes", "الغسلات المتبقية")}</p>
+                <p className="mt-1 text-lg font-black">{remainingWashes}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/20 pt-4 text-xs text-muted-foreground">
+            <span>{pick("NFC card", "كارت NFC")}</span>
+            <span dir="ltr" className="font-black tracking-wider">{result?.card?.serial_number || result?.card?.uid || "—"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-6 rounded-3xl border border-white/20 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl dark:bg-white/5 sm:p-6">
+      <div className="flex items-center gap-3"><span className="flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary"><Sparkles className="size-6" /></span><div><p className="text-sm font-medium text-primary">TapWash NFC</p><h2 className="text-xl font-black">{pick("Book your next wash", "احجز ميعاد الغسيل")}</h2></div></div>
+      <p className="mt-4 text-xs text-muted-foreground">{pick("You are booking directly from your NFC card. No login is required.", "أنت بتحجز مباشرة من كارت NFC، ومش محتاج تسجيل دخول.")}</p>
+      {amount > 0 && <p className="mt-3 font-bold text-primary">{pick("Previous service amount", "قيمة الخدمة السابقة")}: {amount} EGP</p>}
+      <div className="mt-6 space-y-5"><div className="space-y-2"><Label><CalendarDays className="me-1 inline size-4" />{pick("Appointment date", "تاريخ الغسيل")}</Label><Input type="date" min={today} value={date} onChange={e => setDate(e.target.value)} /></div><div className="space-y-2"><Label>{pick("Available time", "الموعد المتاح")}</Label><div className="grid grid-cols-3 gap-2">{loadingSlots ? <span className="col-span-3 text-sm text-muted-foreground">{pick("Loading available times…", "جاري تحميل المواعيد…")}</span> : slots.length === 0 ? <span className="col-span-3 text-sm text-muted-foreground">{pick("No free times for this date.", "مفيش مواعيد متاحة في اليوم ده.")}</span> : slots.map(x => <Button key={x} type="button" variant={time === x ? "default" : "outline"} onClick={() => setTime(x)}>{x}</Button>)}</div></div><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label>{pick("Phone number", "رقم الهاتف")}</Label><Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="01xxxxxxxxx" /></div><div className="space-y-2"><Label>{pick("Address", "العنوان")}</Label><div className="flex gap-2"><MapPin className="mt-2 size-5 text-primary" /><Input value={address} onChange={e => setAddress(e.target.value)} /></div></div></div><div className="space-y-2"><Label>{pick("Map link", "لينك الموقع")}</Label><Input value={locationUrl} onChange={e => setLocationUrl(e.target.value)} placeholder="https://maps.google.com/..." /></div><div className="space-y-2"><Label>{pick("Notes", "ملاحظات")}</Label><Input value={notes} onChange={e => setNotes(e.target.value)} /></div><div className="space-y-2"><Label><CreditCard className="me-1 inline size-4" />{pick("Payment method", "طريقة الدفع")}</Label><div className="grid grid-cols-2 gap-2">{paymentOptions.map(([value, label]) => <Button key={value} type="button" variant={payment === value ? "default" : "outline"} onClick={() => setPayment(value)}>{label}</Button>)}</div></div><Button className="w-full" size="lg" disabled={saving || !time} onClick={() => void submitBooking()}>{saving ? <Loader2 className="me-2 size-4 animate-spin" /> : <CalendarDays className="me-2 size-4" />}{saving ? pick("Sending…", "جاري إرسال الحجز…") : pick("Confirm appointment", "تأكيد حجز الموعد")}</Button><p className="text-center text-xs text-muted-foreground">{pick("Scanning the card does not deduct a wash. A wash is deducted only during staff check-in.", "مسح الكارت لا يخصم غسلة. الخصم بيتم فقط عند تسجيل الغسلة بواسطة الموظف.")}</p></div>
+    </div>
+  </div></main>;
 }
