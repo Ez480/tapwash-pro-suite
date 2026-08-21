@@ -30,30 +30,32 @@ function BookingPage(){
  useEffect(()=>{if(profile)setForm(f=>({...f,full_name:profile.full_name??"",phone:profile.phone??"",email:profile.email??user?.email??""}))},[profile,user?.email]);
  useEffect(()=>{if(isSubscription)return;let live=true;(async()=>{if(!form.date)return;setLoading(true);const a=new Date(`${form.date}T00:00:00`).toISOString(),b=new Date(`${form.date}T23:59:59`).toISOString();const {data,error}=await(supabase as any).rpc("get_booked_booking_slots",{p_start:a,p_end:b});if(live){if(error)toast.error(error.message);setBooked((data??[]).map((x:any)=>new Date(x.scheduled_at).toTimeString().slice(0,5)));setLoading(false)}})();return()=>{live=false}},[form.date,isSubscription]);
  const slots=useMemo(()=>{const r:string[]=[];let [h,m]=start.split(":").map(Number);const [eh,em]=end.split(":").map(Number),stop=eh*60+em;while(h*60+m<stop){r.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);m+=step;h+=Math.floor(m/60);m%=60}return r},[start,end,step]);
- const set=(k:keyof FormState,v:string)=>setForm(f=>({...f,[k]:v}));
+ const set=(k:keyof FormState,v:string)=>setForm(f=>({...f,[k]:v));
  const paymentConfigured=(method:string)=>method==="cash"||(method==="smart_wallet"&&!!s?.smart_wallet_number)||(method==="instapay"&&!!s?.instapay_number)||(method==="bank_transfer"&&!!s?.bank_account_number);
- const openWhatsApp=(message:string)=>{if(typeof window==="undefined")return;const raw=String(s?.whatsapp??"").replace(/\D/g,"").replace(/^00/,"");const number=raw.startsWith("20")?raw:raw.startsWith("0")?`20${raw.slice(1)}`:raw;if(!number)return;const a=document.createElement("a");a.href=`https://wa.me/${number}?text=${encodeURIComponent(message)}`;a.target="_blank";a.rel="noopener noreferrer";a.click();};
+ const whatsappNumber=()=>{const raw=String(s?.whatsapp??"").replace(/\D/g,"").replace(/^00/,"");return raw.startsWith("20")?raw:raw.startsWith("0")?`20${raw.slice(1)}`:raw;};
+ const openWhatsApp=(message:string,preopened?:Window|null)=>{if(typeof window==="undefined")return;const number=whatsappNumber();if(!number){preopened?.close();return;}const url=`https://wa.me/${number}?text=${encodeURIComponent(message)}`;if(preopened&&!preopened.closed){preopened.location.href=url;return;}const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.click();};
  const paymentWhatsAppMessage=()=>`مرحباً TapWash، أنا ${form.full_name}. أرسلت طلب ${isSubscription?`اشتراك في باقة ${title}`:"حجز"}. طريقة الدفع: محفظة ذكية. المبلغ: ${price} جنيه. رقم الهاتف: ${form.phone}. أرسل إثبات الدفع هنا لتأكيد الطلب.`;
  const submit=async()=>{
    if(!user||!item)return;
    if(!form.full_name||!form.phone||!form.car_type||!form.address)return toast.error(pick("Complete all required customer and car details.","اكمل بيانات العميل والسيارة المطلوبة."));
    if(!paymentConfigured(form.payment_method))return toast.error(pick("This payment method is not configured yet.","طريقة الدفع دي لسه مش متفعلة."));
+   const whatsappWindow=form.payment_method==="smart_wallet"&&typeof window!=="undefined"?window.open("about:blank","_blank"):null;
    setSaving(true);
    let carId=null;
    const {data:car,error:carError}=await(supabase as any).from("cars").insert({customer_id:user.id,brand:form.brand||null,model:form.model||null,color:form.color||null,plate_number:form.plate||null,notes:form.car_type}).select("id").single();
-   if(carError){setSaving(false);return toast.error(carError.message)}
+   if(carError){whatsappWindow?.close();setSaving(false);return toast.error(carError.message)}
    if(car)carId=car.id;
    if(isSubscription){
      const {error}=await(supabase as any).from("subscription_requests").insert({customer_id:user.id,package_id:id,car_id:carId,amount:price,payment_method:form.payment_method,payment_status:"pending",status:"pending",notes:[form.address,form.location_url,form.notes].filter(Boolean).join(" | ")||null});
-     setSaving(false); if(error)return toast.error(error.message);
-     if(form.payment_method==="smart_wallet")openWhatsApp(paymentWhatsAppMessage());
+     setSaving(false); if(error){whatsappWindow?.close();return toast.error(error.message)}
+     if(form.payment_method==="smart_wallet")openWhatsApp(paymentWhatsAppMessage(),whatsappWindow);
      setDone(true); return;
    }
-   if(!form.date||!form.time){setSaving(false);return toast.error(pick("Choose a date and time.","اختار التاريخ والوقت."))}
+   if(!form.date||!form.time){whatsappWindow?.close();setSaving(false);return toast.error(pick("Choose a date and time.","اختار التاريخ والوقت."))}
    const when=new Date(`${form.date}T${form.time}:00`); const {data:exists}=await(supabase as any).rpc("get_booked_booking_slots",{p_start:new Date(when.getTime()-1000).toISOString(),p_end:new Date(when.getTime()+1000).toISOString()});
-   if((exists??[]).length){setSaving(false);return toast.error(pick("This time is already booked.","الموعد ده اتحجز، اختار موعد تاني."))}
+   if((exists??[]).length){whatsappWindow?.close();setSaving(false);return toast.error(pick("This time is already booked.","الموعد ده اتحجز، اختار موعد تاني."))}
    const {error}=await(supabase as any).from("booking_requests").insert({customer_id:user.id,package_id:type==="package"?id:null,offer_id:type==="offer"?id:null,car_id:carId,wash_type:form.wash_type,scheduled_at:when.toISOString(),customer_name:form.full_name,customer_phone:form.phone,customer_email:form.email||user.email,car_type:form.car_type,car_brand:form.brand,car_model:form.model,car_color:form.color,plate_number:form.plate,address:form.address,location_url:form.location_url||null,notes:form.notes||null,amount:price,payment_method:form.payment_method,payment_status:form.payment_method==="cash"?"unpaid":"awaiting_proof",status:"pending"});
-   setSaving(false); if(error)return toast.error(error.code==="23505"?pick("This time was just booked.","الموعد اتحجز للتو."):error.message); if(form.payment_method==="smart_wallet")openWhatsApp(paymentWhatsAppMessage()); setDone(true);
+   setSaving(false); if(error){whatsappWindow?.close();return toast.error(error.code==="23505"?pick("This time was just booked.","الموعد اتحجز للتو."):error.message)} if(form.payment_method==="smart_wallet")openWhatsApp(paymentWhatsAppMessage(),whatsappWindow); setDone(true);
  };
  if(!user)return <div className="mx-auto max-w-xl px-4 py-20 text-center"><h1 className="text-2xl font-bold">{pick("Login required","لازم تسجل دخول")}</h1><Button asChild className="mt-6"><Link to="/login">{pick("Login","تسجيل الدخول")}</Link></Button></div>;
  if(done)return <div className="mx-auto max-w-2xl px-4 py-20"><div className="panel p-8 text-center"><CheckCircle2 className="mx-auto size-14 text-primary"/><h1 className="mt-4 text-2xl font-bold">{isSubscription?pick("Subscription request sent","تم إرسال طلب الاشتراك"):pick("Booking request sent","تم إرسال طلب الحجز")}</h1><p className="mt-3 text-muted-foreground">{isSubscription?pick("Your package request is now with management. Payment must be confirmed before the subscription is activated.","طلب الباقة وصل للإدارة، ولا يتم تفعيل الاشتراك إلا بعد تأكيد الدفع."):pick("The request is now visible to management for confirmation.","الطلب ظهر للمدير لمراجعته وتأكيده.")}</p>{isSubscription&&<div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm"><PackageCheck className="mx-auto mb-2 size-6 text-primary"/><p>{pick("The manager will confirm the payment and activate your subscription, then schedule your washes manually.","المدير هيؤكد الدفع ويفعل الاشتراك، وبعدها يحدد مواعيد الغسلات يدويًا.")}</p></div>}{form.payment_method!=="cash"&&<div className="mt-5 rounded-xl border p-4 text-sm"><MessageCircle className="mx-auto mb-2 size-6 text-primary"/>{pick("Send the payment proof to the WhatsApp number listed on the site.","ابعت إثبات التحويل على رقم واتساب الموجود في الموقع.")}</div>}<Button asChild className="mt-6"><Link to="/dashboard">{pick("Back to dashboard","العودة للوحة العميل")}</Link></Button></div></div>;
