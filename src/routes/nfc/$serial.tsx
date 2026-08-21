@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Car, CreditCard, Droplets, Loader2, MapPin, Sparkles } from "lucide-react";
+import { CalendarDays, Car, CreditCard, Droplets, Globe2, Loader2, MapPin, Moon, Sparkles, Sun } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useSession, useUserRoles } from "@/lib/auth";
 import { useSettings } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
+import { useTheme } from "@/lib/theme";
 
 export const Route = createFileRoute("/nfc/$serial")({ component: NfcCardLookup });
 
@@ -37,7 +38,8 @@ function NfcCardLookup() {
   const { user } = useSession();
   const { data: roles = [] } = useUserRoles(user?.id);
   const { data: settings } = useSettings();
-  const { pick } = useI18n();
+  const { pick, lang, toggleLang } = useI18n();
+  const { mode, toggle: toggleTheme } = useTheme();
   const [result, setResult] = useState<LookupResult | null>(null);
   const [defaults, setDefaults] = useState<BookingDefaults | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,6 +171,17 @@ function NfcCardLookup() {
   const remainingWashes = Number(result?.subscription?.remaining_washes ?? 0);
 
   return <main className="min-h-screen bg-background px-4 py-8 text-foreground"><div className="mx-auto max-w-lg">
+    <div className="mb-5 flex items-center justify-end gap-2" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <button type="button" onClick={toggleLang} aria-label={pick("Switch language", "تغيير اللغة")} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/30 bg-white/25 px-4 text-xs font-bold shadow-sm backdrop-blur-xl transition hover:bg-white/40 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/10">
+        <Globe2 className="size-4" />
+        <span>{lang === "ar" ? "English" : "العربية"}</span>
+      </button>
+      <button type="button" onClick={toggleTheme} aria-label={pick("Toggle dark mode", "تغيير الوضع الليلي")} className="inline-flex h-10 items-center gap-2 rounded-full border border-white/30 bg-white/25 px-4 text-xs font-bold shadow-sm backdrop-blur-xl transition hover:bg-white/40 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/10">
+        {mode === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        <span>{mode === "dark" ? pick("Light mode", "الوضع الفاتح") : pick("Dark mode", "الوضع الداكن")}</span>
+      </button>
+    </div>
+
     <div className="rounded-[2rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
       <div className="relative overflow-hidden rounded-[1.6rem] border border-white/35 bg-white/25 p-5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-6">
         <div className="pointer-events-none absolute -left-16 -top-20 size-48 rounded-full bg-cyan-400/15 blur-3xl" />
