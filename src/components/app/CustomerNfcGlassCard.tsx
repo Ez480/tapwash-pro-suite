@@ -45,12 +45,12 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
           to="/nfc-reorder"
           search={{ scan: "1" }}
           aria-label="Tap NFC TapWash"
-          className="mt-4 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-4 text-base font-black tracking-wide text-white shadow-md transition-colors hover:bg-blue-700 active:bg-blue-800"
+          className="mt-6 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-4 text-base font-black tracking-wide text-white shadow-md transition-colors hover:bg-blue-700 active:bg-blue-800"
         >
           Tap NFC TapWash
         </Link>
 
-        <p className="mt-3 text-center text-sm font-black tracking-wide text-muted-foreground" dir="ltr">
+        <p className="mt-2 text-center text-sm font-black tracking-wide text-muted-foreground" dir="ltr">
           {card?.serial_number || card?.uid || "—"}
         </p>
       </div>
