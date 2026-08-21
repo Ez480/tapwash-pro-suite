@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, CheckCircle2, CreditCard, ScanLine, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { AppTopbar } from "@/components/app/Shell";
@@ -14,7 +14,10 @@ import { useSettings } from "@/lib/data";
 
 declare global { interface Window { NDEFReader?: any } }
 
-export const Route = createFileRoute("/_authenticated/nfc-reorder")({ component: NfcReorderPage });
+export const Route = createFileRoute("/_authenticated/nfc-reorder")({
+  validateSearch: (search) => ({ scan: search.scan === "1" }),
+  component: NfcReorderPage,
+});
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -32,6 +35,7 @@ function extractValue(event: any) {
 
 function NfcReorderPage() {
   const { pick, fmtMoney } = useI18n();
+  const { scan: scanOnOpen } = Route.useSearch();
   const { user } = useSession();
   const { data: settings } = useSettings();
   const [scanning, setScanning] = useState(false);
@@ -41,6 +45,7 @@ function NfcReorderPage() {
   const [time, setTime] = useState("");
   const [booked, setBooked] = useState<string[]>([]);
   const [payment, setPayment] = useState("cash");
+  const autoScanStarted = useRef(false);
 
   const s: any = settings;
   const start = (s?.booking_start_time ?? "09:00:00").slice(0, 5);
@@ -74,6 +79,13 @@ function NfcReorderPage() {
     } catch (error) { setScanning(false); toast.error(error instanceof Error ? error.message : pick("NFC scan failed.", "فشل مسح NFC.")); }
   };
 
+  useEffect(() => {
+    if (scanOnOpen && !autoScanStarted.current) {
+      autoScanStarted.current = true;
+      void scan();
+    }
+  }, [scanOnOpen]);
+
   const paymentConfigured = (method: string) => method === "cash" || (method === "smart_wallet" && !!s?.smart_wallet_number) || (method === "instapay" && !!s?.instapay_number) || (method === "bank_transfer" && !!s?.bank_account_number);
 
   const reorder = async () => {
@@ -94,6 +106,6 @@ function NfcReorderPage() {
     <section className="panel p-6 text-center sm:p-8"><div className="mx-auto flex size-16 items-center justify-center rounded-3xl border border-primary/20 bg-primary/10 text-primary"><Smartphone className="size-8" /></div><h1 className="mt-4 text-2xl font-black">{pick("Scan your TapWash NFC tag", "اعمل Scan لكارت TapWash")}</h1><p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">{pick("Use your NFC card, sticker or keychain. Scanning never deducts a wash; it only prepares a new booking from your previous order.", "استخدم كارت أو استيكر أو ميدالية NFC. الـScan مش بيخصم غسلة؛ هو بس بيجهز إعادة الطلب من طلبك السابق.")}</p><Button className="mt-6 gap-2" onClick={() => void scan()} disabled={scanning || saving}><ScanLine className="size-5" />{scanning ? pick("Scanning…", "جاري المسح…") : pick("Scan NFC", "مسح NFC")}</Button></section>
     {card && <section className="panel mt-6 p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><Badge>{pick("Verified tag", "كارت متحقق منه")}</Badge><h2 className="mt-2 text-xl font-bold">{card.last_order.wash_type || pick("TapWash service", "خدمة TapWash")}</h2><p className="text-sm text-muted-foreground">{[card.car?.brand, card.car?.model, card.car?.plate_number].filter(Boolean).join(" · ") || "—"}</p></div><p className="text-xl font-black text-primary">{fmtMoney(card.last_order.amount)}</p></div>
       <div className="mt-6 grid gap-6 lg:grid-cols-2"><div><Label>{pick("New date", "اليوم الجديد")}</Label><Input className="mt-2" type="date" min={today} value={date} onChange={e => { setDate(e.target.value); setTime(""); }} /><Label className="mt-5 block">{pick("Available time", "الساعة المتاحة")}</Label><div className="mt-2 grid grid-cols-3 gap-2">{slots.map(x => <Button key={x} type="button" disabled={booked.includes(x)} variant={time === x ? "default" : "outline"} onClick={() => setTime(x)}>{x}{booked.includes(x) ? " · محجوز" : ""}</Button>)}</div></div><div><Label>{pick("Payment method", "طريقة الدفع")}</Label><div className="mt-2 grid gap-2"><Button variant={payment === "cash" ? "default" : "outline"} onClick={() => setPayment("cash")}><CreditCard className="me-1.5 size-4" />{pick("Cash on service", "دفع عند الغسيل")}</Button><Button variant={payment === "smart_wallet" ? "default" : "outline"} onClick={() => setPayment("smart_wallet")}>{pick("Smart Wallet", "محفظة ذكية")}</Button><Button variant={payment === "instapay" ? "default" : "outline"} onClick={() => setPayment("instapay")}>{pick("InstaPay", "إنستا باي")}</Button><Button variant={payment === "bank_transfer" ? "default" : "outline"} onClick={() => setPayment("bank_transfer")}>{pick("Bank transfer", "تحويل بنكي")}</Button></div></div></div><Button className="mt-6 w-full gap-2" disabled={saving || !time} onClick={() => void reorder()}>{saving ? pick("Sending…", "جاري الإرسال…") : pick("Confirm reorder", "تأكيد إعادة الطلب")}</Button></section>}
-    <div className="mt-6 text-center"><Button asChild variant="ghost"><Link to="/orders">{pick("Back to orders", "العودة للطلبات")}</Link></Button></div>
+    <div className="mt-6 text-center"><Button asChild variant="ghost"><Link to="/orders">{pick("Back to orders", "العودة للطلبات")}</Button></div>
   </main></div>;
 }
