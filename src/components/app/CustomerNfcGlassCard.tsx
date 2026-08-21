@@ -2,11 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { Nfc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
+import { useMySubscription } from "@/lib/data";
 
 export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
   const { pick } = useI18n();
   const card = cards?.[0];
   const active = String(card?.status ?? "active").toLowerCase() === "active";
+  const { data: subscription } = useMySubscription(card?.customer_id);
+  const subscriptionActive = String(subscription?.status ?? "").toLowerCase() === "active";
+  const validUntil = subscriptionActive && subscription?.end_date
+    ? new Intl.DateTimeFormat("ar-EG", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(subscription.end_date))
+    : null;
 
   return (
     <section className="relative mt-4 overflow-hidden rounded-[2rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-4 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-5">
@@ -29,13 +35,26 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
           </Badge>
         </div>
 
+        <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/30 bg-white/20 p-3 dark:border-white/10 dark:bg-white/[0.05]">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-muted-foreground">كود الكارت</p>
+            <p className="mt-1 truncate text-sm font-black" dir="ltr">{card?.serial_number || card?.uid || "—"}</p>
+          </div>
+          {validUntil && (
+            <div className="min-w-0 text-end">
+              <p className="text-[11px] font-bold text-muted-foreground">صالح حتى</p>
+              <p className="mt-1 text-sm font-black">{validUntil}</p>
+            </div>
+          )}
+        </div>
+
         <Link
           to="/nfc-reorder"
           search={{ scan: "1" }}
-          aria-label="SCAN"
-          className="group relative mt-4 flex min-h-28 w-full items-center justify-center overflow-hidden rounded-[1.35rem] border border-white/45 bg-white/25 p-5 shadow-lg backdrop-blur-xl transition-transform duration-150 hover:bg-white/35 active:scale-[0.995] dark:border-white/10 dark:bg-white/[0.06] sm:min-h-32 sm:p-6"
+          aria-label="Tap NFC TapWash"
+          className="mt-4 flex min-h-14 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-4 text-base font-black tracking-wide text-white shadow-md transition-colors hover:bg-blue-700 active:bg-blue-800"
         >
-          <span className="text-sm font-black tracking-[0.16em] sm:text-base">SCAN</span>
+          Tap NFC TapWash
         </Link>
       </div>
     </section>
