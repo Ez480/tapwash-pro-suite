@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, Search, Archive, CheckCircle2, XCircle, PackageCheck } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,31 @@ import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/admin/daily")({ component: AdminDaily });
 
+function cairoToday() { return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+function cairoDayBounds(date: string) { const start = new Date(`${date}T00:00:00+03:00`); const end = new Date(`${date}T23:59:59.999+03:00`); return { start: start.toISOString(), end: end.toISOString() }; }
+
 function AdminDaily() {
   const { pick, fmtDate } = useI18n();
   const [tasks, setTasks] = useState<any[]>([]); const [bookings, setBookings] = useState<any[]>([]); const [payments, setPayments] = useState<any[]>([]); const [subscriptionRequests, setSubscriptionRequests] = useState<any[]>([]); const [search, setSearch] = useState("");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = cairoToday(); const loadingRef = useRef(false); const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = async () => {
-    const start = `${today}T00:00:00.000Z`, end = `${today}T23:59:59.999Z`;
-    const [{ data: t }, { data: b }, { data: p }, { data: sr }] = await Promise.all([
-      supabase.from("employee_tasks").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
-      supabase.from("booking_requests").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
-      supabase.from("payments").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
-      (supabase as any).from("subscription_requests").select("*, packages(title_en,title_ar)").gte("requested_at", start).lte("requested_at", end).order("requested_at", { ascending: false }),
-    ]);
-    setTasks(t ?? []); setBookings(b ?? []); setPayments(p ?? []); setSubscriptionRequests(sr ?? []);
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    try {
+      const { start, end } = cairoDayBounds(today);
+      const [{ data: t }, { data: b }, { data: p }, { data: sr }] = await Promise.all([
+        supabase.from("employee_tasks").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
+        supabase.from("booking_requests").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
+        supabase.from("payments").select("*").gte("created_at", start).lte("created_at", end).order("created_at", { ascending: false }),
+        (supabase as any).from("subscription_requests").select("*, packages(title_en,title_ar)").gte("requested_at", start).lte("requested_at", end).order("requested_at", { ascending: false }),
+      ]);
+      setTasks(t ?? []); setBookings(b ?? []); setPayments(p ?? []); setSubscriptionRequests(sr ?? []);
+    } finally { loadingRef.current = false; }
   };
+  const scheduleReload = () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); reloadTimer.current = setTimeout(() => { reloadTimer.current = null; void load(); }, 250); };
 
-  useEffect(() => { void load(); const c = supabase.channel("admin-daily-live").on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks" }, () => void load()).on("postgres_changes", { event: "*", schema: "public", table: "booking_requests" }, () => void load()).on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => void load()).on("postgres_changes", { event: "*", schema: "public", table: "subscription_requests" }, () => void load()).subscribe(); return () => { void supabase.removeChannel(c); }; }, []);
+  useEffect(() => { void load(); const c = supabase.channel("admin-daily-live").on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks" }, scheduleReload).on("postgres_changes", { event: "*", schema: "public", table: "booking_requests" }, scheduleReload).on("postgres_changes", { event: "*", schema: "public", table: "payments" }, scheduleReload).on("postgres_changes", { event: "*", schema: "public", table: "subscription_requests" }, scheduleReload).subscribe(); return () => { if (reloadTimer.current) clearTimeout(reloadTimer.current); void supabase.removeChannel(c); }; }, []);
 
   const q = search.trim().toLowerCase(); const match = (x: any) => !q || JSON.stringify(x).toLowerCase().includes(q);
   const filteredTasks = useMemo(() => tasks.filter(match), [tasks, q]); const filteredBookings = useMemo(() => bookings.filter(match), [bookings, q]); const filteredPayments = useMemo(() => payments.filter(match), [payments, q]); const filteredSubscriptionRequests = useMemo(() => subscriptionRequests.filter(match), [subscriptionRequests, q]);
@@ -38,9 +46,9 @@ function AdminDaily() {
     if (payError) return toast.error(payError.message);
     const { error } = await (supabase as any).rpc("confirm_subscription_request", { p_request_id: r.id, p_admin_id: auth.user.id });
     if (error) { await (supabase as any).from("subscription_requests").update({ payment_status: "pending" }).eq("id", r.id); return toast.error(error.message); }
-    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك.")); void load();
+    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك.")); scheduleReload();
   };
-  const rejectSubscription = async (r: any) => { if (r.status !== "pending") return; const { error } = await (supabase as any).from("subscription_requests").update({ payment_status: "rejected", status: "rejected" }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك.")); void load(); };
+  const rejectSubscription = async (r: any) => { if (r.status !== "pending") return; const { error } = await (supabase as any).from("subscription_requests").update({ payment_status: "rejected", status: "rejected" }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك.")); scheduleReload(); };
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><CalendarDays className="size-6 text-primary"/><h1 className="text-2xl font-bold">{pick("Today", "طلبات اليوم")}</h1></div><p className="text-sm text-muted-foreground">{today}</p></div><Button asChild variant="outline"><a href="/admin/archive"><Archive className="me-2 size-4"/>{pick("Archive & search", "الأرشيف والبحث")}</a></Button></div>
