@@ -14,8 +14,8 @@ export function useMyNotifications(userId?: string | null) { return useQuery({ q
 
 export function useMyEmployee(userId?: string | null) {
   return useQuery({
-    queryKey: ["my-employee", userId], enabled: !!userId, staleTime: 0, gcTime: 0,
-    refetchOnMount: "always", refetchOnWindowFocus: true, refetchOnReconnect: true,
+    queryKey: ["my-employee", userId], enabled: !!userId, staleTime: 10_000, gcTime: 5 * 60_000,
+    refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: true,
     queryFn: async () => {
       if (!userId) return null;
       const { data, error } = await supabase.rpc("get_my_employee");
@@ -26,10 +26,16 @@ export function useMyEmployee(userId?: string | null) {
 }
 
 export function useAdminTable<T extends string>(table: T, select = "*", orderBy = "created_at") {
-  return useQuery({ queryKey: ["admin", table], staleTime: 0, refetchOnWindowFocus: true, refetchOnReconnect: true, queryFn: async () => {
-    const query = supabase.from(table as any).select(select).order(orderBy, { ascending: false });
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data ?? []) as any[];
-  } });
+  return useQuery({
+    queryKey: ["admin", table],
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    queryFn: async () => {
+      const query = supabase.from(table as any).select(select).order(orderBy, { ascending: false });
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
 }
