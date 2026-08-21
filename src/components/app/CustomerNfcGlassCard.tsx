@@ -31,6 +31,7 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
 
         <Link
           to="/nfc-reorder"
+          search={{ scan: "1" }}
           aria-label={pick("Scan NFC card", "مسح كارت NFC")}
           className="group relative mt-4 flex min-h-28 w-full items-center justify-center overflow-hidden rounded-[1.35rem] border border-white/45 bg-white/25 p-5 shadow-lg backdrop-blur-xl transition-transform duration-150 hover:bg-white/35 active:scale-[0.995] dark:border-white/10 dark:bg-white/[0.06] sm:min-h-32 sm:p-6"
         >
