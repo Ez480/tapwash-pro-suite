@@ -29,22 +29,38 @@ function normalizeOrderStatus(status: string | null | undefined) { const value =
 function NfcGlassCard({ cards, pick }: { cards: any[] | undefined; pick: (en: string, ar: string) => string }) {
   const card = cards?.[0];
   const active = String(card?.status ?? "active").toLowerCase() === "active";
-  return <section className="relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-blue-500/10 to-indigo-500/15 p-4 shadow-xl backdrop-blur-xl sm:p-5">
-    <div className="pointer-events-none absolute -left-10 -top-12 size-36 rounded-full bg-cyan-400/25 blur-3xl" />
-    <div className="pointer-events-none absolute -bottom-14 -right-10 size-40 rounded-full bg-blue-600/20 blur-3xl" />
-    <div className="relative overflow-hidden rounded-[1.45rem] border border-white/35 bg-white/30 p-4 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/35 sm:p-5">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-primary/10 dark:from-white/10" />
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="relative flex size-12 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white/25 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-            <svg viewBox="0 0 40 32" className="size-9 -rotate-12 text-primary" fill="none" aria-hidden="true"><path d="M7 7c-5 5-5 13 0 18M12 11c-3 3-3 7 0 10M33 7c5 5 5 13 0 18M28 11c3 3 3 7 0 10" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/><path d="M19 8h2v16h-2z" fill="currentColor" opacity=".25"/><circle cx="20" cy="16" r="3.2" fill="currentColor"/></svg>
-            <span className={`absolute -right-1 -top-1 size-3 rounded-full border-2 border-background ${active ? "bg-blue-500" : "bg-red-500"} animate-pulse`} />
-          </div>
-          <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">TapWash NFC</p><h3 className="truncate text-lg font-black">Scan NFC TapWash</h3></div>
+  return <section className="relative mt-4 overflow-hidden rounded-[1.8rem] border border-cyan-300/30 bg-gradient-to-br from-cyan-400/20 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-2xl sm:p-4">
+    <div className="pointer-events-none absolute -left-14 -top-16 size-40 rounded-full bg-cyan-300/25 blur-3xl" />
+    <div className="pointer-events-none absolute -bottom-16 -right-14 size-44 rounded-full bg-blue-500/20 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[1.45rem] border border-white/40 bg-white/25 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.06]">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-cyan-400/10 dark:from-white/10" />
+      <div className="relative flex items-center gap-3 border-b border-white/25 px-3 py-3 sm:px-4">
+        <div className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-200/50 bg-white/35 text-primary shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+          <svg viewBox="0 0 48 48" className="size-9 text-primary" fill="none" aria-hidden="true">
+            <circle cx="24" cy="24" r="3.5" fill="currentColor" />
+            <path d="M16.5 17.5a9.2 9.2 0 0 0 0 13M31.5 17.5a9.2 9.2 0 0 1 0 13" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+            <path d="M11 12a17 17 0 0 0 0 24M37 12a17 17 0 0 1 0 24" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" opacity=".62" />
+          </svg>
+          <span className={`absolute -right-0.5 -top-0.5 size-3 rounded-full border-2 border-background ${active ? "bg-blue-500" : "bg-red-500"} ${active ? "animate-pulse" : ""}`} />
         </div>
-        <Badge variant={active ? "default" : "destructive"} className="shrink-0 whitespace-nowrap rounded-full px-3 py-1">{active ? pick("Card active", "الكارت شغال") : pick("Card suspended", "الكارت موقوف")}</Badge>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/75">TapWash NFC</p>
+          <h3 className="truncate text-base font-black sm:text-lg">{pick("NFC card", "كارت NFC")}</h3>
+        </div>
+        <Badge variant={active ? "default" : "destructive"} className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold sm:px-3">{active ? pick("Active", "شغال") : pick("Suspended", "موقوف")}</Badge>
       </div>
-      <div className="relative mt-4 rounded-2xl border border-white/40 bg-white/20 p-4 shadow-inner backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]"><Button asChild size="lg" className="w-full rounded-xl gap-2 font-bold shadow-lg" type="button"><Link to="/nfc-reorder"><ScanLine className="size-5" />{pick("Scan NFC card", "تشغيل مسح الكارت")}</Link></Button></div>
+      <div className="relative flex items-center gap-3 px-3 py-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/30 bg-white/20 px-3 py-2.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.05]">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><ScanLine className="size-5" /></div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold">{pick("Ready to scan", "جاهز للمسح")}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{pick("Tap your card to continue", "قرّب الكارت من الهاتف للمتابعة")}</p>
+          </div>
+        </div>
+        <Button asChild size="icon" className="size-12 shrink-0 rounded-2xl shadow-lg" type="button" aria-label={pick("Scan NFC card", "تشغيل مسح الكارت")}>
+          <Link to="/nfc-reorder"><ScanLine className="size-5" /></Link>
+        </Button>
+      </div>
     </div>
   </section>;
 }
