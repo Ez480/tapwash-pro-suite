@@ -100,6 +100,17 @@ function BookingRequests() {
         return;
       }
 
+      let taskCustomerId: string | null = null;
+      if (r.customer_id) {
+        const { data: customer, error: customerError } = await (supabase as any).from("customers").select("id").eq("id", r.customer_id).maybeSingle();
+        if (!customerError && customer?.id) taskCustomerId = customer.id;
+      }
+      if (!taskCustomerId && r.customer_email) {
+        const { data: customer, error: customerError } = await (supabase as any).from("customers").select("id").ilike("email", r.customer_email).maybeSingle();
+        if (customerError) throw customerError;
+        taskCustomerId = customer?.id ?? null;
+      }
+
       let packageName: string | null = null;
       let offerName: string | null = null;
       let subscriptionId: string | null = null;
@@ -141,7 +152,7 @@ function BookingRequests() {
         title: orderTitle,
         wash_type: r.wash_type,
         employee_id: null,
-        customer_id: r.customer_id ?? null,
+        customer_id: taskCustomerId,
         subscription_id: subscriptionId,
         offer_id: r.offer_id ?? null,
         package_name: packageName,
