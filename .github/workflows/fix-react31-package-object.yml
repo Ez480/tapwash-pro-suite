@@ -1,0 +1,45 @@
+name: Fix React object rendering in employee dashboard
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'fix: employee dashboard package object rendering [applied]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch object rendering
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/routes/_authenticated/employee-tasks.tsx')
+          s=p.read_text()
+          marker='  const renderOrder = (t: any) => {'
+          helper='  const displayValue = (value: any) => {\n    if (value == null || value === "") return "—";\n    if (typeof value === "object") return value.title_ar || value.title_en || value.name || "—";\n    return String(value);\n  };\n\n'
+          if 'const displayValue = (value: any)' not in s:
+              if marker not in s: raise SystemExit('renderOrder marker not found')
+              s=s.replace(marker, helper+marker, 1)
+          replacements={
+            '{t.package_name || t.offer_name || "—"}':'{displayValue(t.package_name || t.offer_name)}',
+            '{t.wash_type || "—"}':'{displayValue(t.wash_type)}',
+            '{t.status}':'{displayValue(t.status)}',
+            '{card.subscription?.package_name || card.subscription?.package || card.package_name || card.package || "—"}':'{displayValue(card.subscription?.package_name || card.subscription?.package || card.package_name || card.package)}'
+          }
+          for old,new in replacements.items():
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          git diff --check
+          git diff -- src/routes/_authenticated/employee-tasks.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/employee-tasks.tsx
+          git commit -m 'fix: employee dashboard package object rendering [applied]'
+          git push
+          git rm .github/workflows/fix-react31-package-object.yml
+          git commit -m 'chore: remove one-time React31 patch workflow'
+          git push
