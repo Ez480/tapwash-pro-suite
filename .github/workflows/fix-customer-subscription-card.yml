@@ -1,0 +1,88 @@
+name: Fix customer subscription card
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'chore: fix customer subscription card [applied]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply customer subscription card fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              s = p.read_text()
+              if old not in s:
+                  raise SystemExit(f'{label}: expected source pattern not found')
+              p.write_text(s.replace(old, new, 1))
+
+          # Fetch the customer's active/latest subscription together with its registered car.
+          replace_once(
+              'src/lib/data.ts',
+              'export function useMySubscription(userId?: string | null) { return useQuery({ queryKey: ["my-subscription", userId], enabled: !!userId, queryFn: async () => { const { data, error } = await supabase.from("subscriptions").select("*, packages(*)").eq("customer_id", userId!).order("start_date", { ascending: false }).limit(1).maybeSingle(); if (error) throw error; return data; } }); }',
+              'export function useMySubscription(userId?: string | null) { return useQuery({ queryKey: ["my-subscription", userId], enabled: !!userId, queryFn: async () => { const { data, error } = await supabase.from("subscriptions").select("*, packages(*)").eq("customer_id", userId!).order("start_date", { ascending: false }).limit(1).maybeSingle(); if (error) throw error; if (!data?.car_id) return data; const { data: car, error: carError } = await supabase.from("cars").select("*").eq("id", data.car_id).maybeSingle(); if (carError) throw carError; return { ...data, car }; } }); }',
+              'subscription hook'
+          )
+
+          # Show the registered car and the first scheduled wash date/time in the customer subscription card.
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              'import { BriefcaseBusiness, CalendarClock, Droplets, Package, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";',
+              'import { BriefcaseBusiness, CalendarClock, CarFront, Droplets, Package, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";',
+              'car icon import'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              'function MembershipGlassCard({ sub, total, remaining, used, statusLabel, pick, t }: { sub: any; total: number; remaining: number; used: number; statusLabel: (s?: string | null) => string; pick: (en: string, ar: string) => string; t: (key: string) => string }) {',
+              'function MembershipGlassCard({ sub, total, remaining, used, nextWash, statusLabel, pick, t }: { sub: any; total: number; remaining: number; used: number; nextWash: string | null; statusLabel: (s?: string | null) => string; pick: (en: string, ar: string) => string; t: (key: string) => string }) {',
+              'membership props'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              '  const statusDot = status === "active" ? "bg-blue-500" : status === "pending" ? "bg-amber-400" : "bg-red-500";\n  return <section',
+              '  const statusDot = status === "active" ? "bg-blue-500" : status === "pending" ? "bg-amber-400" : "bg-red-500";\n  const car = sub?.car as any;\n  const firstWash = nextWash ? new Date(nextWash).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "—";\n  const carDetails = [car?.brand, car?.model, car?.color, car?.plate_number].filter(Boolean).join(" · ") || "—";\n  return <section',
+              'membership derived details'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              '      <div className="grid gap-3 sm:grid-cols-3">',
+              '      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">',
+              'membership grid'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              '        <div className="rounded-2xl border border-white/35 bg-white/20 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles className="size-5" /></div><p className="text-xs text-muted-foreground">{t("subscription_status")}</p><p className="mt-1 font-bold">{statusLabel(sub?.status)}</p></div>\n      </div>',
+              '        <div className="rounded-2xl border border-white/35 bg-white/20 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Sparkles className="size-5" /></div><p className="text-xs text-muted-foreground">{t("subscription_status")}</p><p className="mt-1 font-bold">{statusLabel(sub?.status)}</p></div>\n        <div className="rounded-2xl border border-white/35 bg-white/20 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><CarFront className="size-5" /></div><p className="text-xs text-muted-foreground">{pick("Registered car", "العربية المسجلة")}</p><p className="mt-1 font-bold">{carDetails}</p></div>\n        <div className="rounded-2xl border border-white/35 bg-white/20 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.05]"><div className="mb-3 flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><CalendarClock className="size-5" /></div><p className="text-xs text-muted-foreground">{pick("First wash", "أول غسلة")}</p><p className="mt-1 font-bold">{firstWash}</p></div>\n      </div>',
+              'membership car and first wash cards'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              '{sub && <MembershipGlassCard sub={sub} total={total} remaining={remaining} used={used} statusLabel={statusLabel} pick={pick} t={t} />}',
+              '{sub && <MembershipGlassCard sub={sub} total={total} remaining={remaining} used={used} nextWash={nextSubscriptionWash} statusLabel={statusLabel} pick={pick} t={t} />}',
+              'membership invocation'
+          )
+          replace_once(
+              'src/routes/_authenticated/dashboard.tsx',
+              '  const items = [{ icon: Droplets, title: pick("Last wash", "آخر غسلة"), value: fmtDate(lastWash), tone: "bg-blue-500/10 text-blue-500" }, { icon: CalendarClock, title: pick("Next wash", "الغسلة القادمة"), value: nextWash ? fmtDate(nextWash) : pick("Not scheduled", "غير محددة"), tone: "bg-cyan-500/10 text-cyan-500" }];',
+              '  const formatDateTime = (value: string | null) => value ? `${fmtDate(value)} · ${new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : pick("Not scheduled", "غير محددة");\n  const items = [{ icon: Droplets, title: pick("Last wash", "آخر غسلة"), value: lastWash ? formatDateTime(lastWash) : "—", tone: "bg-blue-500/10 text-blue-500" }, { icon: CalendarClock, title: pick("Next wash", "الغسلة القادمة"), value: nextWash ? formatDateTime(nextWash) : pick("Not scheduled", "غير محددة"), tone: "bg-cyan-500/10 text-cyan-500" }];',
+              'wash date time display'
+          )
+          PY
+          git diff --check
+          git diff -- src/lib/data.ts src/routes/_authenticated/dashboard.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/data.ts src/routes/_authenticated/dashboard.tsx .github/workflows/fix-customer-subscription-card.yml
+          git commit -m 'chore: fix customer subscription card [applied]'
+          git push
