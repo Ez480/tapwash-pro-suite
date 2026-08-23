@@ -22,6 +22,24 @@ jobs:
           p = Path('src/routes/_authenticated/employee-tasks.tsx')
           s = p.read_text()
 
+          scan_marker = '  const extractCardValue = (event: any) => {'
+          scan_helper = '''  const packageLabel = (value: any) => {
+            if (value == null || value === "") return "";
+            if (typeof value === "object") return String(value.title_ar || value.title_en || value.name || "");
+            return String(value);
+          };
+
+          '''
+          if 'const packageLabel = (value: any)' not in s:
+              if scan_marker not in s:
+                  raise SystemExit('NFC marker not found')
+              s = s.replace(scan_marker, scan_helper + scan_marker, 1)
+
+          # The RPC may return packages as an embedded object. Never put that object
+          # into JSX-facing package_name/package fields.
+          s = s.replace('package: subscription.package_name || subscription.package, package_name: subscription.package_name || subscription.package,', 'package: packageLabel(subscription.package_name || subscription.package), package_name: packageLabel(subscription.package_name || subscription.package),')
+          s = s.replace('package: refreshed.subscription?.package_name || refreshed.subscription?.package, package_name: refreshed.subscription?.package_name || refreshed.subscription?.package,', 'package: packageLabel(refreshed.subscription?.package_name || refreshed.subscription?.package), package_name: packageLabel(refreshed.subscription?.package_name || refreshed.subscription?.package),')
+
           marker = '  const renderOrder = (t: any) => {'
           helper = '''  const displayValue = (value: any) => {
             if (value == null || value === "") return "—";
@@ -44,7 +62,6 @@ jobs:
           for old, new in exact.items():
               s = s.replace(old, new)
 
-          # Defensive replacements for any remaining direct package fields in JSX.
           s = s.replace('{t.package_name}', '{displayValue(t.package_name)}')
           s = s.replace('{t.offer_name}', '{displayValue(t.offer_name)}')
           s = s.replace('{t.wash_type}', '{displayValue(t.wash_type)}')
