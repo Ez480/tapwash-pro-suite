@@ -1,4 +1,5 @@
 name: Apply task archive order updates
+# Safe trigger: apply the already-reviewed task/archive/daily patch on the latest main.
 
 on:
   push:
@@ -26,13 +27,13 @@ jobs:
           s = p.read_text()
           s = s.replace('const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");', 'const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");')
           s = s.replace('const {error}=await(supabase as any).from("employee_tasks").delete().eq("id",id);if(error)toast.error(error.message);else refetch();', 'const {error}=await(supabase as any).from("employee_tasks").delete().eq("id",id);if(error)toast.error(error.message);else refetch();')
-          s = s.replace('const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const [form', 'const {data:allTasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const tasks=allTasks.filter((t:any)=>!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(t.status||'"'"'pending'"'"').toLowerCase()));\n const [form')
+          s = s.replace('const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const [form', 'const {data:allTasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const tasks=allTasks.filter((t:any)=>![\'completed\',\'cancelled\'].includes(String(t.status||\'pending\').toLowerCase()));\n const [form')
           s = s.replace('import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront } from "lucide-react";', 'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront, XCircle } from "lucide-react";')
           old = '<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>'
-          new = '{!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(task.status||"pending").toLowerCase())&&<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>}'
+          new = '{![\'completed\',\'cancelled\'].includes(String(task.status||"pending").toLowerCase())&&<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>}'
           s = s.replace(old, new)
           old2 = '{task.status!=="completed"&&<Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button>}'
-          new2 = '{!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(task.status||"pending").toLowerCase())&&<><Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button><Button size="sm" variant="outline" onClick={()=>void updateStatus(task.id,"cancelled")}><XCircle className="me-1 size-4"/>{pick("Cancel","إلغاء")}</Button></>}'
+          new2 = '{![\'completed\',\'cancelled\'].includes(String(task.status||"pending").toLowerCase())&&<><Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button><Button size="sm" variant="outline" onClick={()=>void updateStatus(task.id,"cancelled")}><XCircle className="me-1 size-4"/>{pick("Cancel","إلغاء")}</Button></>}'
           s = s.replace(old2, new2)
           p.write_text(s)
 
