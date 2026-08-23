@@ -1,0 +1,63 @@
+name: Apply task archive order updates
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'chore: apply task archive and order history updates [applied]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch task/archive/daily behavior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # Tasks: completed/cancelled orders are archive-only; never show delete for terminal orders.
+          p = Path('src/routes/_authenticated/admin/tasks.tsx')
+          s = p.read_text()
+          s = s.replace('const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");', 'const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");')
+          s = s.replace('const {error}=await(supabase as any).from("employee_tasks").delete().eq("id",id);if(error)toast.error(error.message);else refetch();', 'const {error}=await(supabase as any).from("employee_tasks").delete().eq("id",id);if(error)toast.error(error.message);else refetch();')
+          s = s.replace('const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const [form', 'const {data:allTasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const tasks=allTasks.filter((t:any)=>!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(t.status||'"'"'pending'"'"').toLowerCase()));\n const [form')
+          s = s.replace('import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront } from "lucide-react";', 'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront, XCircle } from "lucide-react";')
+          old = '<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>'
+          new = '{!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(task.status||"pending").toLowerCase())&&<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>}'
+          s = s.replace(old, new)
+          old2 = '{task.status!=="completed"&&<Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button>}'
+          new2 = '{!['"'"'completed'"'"','"'"'cancelled'"'"'].includes(String(task.status||"pending").toLowerCase())&&<><Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button><Button size="sm" variant="outline" onClick={()=>void updateStatus(task.id,"cancelled")}><XCircle className="me-1 size-4"/>{pick("Cancel","إلغاء")}</Button></>}'
+          s = s.replace(old2, new2)
+          p.write_text(s)
+
+          # Archive: show task order source, real request time, execution time, and employee name; do not expose subscription counters.
+          p = Path('src/routes/_authenticated/admin/archive.tsx')
+          s = p.read_text()
+          s = s.replace('const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));', 'const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));\n  const orderSource=(x:any)=>x.booking_request_id?"طلب عميل":x.offer_id?"عرض":x.subscription_id?"اشتراك":x.scheduled_at?"مجدول":"مهمة";\n  const employeeName=(x:any)=>profile(x.employee_id)?.full_name||x.employee_name||x.assigned_employee_name||x.employee_full_name||"—";')
+          old = '<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border p-3"><small className="text-muted-foreground">اسم العميل</small><p className="font-semibold">{x.customer_name||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">رقم التليفون</small><p className="font-semibold">{x.customer_phone||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">نوع الباقة</small><p className="font-semibold">{x.package_name||x.offer_name||x.wash_type||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">المتبقي</small><p className="font-semibold">{x.remaining_washes!=null?`${x.remaining_washes} غسلة`:"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">الموظف المكلف</small><p className="font-semibold">{x.employee_name||x.assigned_employee_name||x.employee_full_name||"—"}</p><p className="text-xs text-muted-foreground mt-1">Employee ID: {x.employee_id||x.assigned_employee_id||"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">ملاحظات</small><p>{x.notes||"—"}</p></div></div>'
+          new = '<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border p-3"><small className="text-muted-foreground">نوع الأوردر</small><p className="font-semibold">{orderSource(x)}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">اسم العميل</small><p className="font-semibold">{x.customer_name||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">رقم التليفون</small><p className="font-semibold">{x.customer_phone||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">الموظف المكلف</small><p className="font-semibold">{employeeName(x)}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">تاريخ ووقت الطلب</small><p className="font-semibold">{x.created_at?new Date(x.created_at).toLocaleString():"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">تاريخ التنفيذ</small><p className="font-semibold">{x.scheduled_at?new Date(x.scheduled_at).toLocaleString():"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">ملاحظات</small><p>{x.notes||"—"}</p></div></div>'
+          if old not in s: raise SystemExit('archive order card pattern not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+
+          # Daily: distinguish the actual source/type of each task without exposing subscription counters.
+          p = Path('src/routes/_authenticated/admin/daily.tsx')
+          s = p.read_text()
+          old = 'const orderType = (x: any) => x.subscription_id ? pick("Subscription", "اشتراك") : x.offer_id ? pick("Offer", "عرض") : pick("Service order", "أوردر خدمة");'
+          new = 'const orderType = (x: any) => x.booking_request_id ? pick("Customer request", "طلب عميل") : x.offer_id ? pick("Offer", "عرض") : x.subscription_id ? pick("Subscription", "اشتراك") : x.scheduled_at ? pick("Scheduled", "مجدول") : pick("Task", "مهمة");'
+          if old not in s: raise SystemExit('daily orderType pattern not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/routes/_authenticated/admin/tasks.tsx src/routes/_authenticated/admin/archive.tsx src/routes/_authenticated/admin/daily.tsx
+          git commit -m 'chore: apply task archive and order history updates [applied]'
+          git push
