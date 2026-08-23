@@ -20,69 +20,25 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           def replace_once(path, old, new, label):
               p = Path(path); s = p.read_text()
               if old not in s:
                   raise SystemExit(f'{label}: expected source pattern not found')
-              s2 = s.replace(old, new, 1)
-              p.write_text(s2)
+              p.write_text(s.replace(old, new, 1))
 
-          # TASKS: terminal orders stay archived, cannot be deleted, and can be cancelled.
-          replace_once(
-            'src/routes/_authenticated/admin/tasks.tsx',
-            'const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");',
-            'const {data:allTasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const tasks=allTasks.filter((t:any)=>!["completed","cancelled"].includes(String(t.status||"pending").toLowerCase()));',
-            'tasks data filter'
-          )
-          replace_once(
-            'src/routes/_authenticated/admin/tasks.tsx',
-            'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront } from "lucide-react";',
-            'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront, XCircle } from "lucide-react";',
-            'tasks cancel icon import'
-          )
-          replace_once(
-            'src/routes/_authenticated/admin/tasks.tsx',
-            '{task.status!=="completed"&&<Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button>}',
-            '{!["completed","cancelled"].includes(String(task.status||"pending").toLowerCase())&&<><Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button><Button size="sm" variant="outline" onClick={()=>void updateStatus(task.id,"cancelled")}><XCircle className="me-1 size-4"/>{pick("Cancel","إلغاء")}</Button></>}',
-            'tasks terminal actions'
-          )
-          replace_once(
-            'src/routes/_authenticated/admin/tasks.tsx',
-            '<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>',
-            '{!["completed","cancelled"].includes(String(task.status||"pending").toLowerCase())&&<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>}',
-            'tasks delete guard'
-          )
+          replace_once('src/routes/_authenticated/admin/tasks.tsx', 'const {data:tasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");', 'const {data:allTasks=[],refetch}=useAdminTable("employee_tasks","*","created_at");\n const tasks=allTasks.filter((t:any)=>!["completed","cancelled"].includes(String(t.status||"pending").toLowerCase()));', 'tasks data filter')
+          replace_once('src/routes/_authenticated/admin/tasks.tsx', 'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront } from "lucide-react";', 'import { CheckCircle2, ClipboardList, ExternalLink, MapPin, Plus, Trash2, CarFront, XCircle } from "lucide-react";', 'tasks cancel icon import')
+          replace_once('src/routes/_authenticated/admin/tasks.tsx', '{task.status!=="completed"&&<Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button>}', '{!["completed","cancelled"].includes(String(task.status||"pending").toLowerCase())&&<><Button size="sm" onClick={()=>void updateStatus(task.id,"completed")}><CheckCircle2 className="me-1 size-4"/>{pick("Complete","تم التنفيذ")}</Button><Button size="sm" variant="outline" onClick={()=>void updateStatus(task.id,"cancelled")}><XCircle className="me-1 size-4"/>{pick("Cancel","إلغاء")}</Button></>}', 'tasks terminal actions')
+          replace_once('src/routes/_authenticated/admin/tasks.tsx', '<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>', '{!["completed","cancelled"].includes(String(task.status||"pending").toLowerCase())&&<Button size="sm" variant="ghost" onClick={()=>void removeTask(task.id)}><Trash2 className="me-1 size-4"/>{pick("Delete","حذف")}</Button>}', 'tasks delete guard')
 
-          # ARCHIVE: task orders show source, original booking request time, execution time, and employee name only.
-          replace_once(
-            'src/routes/_authenticated/admin/archive.tsx',
-            'const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));',
-            'const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));\n  const bookingById=(id:any)=>(bookingsRes.data??[]).find((b:any)=>String(b.id)===String(id));\n  const orderSource=(x:any)=>x.booking_request_id?"طلب عميل":x.offer_id?"عرض":x.subscription_id?"اشتراك":x.scheduled_at?"مجدول":"مهمة";\n  const employeeName=(x:any)=>profile(x.employee_id)?.full_name||x.employee_name||x.assigned_employee_name||x.employee_full_name||"—";\n  const requestCreatedAt=(x:any)=>bookingById(x.booking_request_id)?.created_at||x.created_at;',
-            'archive helpers'
-          )
+          replace_once('src/routes/_authenticated/admin/archive.tsx', 'const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));', 'const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));\n  const bookingById=(id:any)=>(bookingsRes.data??[]).find((b:any)=>String(b.id)===String(id));\n  const orderSource=(x:any)=>x.booking_request_id?"طلب عميل":x.offer_id?"عرض":x.subscription_id?"اشتراك":x.scheduled_at?"مجدول":"مهمة";\n  const employeeName=(x:any)=>profile(x.employee_id)?.full_name||x.employee_name||x.assigned_employee_name||x.employee_full_name||"—";\n  const requestCreatedAt=(x:any)=>bookingById(x.booking_request_id)?.created_at||x.created_at;', 'archive helpers')
           old_card='<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border p-3"><small className="text-muted-foreground">اسم العميل</small><p className="font-semibold">{x.customer_name||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">رقم التليفون</small><p className="font-semibold">{x.customer_phone||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">نوع الباقة</small><p className="font-semibold">{x.package_name||x.offer_name||x.wash_type||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">المتبقي</small><p className="font-semibold">{x.remaining_washes!=null?`${x.remaining_washes} غسلة`:"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">الموظف المكلف</small><p className="font-semibold">{x.employee_name||x.assigned_employee_name||x.employee_full_name||"—"}</p><p className="text-xs text-muted-foreground mt-1">Employee ID: {x.employee_id||x.assigned_employee_id||"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">ملاحظات</small><p>{x.notes||"—"}</p></div></div>'
           new_card='<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div className="rounded-xl border p-3"><small className="text-muted-foreground">نوع الأوردر</small><p className="font-semibold">{orderSource(x)}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">اسم العميل</small><p className="font-semibold">{x.customer_name||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">رقم التليفون</small><p className="font-semibold">{x.customer_phone||"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">الموظف المكلف</small><p className="font-semibold">{employeeName(x)}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">تاريخ ووقت طلب العميل</small><p className="font-semibold">{requestCreatedAt(x)?new Date(requestCreatedAt(x)).toLocaleString():"—"}</p></div><div className="rounded-xl border p-3"><small className="text-muted-foreground">تاريخ التنفيذ</small><p className="font-semibold">{x.scheduled_at?new Date(x.scheduled_at).toLocaleString():"—"}</p></div><div className="rounded-xl border p-3 sm:col-span-2"><small className="text-muted-foreground">ملاحظات</small><p>{x.notes||"—"}</p></div></div>'
           replace_once('src/routes/_authenticated/admin/archive.tsx', old_card, new_card, 'archive order card')
-
-          # ARCHIVE date filter: use actual execution date for scheduled orders, otherwise original creation date.
-          replace_once(
-            'src/routes/_authenticated/admin/archive.tsx',
-            'const created=x.updated_at||x.created_at||x.washed_at;',
-            'const created=x._type==="order"?(x.scheduled_at||requestCreatedAt(x)):x.updated_at||x.created_at||x.washed_at;',
-            'archive actual date filter'
-          )
-
-          # DAILY: classify task orders explicitly and include customer-request source when linked.
-          replace_once(
-            'src/routes/_authenticated/admin/daily.tsx',
-            'const orderType = (x: any) => x.subscription_id ? pick("Subscription", "اشتراك") : x.offer_id ? pick("Offer", "عرض") : pick("Service order", "أوردر خدمة");',
-            'const orderType = (x: any) => x.booking_request_id ? pick("Customer request", "طلب عميل") : x.offer_id ? pick("Offer", "عرض") : x.subscription_id ? pick("Subscription", "اشتراك") : x.scheduled_at ? pick("Scheduled", "مجدول") : pick("Task", "مهمة");',
-            'daily order source'
-          )
+          replace_once('src/routes/_authenticated/admin/archive.tsx', 'const created=x.updated_at||x.created_at||x.washed_at;', 'const created=x._type==="order"?(x.scheduled_at||requestCreatedAt(x)):x.updated_at||x.created_at||x.washed_at;', 'archive actual date filter')
+          replace_once('src/routes/_authenticated/admin/daily.tsx', 'const orderType = (x: any) => x.subscription_id ? pick("Subscription", "اشتراك") : x.offer_id ? pick("Offer", "عرض") : pick("Service order", "أوردر خدمة");', 'const orderType = (x: any) => x.booking_request_id ? pick("Customer request", "طلب عميل") : x.offer_id ? pick("Offer", "عرض") : x.subscription_id ? pick("Subscription", "اشتراك") : x.scheduled_at ? pick("Scheduled", "مجدول") : pick("Task", "مهمة");', 'daily order source')
           PY
-
           git diff --check
           git diff -- src/routes/_authenticated/admin/tasks.tsx src/routes/_authenticated/admin/archive.tsx src/routes/_authenticated/admin/daily.tsx
           git config user.name 'github-actions[bot]'
