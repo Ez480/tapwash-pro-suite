@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, ShieldCheck, Sparkles, Truck, ClipboardList } from "lucide-react";
+import { LogOut, ShieldCheck, Truck, ClipboardList } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { NotificationCenter } from "@/components/app/NotificationCenter";
@@ -22,7 +22,7 @@ export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
   return <header className={cn("sticky top-0 z-40 w-full border-b border-white/30 bg-background/80 px-2 text-foreground shadow-lg backdrop-blur-2xl sm:px-4",mobileEmployee&&"px-1.5 sm:px-4")}>
     <div className={cn("mx-auto flex min-h-14 w-full max-w-7xl items-center gap-1 rounded-b-2xl",mobileEmployee&&"min-h-16")}>
       <Link to="/" aria-label={pick("Home","الرئيسية")} className="flex min-w-0 shrink-0 items-center rounded-xl p-0.5">
-        <span className={`${glassIcon} size-9`}><Sparkles className="size-4"/></span>
+        <img src="/icons/tapwash-brand.svg" alt="TapWash" className="size-10 shrink-0 object-contain" />
         <span className="hidden max-w-28 truncate px-2 text-xs font-black sm:block">{s?pick(s.company_name_en,s.company_name_ar):t("brand")}</span>
       </Link>
       {!isAdmin&&user&&<Button asChild variant="ghost" size="sm" className={cn(toolbarButton,"h-9 px-2.5 sm:px-3")}><Link to="/orders" title={pick("My orders","طلباتي")}><ClipboardList className="size-4 sm:me-1.5"/><span className="hidden sm:inline">{pick("My orders","طلباتي")}</span></Link></Button>}
