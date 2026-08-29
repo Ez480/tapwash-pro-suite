@@ -27,8 +27,8 @@ export function EmployeeDashboardSummary() {
     setSlot(target);
     const mark = header.querySelector(".glass-soft") as HTMLElement | null;
     if (mark) {
-      mark.textContent = "TW";
-      mark.className = "flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-sky-500 text-sm font-black tracking-tight text-white shadow-lg ring-1 ring-white/30";
+      mark.innerHTML = '<img src="/icons/tapwash-brand.svg" alt="TapWash" class="size-10 object-contain" />';
+      mark.className = "flex size-11 shrink-0 items-center justify-center rounded-xl bg-transparent p-0";
       mark.setAttribute("aria-label", "TapWash");
       mark.setAttribute("title", "TapWash");
     }
