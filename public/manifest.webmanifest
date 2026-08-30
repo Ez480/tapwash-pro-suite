@@ -12,7 +12,7 @@
   "background_color": "#0b1020",
   "icons": [
     {
-      "src": "/icons/tapwash.svg",
+      "src": "/icons/tapwash-brand.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
