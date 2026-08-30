@@ -25,13 +25,6 @@ export function EmployeeDashboardSummary() {
     target.className = "employee-summary-slot w-full";
     employeeCard.insertAdjacentElement("afterend", target);
     setSlot(target);
-    const mark = header.querySelector(".glass-soft") as HTMLElement | null;
-    if (mark) {
-      mark.innerHTML = '<img src="/icons/tapwash-brand.svg" alt="TapWash" class="size-10 object-contain" />';
-      mark.className = "flex size-11 shrink-0 items-center justify-center rounded-xl bg-transparent p-0";
-      mark.setAttribute("aria-label", "TapWash");
-      mark.setAttribute("title", "TapWash");
-    }
     return () => { target.remove(); setSlot(null); };
   }, [isEmployeePage, isEmployee]);
 
