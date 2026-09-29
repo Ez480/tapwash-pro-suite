@@ -20,8 +20,8 @@ export function useSignOut(){const queryClient=useQueryClient();const navigate=u
 export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
   const{t,pick}=useI18n();const signOut=useSignOut();const navigate=useNavigate();const{data:s}=useSettings();const{user}=useSession();const{data:roles}=useIsAdmin(user?.id);const{data:userRoles=[]}=useUserRoles(user?.id);const isAdmin=(roles??[]).includes("admin");const isEmployee=!isAdmin&&userRoles.includes("employee");const pathname=useRouterState({select:state=>state.location.pathname});const isAdminArea=pathname.startsWith("/admin");const mobileEmployee=isEmployee&&pathname==="/dashboard";
   return <header className={cn("sticky top-0 z-40 w-full border-b border-white/30 bg-background/85 px-2 text-foreground shadow-lg backdrop-blur-2xl sm:px-4",mobileEmployee&&"px-1 sm:px-4")}>
-    <div className={cn("mx-auto flex min-h-16 w-full max-w-7xl items-center gap-1.5 rounded-b-2xl",mobileEmployee&&"min-h-16")}>
-      <Link to="/" aria-label={pick("Home","الرئيسية")} className="flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-0.5 py-1">
+    <div className={cn("mx-auto flex min-h-16 w-full max-w-7xl items-center gap-2 rounded-b-2xl",mobileEmployee&&"min-h-16")}>
+      <Link to="/" aria-label={pick("Home","الرئيسية")} className="flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-1 py-1">
         <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent">
           <img src="/icons/tapwash-brand.svg?v=20260929" alt="TapWash" className="h-10 w-10 object-contain" />
         </span>
@@ -30,7 +30,7 @@ export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
       {!isAdmin&&user&&<Button asChild variant="ghost" size="sm" className={cn(toolbarButton,"h-9 px-2.5 sm:px-3")}><Link to="/orders" title={pick("My orders","طلباتي")}><ClipboardList className="size-4 sm:me-1.5"/><span className="hidden sm:inline">{pick("My orders","طلباتي")}</span></Link></Button>}
       <div className="mx-1 hidden h-7 w-px bg-border/60 md:block"/>
       <h1 className="min-w-0 flex-1 truncate px-1 text-center text-xs font-bold text-muted-foreground sm:text-sm md:text-start">{title}</h1>
-      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+      <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-1.5">
         {extra}
         {isAdmin&&isAdminArea&&<Button type="button" variant="ghost" size="sm" onClick={()=>navigate({to:"/admin/live-orders"})} aria-label="متابعة الأوردرات والدليفري Live" title="متابعة الأوردرات والدليفري Live" className={cn(toolbarButton,"h-9 px-2.5")}><Truck className="size-4 sm:me-1"/><span className="hidden lg:inline">Live</span></Button>}
         {isAdmin&&!isAdminArea&&<Button asChild variant="ghost" size="sm" className={cn(toolbarButton,"h-9 px-2.5")}><Link to="/admin" title={pick("Admin dashboard","لوحة المدير")}><ShieldCheck className="size-4 sm:me-1"/><span className="hidden lg:inline">{pick("Admin","المدير")}</span></Link></Button>}
