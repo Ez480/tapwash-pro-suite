@@ -25,9 +25,8 @@ export function NotificationCenter() {
       .from("notifications")
       .select("id, customer_id, title, message, is_read, created_at");
 
-    // Admin events are written in two formats: customer_id = NULL for shared
-    // admin events, and customer_id = each admin's user ID for targeted events.
-    // Customers must only ever query their own rows.
+    // Shared admin events have no customer_id; targeted events belong to this user.
+    // Never surface another customer's private notifications in the admin UI.
     query = isAdmin
       ? query.or(`customer_id.eq.${user.id},customer_id.is.null`)
       : query.eq("customer_id", user.id);
@@ -49,6 +48,14 @@ export function NotificationCenter() {
 
     const handleInsert = (payload: any) => {
       const next = payload.new as NotificationRow;
+      // Admin realtime is intentionally unfiltered to receive NULL-customer events.
+      // Filter the payload locally so customer-targeted notifications stay private.
+      if (isAdmin) {
+        if (next.customer_id !== null && next.customer_id !== user.id) return;
+      } else if (next.customer_id !== user.id) {
+        return;
+      }
+
       setItems((current) => [next, ...current.filter((item) => item.id !== next.id)].slice(0, 20));
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
         new Notification(next.title, { body: next.message });
@@ -57,8 +64,6 @@ export function NotificationCenter() {
 
     let channel = supabase.channel(`tapwash-notifications-${user.id}`);
     if (isAdmin) {
-      // Leave the realtime filter off for admins so shared NULL-customer
-      // notifications are received too. RLS still limits visible rows.
       channel = channel
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, handleInsert)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => void load());
