@@ -113,6 +113,7 @@ begin
     into v_car
   from public.cars c
   where c.customer_id = v_customer_id
+    and (v_card.car_id is null or c.id = v_card.car_id)
   order by c.created_at desc
   limit 1;
 
