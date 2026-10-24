@@ -1,3 +1,21 @@
+-- The role helper is used by RLS policies; keep it callable but pin its path.
+create or replace function public.has_role(_user_id uuid, _role public.app_role)
+returns boolean
+language sql
+stable
+security definer
+set search_path to ''
+as $function$
+  select exists (
+    select 1 from public.user_roles ur
+    where ur.user_id = _user_id and ur.role = _role
+  );
+$function$;
+
+alter function public.set_updated_at() set search_path to '';
+alter function public.touch_employee_task_updated_at() set search_path to '';
+alter function public.notify_subscription_order_reminders() set search_path to '';
+
 -- Pin privileged SECURITY DEFINER routines to an empty search_path. The
 -- function bodies below use schema-qualified references throughout.
 create or replace function public.get_my_employee()
