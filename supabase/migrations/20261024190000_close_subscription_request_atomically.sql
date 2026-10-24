@@ -20,7 +20,7 @@ begin
     raise exception 'Only authenticated admins can close subscription requests';
   end if;
 
-  if p_outcome not in ('rejected', 'cancelled') then
+  if p_outcome is null or p_outcome not in ('rejected', 'cancelled') then
     raise exception 'Invalid subscription request outcome';
   end if;
 
@@ -76,7 +76,7 @@ begin
 end;
 $function$;
 
-revoke execute on function public.close_subscription_request(uuid, text) from public, anon;
-grant execute on function public.close_subscription_request(uuid, text) to authenticated, service_role;
+revoke execute on function public.close_subscription_request(uuid, text) from public, anon, service_role;
+grant execute on function public.close_subscription_request(uuid, text) to authenticated;
 
 notify pgrst, 'reload schema';
