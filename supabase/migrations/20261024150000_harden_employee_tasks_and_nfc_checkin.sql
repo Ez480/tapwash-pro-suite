@@ -37,9 +37,8 @@ begin
     end if;
 
     if new.status = 'completed' then
-      if new.completed_at is null then
-        new.completed_at := now();
-      end if;
+      -- Completion time is server-generated, never trusted from the client.
+      new.completed_at := now();
     elsif new.completed_at is distinct from old.completed_at then
       raise exception 'Completion timestamp is only allowed when completing a task';
     end if;
