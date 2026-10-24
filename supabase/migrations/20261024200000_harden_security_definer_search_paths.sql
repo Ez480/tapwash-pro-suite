@@ -1,5 +1,37 @@
 -- Pin privileged SECURITY DEFINER routines to an empty search_path. The
 -- function bodies below use schema-qualified references throughout.
+create or replace function public.get_my_employee()
+returns table(
+  id uuid,
+  employee_id text,
+  birth_date date,
+  qualification text,
+  national_id text,
+  job_title text,
+  branch text,
+  full_name text
+)
+language sql
+security definer
+set search_path to ''
+as $function$
+  select e.id, e.employee_id, e.birth_date, e.qualification, e.national_id, e.job_title, e.branch, e.full_name
+  from public.employees e
+  where auth.uid() is not null
+    and (
+      e.user_id = auth.uid()
+      or (
+        nullif(trim(auth.jwt()->>'email'), '') is not null
+        and lower(coalesce(e.email, '')) = lower(trim(auth.jwt()->>'email'))
+      )
+    )
+  order by e.updated_at desc nulls last
+  limit 1;
+$function$;
+
+revoke execute on function public.get_my_employee() from public, anon, service_role;
+grant execute on function public.get_my_employee() to authenticated;
+
 alter function public.admin_confirm_payment(uuid) set search_path to '';
 alter function public.admin_delete_employee(uuid) set search_path to '';
 alter function public.admin_list_employees() set search_path to '';
