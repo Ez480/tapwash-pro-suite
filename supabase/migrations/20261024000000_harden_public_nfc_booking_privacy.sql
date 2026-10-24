@@ -67,6 +67,7 @@ declare
   v_customer jsonb;
   v_car jsonb;
   v_sub jsonb;
+  v_can_view_identity boolean := false;
 begin
   select * into v_card
   from public.nfc_cards c
@@ -79,6 +80,9 @@ begin
   end if;
 
   v_customer_id := v_card.customer_id;
+  v_can_view_identity := v_customer_id = auth.uid()
+    or public.has_role(auth.uid(), 'admin'::public.app_role)
+    or public.has_role(auth.uid(), 'employee'::public.app_role);
   if v_customer_id is null then
     return jsonb_build_object(
       'card', jsonb_build_object(
@@ -91,16 +95,20 @@ begin
     );
   end if;
 
-  select jsonb_build_object('full_name', coalesce(p.full_name, ''))
-    into v_customer
+  if v_can_view_identity then
+    select jsonb_build_object('full_name', coalesce(p.full_name, ''))
+      into v_customer
   from public.profiles p
-  where p.id = v_customer_id;
+    where p.id = v_customer_id;
+  else
+    v_customer := jsonb_build_object('full_name', null);
+  end if;
 
   select jsonb_build_object(
     'brand', c.brand,
     'model', c.model,
     'color', c.color,
-    'plate_number', c.plate_number
+    'plate_number', case when v_can_view_identity then c.plate_number else null end
   )
     into v_car
   from public.cars c
