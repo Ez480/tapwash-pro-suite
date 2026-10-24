@@ -31,8 +31,8 @@ revoke execute on function public.link_employee_user() from public, anon, authen
 -- A second layer of protection for this admin-only RPC; its body independently
 -- checks auth.uid() and the admin role.
 alter function public.admin_confirm_payment(uuid) set search_path to '';
-revoke execute on function public.admin_confirm_payment(uuid) from public, anon;
-grant execute on function public.admin_confirm_payment(uuid) to authenticated, service_role;
+revoke execute on function public.admin_confirm_payment(uuid) from public, anon, service_role;
+grant execute on function public.admin_confirm_payment(uuid) to authenticated;
 
 -- This RPC is intentionally callable without a session because public booking
 -- pages use it to show busy times only. Harden its SECURITY DEFINER search path.
