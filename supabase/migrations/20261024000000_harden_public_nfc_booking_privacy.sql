@@ -23,7 +23,7 @@ begin
     return null;
   end if;
 
-  select br.package_id, br.offer_id, br.car_id, br.wash_type, br.amount, br.payment_method
+  select br.wash_type, br.amount, br.payment_method
     into v_last
   from public.booking_requests br
   where br.customer_id = v_card.customer_id
@@ -44,9 +44,6 @@ begin
     'car', null,
     'last_order',
       case when found then jsonb_build_object(
-        'package_id', v_last.package_id,
-        'offer_id', v_last.offer_id,
-        'car_id', v_last.car_id,
         'wash_type', v_last.wash_type,
         'amount', v_last.amount,
         'payment_method', v_last.payment_method
