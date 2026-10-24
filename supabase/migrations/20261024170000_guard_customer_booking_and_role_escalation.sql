@@ -32,8 +32,6 @@ set search_path to ''
 as $function$
 declare
   v_user uuid := auth.uid();
-  v_package_price numeric;
-  v_offer_price numeric;
 begin
   if public.has_role(v_user, 'admin'::public.app_role)
      or coalesce(auth.role(), '') = 'service_role' then
@@ -81,6 +79,8 @@ set search_path to ''
 as $function$
 declare
   v_user uuid := auth.uid();
+  v_package_price numeric;
+  v_offer_price numeric;
 begin
   if public.has_role(v_user, 'admin'::public.app_role)
      or coalesce(auth.role(), '') = 'service_role' then
