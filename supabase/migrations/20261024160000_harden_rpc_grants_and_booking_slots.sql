@@ -53,7 +53,8 @@ as $function$
   order by br.scheduled_at;
 $function$;
 
-revoke execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) from public;\ngrant execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) to anon, authenticated, service_role;
+revoke execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) from public;
+grant execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) to anon, authenticated, service_role;
 
 -- Serialize competing booking attempts for the same exact appointment instant.
 -- This closes the check-then-insert race even for client-side direct inserts.
