@@ -462,17 +462,13 @@ Everything should be connected.
 
 Prepare the project for Supabase integration.
 
-This project was built with [Lovable](https://lovable.dev).
+## Deployment
 
-**Live app**: https://tapwash-pro-suite.lovable.app
+TapWash is intended to deploy through **Cloudflare Workers**. Branch changes are previewed through the connected Cloudflare Git integration; production deployment follows the production branch configured in Cloudflare. Keep security changes in a reviewable pull request and do not push directly to `main`.
 
-## Build with Lovable
+Supabase schema migrations are **not** applied by a successful Worker deployment. Review and validate migrations against a staging database before applying them to production.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d0ce35fd-77e4-4ce3-84ce-f6ab789fb6c2).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight into this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+The server-side admin bootstrap is fail-closed. If a new environment has no admin, set `TAPWASH_INITIAL_ADMIN_EMAIL` in the server/Worker environment to the verified email address allowed to claim the first admin role. Do not put service-role keys or other secrets in client-side variables or commit them to Git.
 
 ## Development
 
