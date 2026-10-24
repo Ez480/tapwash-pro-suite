@@ -22,9 +22,6 @@ type LookupResult = {
 
 type BookingDefaults = {
   last_order: {
-    package_id?: string | null;
-    offer_id?: string | null;
-    car_id?: string | null;
     wash_type?: string | null;
     amount?: number | null;
     payment_method?: string | null;
