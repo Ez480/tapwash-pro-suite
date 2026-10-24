@@ -17,6 +17,7 @@ declare
   new_subscription_id uuid;
   v_start_date date;
   v_end_date date;
+  v_payment_id uuid;
   v_payment_status text;
   v_actor_id uuid := auth.uid();
 begin
@@ -32,17 +33,30 @@ begin
 
   if not found then raise exception 'Subscription request not found'; end if;
   if r.status <> 'pending' then raise exception 'Subscription request is not pending'; end if;
-  if r.payment_status <> 'paid' then raise exception 'Payment must be confirmed first'; end if;
+  if r.payment_status not in ('pending', 'paid') then
+    raise exception 'Subscription request payment cannot be confirmed from its current state';
+  end if;
 
-  select p.status into v_payment_status
+  select p.id, p.status into v_payment_id, v_payment_status
   from public.payments p
   where p.reference = 'subscription_request:' || r.id::text
+    and p.customer_id = r.customer_id
   order by p.created_at desc
-  limit 1;
+  limit 1
+  for update;
 
-  if coalesce(v_payment_status, '') <> 'paid' then
-    raise exception 'Payment transaction must be manually confirmed first';
+  if not found then
+    raise exception 'Payment transaction not found for this subscription request';
   end if;
+  if coalesce(v_payment_status, '') not in ('pending', 'paid') then
+    raise exception 'Payment transaction cannot be confirmed from its current state';
+  end if;
+
+  -- Confirmation and activation are atomic under the locked request/payment rows.
+  update public.payments
+  set status = 'paid',
+      paid_at = coalesce(paid_at, now())
+  where id = v_payment_id;
 
   select * into pkg
   from public.packages
@@ -82,8 +96,13 @@ begin
     where id = new_subscription_id;
   end if;
 
+  update public.payments
+  set subscription_id = new_subscription_id
+  where id = v_payment_id;
+
   update public.subscription_requests
   set status = 'confirmed',
+      payment_status = 'paid',
       confirmed_at = now(),
       confirmed_by = v_actor_id,
       updated_at = now()
