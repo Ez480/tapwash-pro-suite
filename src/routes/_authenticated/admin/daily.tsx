@@ -47,12 +47,56 @@ function AdminDaily() {
 
   const confirmSubscription = async (r: any) => {
     if (r.status !== "pending") return;
-    const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return toast.error(pick("Admin session not found.", "جلسة المدير غير موجودة."));
-    const { error: payError } = await (supabase as any).from("subscription_requests").update({ payment_status: "paid" }).eq("id", r.id).eq("status", "pending");
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return toast.error(pick("Admin session not found.", "جلسة المدير غير موجودة."));
+
+    const { data: payment, error: paymentReadError } = await (supabase as any)
+      .from("payments")
+      .select("id, status")
+      .eq("reference", `subscription_request:${r.id}`)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (paymentReadError) return toast.error(paymentReadError.message);
+    if (!payment) return toast.error(pick("No payment transaction exists for this request.", "لا توجد معاملة دفع لطلب الاشتراك ده."));
+    if (payment.status !== "pending") return toast.error(pick("Payment status has already changed.", "حالة الدفع اتغيرت بالفعل."));
+
+    const now = new Date().toISOString();
+    const { error: payError } = await (supabase as any)
+      .from("payments")
+      .update({ status: "paid", paid_at: now })
+      .eq("id", payment.id)
+      .eq("status", "pending");
     if (payError) return toast.error(payError.message);
-    const { error } = await (supabase as any).rpc("confirm_subscription_request", { p_request_id: r.id, p_admin_id: auth.user.id });
-    if (error) { await (supabase as any).from("subscription_requests").update({ payment_status: "pending" }).eq("id", r.id); return toast.error(error.message); }
-    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك.")); scheduleReload();
+
+    const { error: requestPayError } = await (supabase as any)
+      .from("subscription_requests")
+      .update({ payment_status: "paid", updated_at: now })
+      .eq("id", r.id)
+      .eq("status", "pending");
+    if (requestPayError) {
+      await (supabase as any).from("payments").update({ status: "pending", paid_at: null }).eq("id", payment.id);
+      return toast.error(requestPayError.message);
+    }
+
+    const { data: subscriptionId, error } = await (supabase as any).rpc("confirm_subscription_request", {
+      p_request_id: r.id,
+      p_admin_id: auth.user.id,
+    });
+    if (error) {
+      await (supabase as any).from("payments").update({ status: "pending", paid_at: null }).eq("id", payment.id);
+      await (supabase as any).from("subscription_requests").update({ payment_status: "pending", updated_at: new Date().toISOString() }).eq("id", r.id).eq("status", "pending");
+      return toast.error(error.message);
+    }
+
+    const { error: linkError } = await (supabase as any)
+      .from("payments")
+      .update({ subscription_id: subscriptionId })
+      .eq("id", payment.id);
+    if (linkError) return toast.error(linkError.message);
+
+    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك."));
+    scheduleReload();
   };
   const rejectSubscription = async (r: any) => { if (r.status !== "pending") return; const { error } = await (supabase as any).from("subscription_requests").update({ payment_status: "rejected", status: "rejected" }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك.")); scheduleReload(); };
 
