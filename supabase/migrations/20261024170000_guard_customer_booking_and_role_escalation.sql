@@ -81,6 +81,7 @@ declare
   v_user uuid := auth.uid();
   v_package_price numeric;
   v_offer_price numeric;
+  v_card_status text;
 begin
   if public.has_role(v_user, 'admin'::public.app_role)
      or coalesce(auth.role(), '') = 'service_role' then
@@ -142,6 +143,15 @@ begin
   new.checked_in_by := null;
 
   if v_user is null then
+    if new.card_id is null then
+      raise exception 'Anonymous booking must be linked to an NFC card';
+    end if;
+    select c.status::text into v_card_status
+    from public.nfc_cards c
+    where c.id = new.card_id
+    for share;
+    if not found then raise exception 'NFC card not found'; end if;
+    if v_card_status = 'blocked' then raise exception 'NFC card is blocked'; end if;
     new.scan_method := 'customer_nfc_link';
   else
     new.scan_method := null;
