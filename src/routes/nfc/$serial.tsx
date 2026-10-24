@@ -21,13 +21,13 @@ type LookupResult = {
 };
 
 type BookingDefaults = {
-  customer: { id: string; full_name: string; phone: string | null; email: string | null } | null;
-  car: { id?: string; brand: string | null; model: string | null; color: string | null; plate_number: string | null } | null;
   last_order: {
-    id: string; package_id: string | null; offer_id: string | null; car_id: string | null; wash_type: string | null;
-    amount: number | null; payment_method: string | null; customer_phone: string | null; customer_email: string | null;
-    car_type: string | null; car_brand: string | null; car_model: string | null; car_color: string | null; plate_number: string | null;
-    address: string | null; location_url: string | null; notes: string | null;
+    package_id?: string | null;
+    offer_id?: string | null;
+    car_id?: string | null;
+    wash_type?: string | null;
+    amount?: number | null;
+    payment_method?: string | null;
   } | null;
 };
 
@@ -82,10 +82,11 @@ function NfcCardLookup() {
       if (!defaultsError && bookingData) {
         const d = bookingData as BookingDefaults;
         setDefaults(d);
-        setPhone(d.customer?.phone ?? d.last_order?.customer_phone ?? "");
-        setAddress(d.last_order?.address ?? "");
-        setLocationUrl(d.last_order?.location_url ?? "");
-        setNotes(d.last_order?.notes ?? "");
+        // Public NFC links must not prefill or expose personal contact/location data.
+        setPhone("");
+        setAddress("");
+        setLocationUrl("");
+        setNotes("");
         setPayment(d.last_order?.payment_method ?? "cash");
       }
       setLoading(false);
