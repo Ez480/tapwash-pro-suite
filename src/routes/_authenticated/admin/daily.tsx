@@ -47,14 +47,30 @@ function AdminDaily() {
 
   const confirmSubscription = async (r: any) => {
     if (r.status !== "pending") return;
-    const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return toast.error(pick("Admin session not found.", "جلسة المدير غير موجودة."));
-    const { error: payError } = await (supabase as any).from("subscription_requests").update({ payment_status: "paid" }).eq("id", r.id).eq("status", "pending");
-    if (payError) return toast.error(payError.message);
-    const { error } = await (supabase as any).rpc("confirm_subscription_request", { p_request_id: r.id, p_admin_id: auth.user.id });
-    if (error) { await (supabase as any).from("subscription_requests").update({ payment_status: "pending" }).eq("id", r.id); return toast.error(error.message); }
-    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك.")); scheduleReload();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return toast.error(pick("Admin session not found.", "جلسة المدير غير موجودة."));
+
+    // The RPC confirms payment, activates the subscription, links the payment,
+    // and emits the customer notification in one database transaction.
+    const { error } = await (supabase as any).rpc("confirm_subscription_request", {
+      p_request_id: r.id,
+      p_admin_id: auth.user.id,
+    });
+    if (error) return toast.error(error.message);
+
+    toast.success(pick("Payment confirmed and subscription activated.", "تم تأكيد الدفع وتفعيل الاشتراك."));
+    scheduleReload();
   };
-  const rejectSubscription = async (r: any) => { if (r.status !== "pending") return; const { error } = await (supabase as any).from("subscription_requests").update({ payment_status: "rejected", status: "rejected" }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك.")); scheduleReload(); };
+  const rejectSubscription = async (r: any) => {
+    if (r.status !== "pending") return;
+    const { error } = await (supabase as any).rpc("close_subscription_request", {
+      p_request_id: r.id,
+      p_outcome: "rejected",
+    });
+    if (error) return toast.error(error.message);
+    toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك."));
+    scheduleReload();
+  };
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><CalendarDays className="size-6 text-primary"/><h1 className="text-2xl font-bold">{pick("Today", "طلبات اليوم")}</h1></div><p className="text-sm text-muted-foreground">{today}</p></div><Button asChild variant="outline"><a href="/admin/archive"><Archive className="me-2 size-4"/>{pick("Archive & search", "الأرشيف والبحث")}</a></Button></div>

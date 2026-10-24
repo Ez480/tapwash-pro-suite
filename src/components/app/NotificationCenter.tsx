@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -18,31 +18,64 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const unread = useMemo(() => items.filter((n) => !n.is_read).length, [items]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+
+    let query = supabase
       .from("notifications")
-      .select("id, customer_id, title, message, is_read, created_at")
-      .eq("customer_id", user.id)
+      .select("id, customer_id, title, message, is_read, created_at");
+
+    // Shared admin events have no customer_id; targeted events belong to this user.
+    // Never surface another customer's private notifications in the admin UI.
+    query = isAdmin
+      ? query.or(`customer_id.eq.${user.id},customer_id.is.null`)
+      : query.eq("customer_id", user.id);
+
+    const { data, error } = await query
       .order("created_at", { ascending: false })
       .limit(20);
+
+    if (error) {
+      console.error("Failed to load notifications:", error);
+      return;
+    }
     setItems((data ?? []) as NotificationRow[]);
-  };
+  }, [user, isAdmin]);
 
   useEffect(() => {
-    if (!user || !roles) return;
+    if (!user || roles === undefined) return;
     void load();
-    const channel = supabase
-      .channel(`tapwash-notifications-${user.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `customer_id=eq.${user.id}` }, (payload) => {
-        const next = payload.new as NotificationRow;
-        setItems((current) => [next, ...current].slice(0, 20));
-        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") new Notification(next.title, { body: next.message });
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications", filter: `customer_id=eq.${user.id}` }, () => void load())
-      .subscribe();
+
+    const handleInsert = (payload: any) => {
+      const next = payload.new as NotificationRow;
+      // Admin realtime is intentionally unfiltered to receive NULL-customer events.
+      // Filter the payload locally so customer-targeted notifications stay private.
+      if (isAdmin) {
+        if (next.customer_id !== null && next.customer_id !== user.id) return;
+      } else if (next.customer_id !== user.id) {
+        return;
+      }
+
+      setItems((current) => [next, ...current.filter((item) => item.id !== next.id)].slice(0, 20));
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        new Notification(next.title, { body: next.message });
+      }
+    };
+
+    let channel = supabase.channel(`tapwash-notifications-${user.id}`);
+    if (isAdmin) {
+      channel = channel
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications" }, handleInsert)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications" }, () => void load());
+    } else {
+      channel = channel
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `customer_id=eq.${user.id}` }, handleInsert)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications", filter: `customer_id=eq.${user.id}` }, () => void load());
+    }
+
+    channel.subscribe();
     return () => { void supabase.removeChannel(channel); };
-  }, [user?.id, Boolean(roles)]);
+  }, [user, roles, isAdmin, load]);
 
   const requestPermission = async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -52,7 +85,11 @@ export function NotificationCenter() {
   const markAllRead = async () => {
     const unreadIds = items.filter((n) => !n.is_read).map((n) => n.id);
     if (!unreadIds.length) return;
-    await supabase.from("notifications").update({ is_read: true }).in("id", unreadIds);
+    const { error } = await supabase.from("notifications").update({ is_read: true }).in("id", unreadIds);
+    if (error) {
+      console.error("Failed to mark notifications as read:", error);
+      return;
+    }
     setItems((current) => current.map((n) => ({ ...n, is_read: true })));
   };
 
