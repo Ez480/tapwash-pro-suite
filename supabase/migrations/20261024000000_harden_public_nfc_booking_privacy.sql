@@ -120,7 +120,11 @@ begin
   from public.subscriptions s
   left join public.packages pk on pk.id = s.package_id
   where s.customer_id = v_customer_id
-  order by s.created_at desc
+    and (v_card.car_id is null or s.car_id is null or s.car_id = v_card.car_id)
+  order by
+    case when v_card.car_id is not null and s.car_id = v_card.car_id then 0 else 1 end,
+    case when s.status::text = 'active' and s.used_washes < s.total_washes and (s.end_date is null or s.end_date >= current_date) then 0 else 1 end,
+    s.created_at desc
   limit 1;
 
   return jsonb_build_object(
