@@ -137,7 +137,7 @@ grant execute on function public.admin_save_employee(uuid, text, text, date, tex
 revoke execute on function public.admin_upsert_employee(uuid, text, text, text, text, text, text, text, text, text) from public, anon;
 grant execute on function public.admin_upsert_employee(uuid, text, text, text, text, text, text, text, text, text) to authenticated, service_role;
 
-revoke execute on function public.checkin_nfc_card(text, uuid) from public, anon;
-grant execute on function public.checkin_nfc_card(text, uuid) to authenticated, service_role;
+revoke execute on function public.checkin_nfc_card(text, uuid) from public, anon, service_role;
+grant execute on function public.checkin_nfc_card(text, uuid) to authenticated;
 
 notify pgrst, 'reload schema';
