@@ -122,8 +122,8 @@ $function$;
 
 -- These RPCs are intended for signed-in staff/admin only. Their bodies also
 -- enforce the admin role; removing PUBLIC/anon EXECUTE is defense in depth.
-revoke execute on function public.confirm_subscription_request(uuid, uuid) from public, anon;
-grant execute on function public.confirm_subscription_request(uuid, uuid) to authenticated, service_role;
+revoke execute on function public.confirm_subscription_request(uuid, uuid) from public, anon, service_role;
+grant execute on function public.confirm_subscription_request(uuid, uuid) to authenticated;
 
 revoke execute on function public.admin_delete_employee(uuid) from public, anon;
 grant execute on function public.admin_delete_employee(uuid) to authenticated, service_role;
