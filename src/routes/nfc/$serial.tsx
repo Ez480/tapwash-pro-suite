@@ -119,7 +119,7 @@ function NfcCardLookup() {
   }, [date, staffMode, start, end, step]);
 
   async function deductWash() {
-    if (!user || !result?.card?.id || deducting) return;
+    if (!user || !(result?.card?.uid || result?.card?.serial_number) || deducting) return;
     if ((result.subscription?.remaining_washes ?? 0) <= 0) return void toast.error(pick("No washes remaining.", "مفيش غسلات متبقية."));
     if (!window.confirm(pick("Confirm this wash? One wash will be deducted.", "تأكيد تسجيل الغسلة؟ سيتم خصم غسلة واحدة."))) return;
     setDeducting(true);
