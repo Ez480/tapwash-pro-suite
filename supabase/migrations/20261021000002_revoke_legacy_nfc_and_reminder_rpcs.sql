@@ -8,6 +8,12 @@ revoke all on function public.public_nfc_scan(text) from public, anon, authentic
 -- containing customer/order details. The migration/job owner retains execution.
 revoke execute on function public.notify_subscription_order_reminders() from public, anon, authenticated, service_role;
 
+-- Employee identity lookup can return national ID and employment details.
+-- It is only needed by a signed-in employee session; the function's email
+-- fallback must never be usable by an anonymous caller.
+revoke execute on function public.get_my_employee() from public, anon;
+grant execute on function public.get_my_employee() to authenticated, service_role;
+
 -- These customer/staff RPCs enforce auth.uid() internally, but do not need
 -- anonymous EXECUTE. Keep them available to signed-in users where used by UI.
 revoke execute on function public.create_customer_nfc_reorder(uuid, timestamptz, text) from public, anon;
