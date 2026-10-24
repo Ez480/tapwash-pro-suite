@@ -53,7 +53,7 @@ as $function$
   order by br.scheduled_at;
 $function$;
 
-grant execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) to anon, authenticated, service_role;
+revoke execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) from public;\ngrant execute on function public.get_booked_booking_slots(timestamp with time zone, timestamp with time zone) to anon, authenticated, service_role;
 
 -- Serialize competing booking attempts for the same exact appointment instant.
 -- This closes the check-then-insert race even for client-side direct inserts.
@@ -70,7 +70,7 @@ begin
   end if;
 
   perform pg_catalog.pg_advisory_xact_lock(
-    pg_catalog.hashtextextended(new.scheduled_at::text, 574731)
+    pg_catalog.hashtextextended(extract(epoch from new.scheduled_at)::text, 574731)
   );
 
   if exists (
