@@ -30,17 +30,19 @@ function AdminPayments() {
     const requestId = String(row["id"] ?? "");
     if (!requestId || String(row["status"] ?? "") !== "pending" || String(row["payment_status"] ?? "") !== "pending") return;
     if (!window.confirm("تأكيد الدفع وتفعيل الاشتراك؟ سيتم تنفيذ التفعيل يدويًا الآن من صفحة المدفوعات.")) return;
-    const { data: auth } = await supabase.auth.getUser(); if (!auth.user) return void toast.error("جلسة المدير غير موجودة.");
-    const { data: request, error: requestReadError } = await (supabase as any).from("subscription_requests").select("*").eq("id", requestId).single(); if (requestReadError || !request) return void toast.error(requestReadError?.message ?? "طلب الاشتراك غير موجود.");
-    const { data: payment, error: paymentReadError } = await (supabase as any).from("payments").select("id, status, subscription_id").eq("reference", `subscription_request:${requestId}`).order("created_at", { ascending: false }).limit(1).maybeSingle(); if (paymentReadError) return void toast.error(paymentReadError.message); if (!payment) return void toast.error("لم يتم إنشاء معاملة الدفع لهذا الاشتراك."); if (payment.status !== "pending") return void toast.error("حالة الدفع تغيرت بالفعل.");
-    const now = new Date().toISOString();
-    const { error: paymentError } = await (supabase as any).from("payments").update({ status: "paid", paid_at: now }).eq("id", payment.id).eq("status", "pending"); if (paymentError) return void toast.error(paymentError.message);
-    const { error: requestPaidError } = await (supabase as any).from("subscription_requests").update({ payment_status: "paid", updated_at: now }).eq("id", requestId).eq("status", "pending");
-    if (requestPaidError) { await (supabase as any).from("payments").update({ status: "pending", paid_at: null }).eq("id", payment.id); return void toast.error(requestPaidError.message); }
-    const { data: subscriptionId, error: activationError } = await (supabase as any).rpc("confirm_subscription_request", { p_request_id: requestId, p_admin_id: auth.user.id });
-    if (activationError) { await (supabase as any).from("payments").update({ status: "pending", paid_at: null }).eq("id", payment.id); await (supabase as any).from("subscription_requests").update({ payment_status: "pending", updated_at: new Date().toISOString() }).eq("id", requestId).eq("status", "pending"); return void toast.error(activationError.message); }
-    const { error: linkError } = await (supabase as any).from("payments").update({ subscription_id: subscriptionId }).eq("id", payment.id); if (linkError) return void toast.error(linkError.message);
-    toast.success("تم تأكيد الدفع وتفعيل الاشتراك يدويًا."); refresh();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return void toast.error("جلسة المدير غير موجودة.");
+
+    // The database RPC locks the request and payment, confirms both, activates
+    // the subscription, and creates the notification atomically.
+    const { error } = await (supabase as any).rpc("confirm_subscription_request", {
+      p_request_id: requestId,
+      p_admin_id: auth.user.id,
+    });
+    if (error) return void toast.error(error.message);
+
+    toast.success("تم تأكيد الدفع وتفعيل الاشتراك يدويًا.");
+    refresh();
   };
   return <div className="space-y-6">
     <section className="panel overflow-hidden"><div className="flex flex-wrap items-center justify-between gap-3 border-b p-4"><div><h2 className="text-lg font-bold">طلبات دفع الاشتراكات</h2><p className="text-sm text-muted-foreground">تظهر هنا قبل التفعيل. المدير هو الذي يؤكد الدفع ويقوم بالتفعيل يدويًا من هذه الصفحة.</p></div><Badge variant="secondary">{subscriptionRequests.filter((r: any) => r.status === "pending" && r.payment_status === "pending").length} معلقة</Badge></div><div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-sm"><thead><tr className="border-b bg-muted/40 text-right"><th className="p-3">العميل</th><th className="p-3">الباقة</th><th className="p-3">المبلغ</th><th className="p-3">طريقة الدفع</th><th className="p-3">تاريخ ووقت الطلب</th><th className="p-3">الحالة</th><th className="p-3">الإجراء</th></tr></thead><tbody>{subscriptionRequests.map((r: any) => { const pending = r.status === "pending" && r.payment_status === "pending"; return <tr key={`subscription-payment-${r.id}`} className="border-b last:border-0 hover:bg-muted/20"><td className="p-3"><div className="font-semibold">{customerOptions.find((c) => c.value === String(r.customer_id))?.label ?? r.customer_id}</div></td><td className="p-3">{packageLabel(r.package_id)}</td><td className="p-3 font-semibold">{fmtMoney(Number(r.amount ?? 0))}</td><td className="p-3">{manualPaymentMethod(r.payment_method)}</td><td className="p-3">{r.requested_at ? `${fmtDate(String(r.requested_at))} · ${new Date(String(r.requested_at)).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}` : "—"}</td><td className="p-3"><Badge variant={r.payment_status === "paid" ? "default" : r.status === "cancelled" ? "destructive" : "secondary"}>{r.payment_status === "paid" ? "مدفوع" : r.status === "pending" ? "في انتظار التأكيد" : r.status}</Badge></td><td className="p-3">{pending ? <Button size="sm" onClick={() => void confirmSubscriptionPayment(r)}><CheckCircle2 className="me-1 size-4"/>تأكيد الدفع وتفعيل الاشتراك</Button> : <span className="text-xs text-muted-foreground">—</span>}</td></tr>; })}{subscriptionRequests.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">لا توجد طلبات اشتراك.</td></tr>}</tbody></table></div></section>
