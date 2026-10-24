@@ -281,7 +281,7 @@ begin
 end;
 $function$;
 
-revoke execute on function public.checkin_nfc_card(text, uuid) from public, anon;
-grant execute on function public.checkin_nfc_card(text, uuid) to authenticated, service_role;
+revoke execute on function public.checkin_nfc_card(text, uuid) from public, anon, service_role;
+grant execute on function public.checkin_nfc_card(text, uuid) to authenticated;
 
 notify pgrst, 'reload schema';
