@@ -32,6 +32,8 @@ set search_path to ''
 as $function$
 declare
   v_user uuid := auth.uid();
+  v_package_price numeric;
+  v_offer_price numeric;
 begin
   if public.has_role(v_user, 'admin'::public.app_role)
      or coalesce(auth.role(), '') = 'service_role' then
@@ -87,6 +89,39 @@ begin
 
   if v_user is not null and new.customer_id is distinct from v_user then
     raise exception 'Customers may only create bookings for their own account';
+  end if;
+
+  if v_user is not null then
+    if new.package_id is not null and new.offer_id is not null then
+      raise exception 'A booking must reference either a package or an offer, not both';
+    elsif new.package_id is not null then
+      select p.price into v_package_price
+      from public.packages p
+      where p.id = new.package_id
+        and p.status::text = 'active'
+      for share;
+      if not found then raise exception 'This package is not available'; end if;
+      new.amount := v_package_price;
+    elsif new.offer_id is not null then
+      select coalesce(o.new_price, o.old_price, 0) into v_offer_price
+      from public.offers o
+      where o.id = new.offer_id
+        and o.status::text = 'active'
+        and o.start_date <= now()
+        and (o.end_date is null or o.end_date >= now())
+      for share;
+      if not found then raise exception 'This offer is not available'; end if;
+      new.amount := v_offer_price;
+    else
+      raise exception 'Select an active package or offer';
+    end if;
+
+    if new.car_id is not null and not exists (
+      select 1 from public.cars c
+      where c.id = new.car_id and c.customer_id = v_user
+    ) then
+      raise exception 'The selected vehicle does not belong to this customer';
+    end if;
   end if;
 
   if new.scheduled_at is null or new.scheduled_at <= now() then
