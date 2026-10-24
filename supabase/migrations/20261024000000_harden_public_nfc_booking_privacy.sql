@@ -56,7 +56,7 @@ create or replace function public.public_nfc_lookup(p_uid text)
 returns jsonb
 language plpgsql
 security definer
-set search_path to 'public'
+set search_path to ''
 as $function$
 declare
   v_card public.nfc_cards%rowtype;
