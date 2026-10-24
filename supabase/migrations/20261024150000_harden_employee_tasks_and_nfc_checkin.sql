@@ -229,9 +229,13 @@ begin
     and (s.end_date is null or s.end_date >= current_date)
     and (
       coalesce(v_booking.car_id, v_card.car_id) is null
+      or s.car_id is null
       or s.car_id = coalesce(v_booking.car_id, v_card.car_id)
     )
-  order by s.end_date nulls last, s.created_at desc
+  order by
+    case when coalesce(v_booking.car_id, v_card.car_id) is not null and s.car_id = coalesce(v_booking.car_id, v_card.car_id) then 0 else 1 end,
+    s.end_date nulls last,
+    s.created_at desc
   limit 1
   for update;
 
