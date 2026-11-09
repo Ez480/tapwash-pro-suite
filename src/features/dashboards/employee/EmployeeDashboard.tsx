@@ -39,8 +39,8 @@ function EmployeeMessagesButton() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" size="sm" aria-label="رسائل الإدارة" title="رسائل الإدارة" className="shrink-0 gap-2">
-          <Bell className="size-4" /><span>رسائل الإدارة</span>
+        <Button type="button" variant="outline" size="sm" aria-label={pick("Management messages", "رسائل الإدارة")} title={pick("Management messages", "رسائل الإدارة")} className="shrink-0 gap-2">
+          <Bell className="size-4" /><span>{pick("Management messages", "رسائل الإدارة")}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(92vw,360px)] p-4">
@@ -427,8 +427,8 @@ export function EmployeeDashboard() {
             <span className="flex size-11 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MapPin className="size-6" /></span>
             
           </Button>
-          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><ScanLine className="size-6" /></span>
+          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-0 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
+            <span className="flex size-11 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><ScanLine className="size-6" /></span>
             
           </Button>
           <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => setSupportOpen(true)}>
