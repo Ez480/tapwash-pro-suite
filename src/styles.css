@@ -113,8 +113,8 @@
 }
 .tapwash-employee-dock-button:disabled { opacity: .55 !important; }
 .tapwash-employee-dock-button svg {
-  width: 58px !important;
-  height: 58px !important;
+  width: 32px !important;
+  height: 32px !important;
   max-width: none !important;
   max-height: none !important;
 }
