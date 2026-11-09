@@ -11,7 +11,7 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
   const { data: subscription } = useMySubscription(card?.customer_id);
   const subscriptionActive = String(subscription?.status ?? "").toLowerCase() === "active";
   const validUntil = subscriptionActive && subscription?.end_date
-    ? new Intl.DateTimeFormat("ar-EG", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(subscription.end_date))
+    ? new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(subscription.end_date))
     : null;
 
   return (
