@@ -122,7 +122,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
         driverMarkerRef.current = L.marker([driver.lat, driver.lng], { icon, zIndexOffset: 1000 }).addTo(map);
       }
       driverMarkerRef.current.setLatLng([driver.lat, driver.lng]);
-      driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${new Date(driver.updatedAt).toLocaleTimeString()}` : "الدليفري الآن");
+      driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${new Date(driver.updatedAt).toLocaleTimeString("en-US")}` : "الدليفري الآن");
     } else if (driverMarkerRef.current) {
       driverMarkerRef.current.remove();
       driverMarkerRef.current = null;
