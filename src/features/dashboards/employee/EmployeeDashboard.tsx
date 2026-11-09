@@ -378,20 +378,17 @@ export function EmployeeDashboard() {
         </div>}
         {employeePage === "current" ? (
           active.length ? active.map(renderOrder) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>
-        ) : Object.entries(archiveGroups).length ? Object.entries(archiveGroups).sort(([a], [b]) => b.localeCompare(a)).map(([day, dayTasks]) => <div key={day} className="space-y-3">
-          <h3 className="border-b pb-2 text-sm font-bold text-muted-foreground">{new Date(day + "T00:00:00").toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</h3>
-          {(dayTasks as any[]).map((task: any) => <article key={task.id} className="rounded-2xl border bg-card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="font-bold">{displayValue(task.title || pick("Order", "أوردر"))}</p><p className="text-xs text-muted-foreground">#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</p></div><Badge variant="secondary">{pick("Completed", "مكتمل")}</Badge></div>
-            <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              <p><span className="text-muted-foreground">{pick("Customer", "العميل")}: </span>{displayValue(task.customer_name)}</p>
-              <p><span className="text-muted-foreground">{pick("Phone", "الهاتف")}: </span>{displayValue(task.customer_phone)}</p>
-              <p><span className="text-muted-foreground">{pick("Package", "الباقة")}: </span>{displayValue(task.package_name || task.offer_name)}</p>
-              <p><span className="text-muted-foreground">{pick("Remaining washes", "الغسلات المتبقية")}: </span>{displayValue(task.remaining_washes)}</p>
-              <p><span className="text-muted-foreground">{pick("Completed at", "تاريخ الإكمال")}: </span>{fmtDate(task.completed_at || task.updated_at || task.created_at)}</p>
-              <p><span className="text-muted-foreground">{pick("Amount", "المبلغ")}: </span>{Number(task.collection_amount ?? task.amount ?? 0).toFixed(2)} EGP</p>
+        ) : completed.length ? completed.slice().sort((a: any, b: any) => new Date(b.completed_at || b.updated_at || b.created_at).getTime() - new Date(a.completed_at || a.updated_at || a.created_at).getTime()).map((task: any) => {
+          const executedAt = task.completed_at || task.updated_at || task.created_at;
+          return <article key={task.id} className="rounded-2xl border bg-card p-4">
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <p><span className="text-muted-foreground">{pick("Order number", "رقم الأوردر")}: </span><strong>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</strong></p>
+              <p><span className="text-muted-foreground">{pick("Customer", "اسم العميل")}: </span><strong>{displayValue(task.customer_name)}</strong></p>
+              <p><span className="text-muted-foreground">{pick("Collection", "التحصيل")}: </span><strong>{money(Number(task.collection_amount ?? task.amount ?? 0))}</strong></p>
+              <p><span className="text-muted-foreground">{pick("Execution time", "وقت التنفيذ")}: </span><strong>{executedAt ? new Date(executedAt).toLocaleString(lang === "ar" ? "ar-EG" : "en-US") : "—"}</strong></p>
             </div>
-          </article>)}
-        </div>) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No completed orders", "لا توجد أوردرات مكتملة")}</p>}
+          </article>;
+        }) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No completed orders", "لا توجد أوردرات مكتملة")}</p>}
       </div></section>}
       <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
         <DialogContent>
@@ -431,8 +428,8 @@ export function EmployeeDashboard() {
       </Dialog>
       <div dir="rtl" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
         <div className="pointer-events-auto mx-auto flex w-full max-w-[390px] items-center justify-center gap-3 bg-transparent p-0">
-          <Button type="button" variant="ghost" aria-label={pick("Customer map", "خريطة العميل")} className="group relative flex h-[74px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[24px] border border-white/65 bg-white/55 px-1 text-[11px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
-            <span className="flex size-9 items-center justify-center rounded-[13px] border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MapPin className="size-[19px]" /></span>
+          <Button type="button" variant="ghost" aria-label={pick("Location", "الموقع")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
+            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MapPin className="size-[19px]" /></span>
             <span className="truncate">{pick("Customer map", "خريطة العميل")}</span>
           </Button>
           <Button type="button" variant="ghost" aria-label={pick("Scan NFC", "مسح NFC")} className="group relative flex h-[74px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[24px] border border-white/65 bg-white/55 px-1 text-[11px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
