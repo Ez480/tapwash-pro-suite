@@ -82,7 +82,7 @@ function AdminScheduledOrders() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="font-bold">{pick("Orders for this execution date", "أوردرات تاريخ التنفيذ")}</h2>{loading&&<span className="text-sm text-muted-foreground">{pick("Loading…", "جاري التحميل…")}</span>}</div>
       <div className="space-y-4">
         {filteredTasks.map((x:any)=>{const emp=employee(x);const c=car(x);return <article key={x.id} className="rounded-2xl border border-border p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><b className="text-lg">#{x.serial_number || x.id.slice(0,8)}</b><Badge variant={x.subscription_id ? "default" : "secondary"}>{orderType(x)}</Badge><Badge variant="outline">{x.status || "pending"}</Badge></div><div className="mt-2 font-semibold">{x.customer_name || "—"}</div><div className="text-sm text-muted-foreground">{x.customer_phone || "—"} · {x.customer_email || "—"}</div></div><div className="rounded-xl border bg-muted/30 px-3 py-2 text-sm font-semibold"><Clock3 className="me-1 inline size-4"/>{x.scheduled_at ? `${fmtDate(x.scheduled_at)} · ${new Date(x.scheduled_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}` : "—"}</div></div>
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><b className="text-lg">#{x.serial_number || x.id.slice(0,8)}</b><Badge variant={x.subscription_id ? "default" : "secondary"}>{orderType(x)}</Badge><Badge variant="outline">{x.status || "pending"}</Badge></div><div className="mt-2 font-semibold">{x.customer_name || "—"}</div><div className="text-sm text-muted-foreground">{x.customer_phone || "—"} · {x.customer_email || "—"}</div></div><div className="rounded-xl border bg-muted/30 px-3 py-2 text-sm font-semibold"><Clock3 className="me-1 inline size-4"/>{x.scheduled_at ? `${fmtDate(x.scheduled_at)} · ${new Date(x.scheduled_at).toLocaleTimeString("en-US", {hour:"2-digit", minute:"2-digit"})}` : "—"}</div></div>
           <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div><b>{pick("Order number", "رقم الأوردر")}:</b> {x.serial_number || x.id}</div>
             <div><b>{pick("Customer name", "اسم العميل")}:</b> {x.customer_name || "—"}</div>
@@ -97,7 +97,7 @@ function AdminScheduledOrders() {
             <div className="sm:col-span-2"><b>{pick("Address", "العنوان")}:</b> {x.location_text || x.address || "—"}</div>
             <div className="sm:col-span-2 lg:col-span-4"><b>{pick("Notes", "ملاحظات")}:</b> {x.notes || "—"}</div>
           </div>
-          <div className="mt-4 text-xs text-muted-foreground">{x.created_at ? `${pick("Order created", "وقت إنشاء الأوردر")}: ${new Date(x.created_at).toLocaleString()}` : ""}</div>
+          <div className="mt-4 text-xs text-muted-foreground">{x.created_at ? `${pick("Order created", "وقت إنشاء الأوردر")}: ${new Date(x.created_at).toLocaleString("en-US")}` : ""}</div>
         </article>})}
         {!loading&&!filteredTasks.length&&<div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{pick("No scheduled orders for this date.", "لا توجد أوردرات مجدولة في هذا التاريخ.")}</div>}
       </div>
