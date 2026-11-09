@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { EmployeeDashboardSummary } from "@/components/app/EmployeeDashboardSummary";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -34,5 +33,5 @@ export const Route = createFileRoute("/_authenticated")({
 
     return { user: data.user, roles: roleNames, isCustomer };
   },
-  component: () => <><EmployeeDashboardSummary /><Outlet /></>,
+  component: () => <Outlet />,
 });
