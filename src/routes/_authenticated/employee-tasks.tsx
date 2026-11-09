@@ -144,18 +144,52 @@ function EmployeeTasks() {
   useEffect(() => {
     if (!mapDialogOpen || !mapTask?.id || !user?.id) { setDriverLocation(null); return; }
     let mounted = true;
-    const loadDriverLocation = async () => {
+    let watchId: number | null = null;
+    const savePosition = async (position: GeolocationPosition) => {
+      if (!mounted) return;
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const updated_at = new Date().toISOString();
+      setMap({ lat: latitude, lng: longitude });
+      setDriverLocation({ latitude, longitude, updated_at });
+      const { error } = await (supabase as any).from("employee_locations").upsert({
+        task_id: mapTask.id, employee_id: user.id, latitude, longitude,
+        accuracy: position.coords.accuracy ?? null,
+        heading: position.coords.heading ?? null,
+        speed: position.coords.speed ?? null, updated_at,
+      }, { onConflict: "task_id" });
+      if (error && mounted) {
+        console.error("Could not save courier location", error);
+        toast.error(pick("Your live location is visible on this phone but could not be synced: ", "موقعك ظاهر على الهاتف لكن تعذر مزامنته: ") + error.message);
+      }
+    };
+    const loadAndTrack = async () => {
       const { data, error } = await (supabase as any).from("employee_locations").select("task_id,employee_id,latitude,longitude,updated_at").eq("task_id", mapTask.id).eq("employee_id", user.id).maybeSingle();
       if (!mounted) return;
-      if (error) { console.warn("Could not load delivery location", error); setDriverLocation(null); return; }
-      setDriverLocation(data ?? null);
+      if (data) setDriverLocation(data);
+      if (error) console.warn("Could not load saved courier location", error);
+      if (!navigator.geolocation) { toast.error(pick("Location is not supported by this browser.", "هذا المتصفح لا يدعم تحديد الموقع.")); return; }
+      navigator.geolocation.getCurrentPosition(
+        position => { void savePosition(position); },
+        error => {
+          if (!mounted) return;
+          const message = error.code === 1 ? pick("Allow location permission for TapWash to show your position.", "اسمح لتطبيق TapWash باستخدام الموقع حتى يظهر مكانك.") : error.code === 2 ? pick("The phone could not determine your location. Turn on GPS.", "تعذر تحديد موقع الهاتف. شغّل GPS.") : pick("Location request timed out. Try again with GPS enabled.", "انتهت مهلة تحديد الموقع. حاول مجددًا مع تشغيل GPS.");
+          toast.error(message);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      );
+      watchId = navigator.geolocation.watchPosition(
+        position => { void savePosition(position); },
+        error => { if (mounted && error.code === 1) toast.error(pick("Location permission was denied.", "تم رفض إذن الوصول للموقع.")); },
+        { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
+      );
     };
-    void loadDriverLocation();
+    void loadAndTrack();
     const channel = supabase.channel("employee-map-location-" + user.id + "-" + String(mapTask.id)).on("postgres_changes", { event: "*", schema: "public", table: "employee_locations", filter: "task_id=eq." + mapTask.id }, (payload: any) => {
       const row = payload.new as any;
-      if (row?.employee_id === user.id) setDriverLocation(row);
+      if (row?.employee_id === user.id && Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude))) setDriverLocation(row);
     }).subscribe();
-    return () => { mounted = false; void supabase.removeChannel(channel); };
+    return () => { mounted = false; if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId); void supabase.removeChannel(channel); };
   }, [mapDialogOpen, mapTask?.id, user?.id]);
   const openCustomerMap = (provider: "google" | "waze" | "apple" | "osm") => {
     if (!customerMapQuery) return toast.error(pick("The current order has no customer location.", "الأوردر الحالي لا يحتوي على موقع للعميل."));
@@ -346,8 +380,8 @@ function EmployeeTasks() {
                 <p className="text-sm font-semibold">{pick("Live delivery location", "موقع الدليفري المباشر")}</p>
                 {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {new Date(driverLocation.updated_at).toLocaleTimeString()}</span>}
               </div>
-              <DeliveryMap destination={customerMapPoint} driver={driverLocation ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : map ? { lat: map.lat, lng: map.lng } : null} height="280px" />
-              {!driverLocation && <p className="text-xs text-amber-600">{pick("Showing this phone GPS until its saved delivery location is available.", "يتم عرض GPS الهاتف الحالي لحين توفر آخر موقع محفوظ للدليفري.")}</p>}
+              <DeliveryMap destination={customerMapPoint} driver={driverLocation && Number.isFinite(Number(driverLocation.latitude)) && Number.isFinite(Number(driverLocation.longitude)) ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : null} height="280px" />
+              {!driverLocation && <p className="text-xs text-amber-600">{pick("Waiting for GPS permission and a location fix…", "في انتظار إذن الموقع وتحديد إحداثيات الهاتف…")}</p>}
             </div>}
             {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : !customerMapPoint && !driverLocation && !map ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No customer or delivery GPS location is available yet.", "لا يتوفر موقع GPS للعميل أو الدليفري حتى الآن.")}</p> : null}
             <p className="text-sm font-semibold">{pick("Open with", "فتح باستخدام")}</p>
