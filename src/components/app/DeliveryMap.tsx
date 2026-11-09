@@ -51,6 +51,8 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
   const mapRef = useRef<any>(null);
   const destinationMarkerRef = useRef<any>(null);
   const driverMarkerRef = useRef<any>(null);
+  const latestPointsRef = useRef<{ destination?: { lat: number; lng: number } | null; driver?: { lat: number; lng: number; updatedAt?: string | null } | null }>({});
+  latestPointsRef.current = { destination, driver };
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +67,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
             attribution: "&copy; OpenStreetMap contributors",
           }).addTo(mapRef.current);
         }
-        updateMap(L);
+        updateMap(L, latestPointsRef.current.destination, latestPointsRef.current.driver);
       })
       .catch(() => undefined);
 
@@ -82,10 +84,10 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
 
   useEffect(() => {
     if (!window.L || !mapRef.current) return;
-    updateMap(window.L);
+    updateMap(window.L, destination, driver);
   }, [destination?.lat, destination?.lng, driver?.lat, driver?.lng]);
 
-  function updateMap(L: any) {
+  function updateMap(L: any, destination?: { lat: number; lng: number } | null, driver?: { lat: number; lng: number; updatedAt?: string | null } | null) {
     const map = mapRef.current;
     if (!map) return;
 
