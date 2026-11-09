@@ -421,16 +421,16 @@ export function EmployeeDashboard() {
           </> : <p className="py-8 text-center text-sm text-muted-foreground">{pick("There is no active order assigned to you.", "لا يوجد أوردر حالي مسند إليك.")}</p>}
         </DialogContent>
       </Dialog>
-      <div dir="rtl" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
-        <div className="pointer-events-auto mx-auto flex w-full max-w-[350px] items-center justify-around gap-2 rounded-[34px] border border-white/90 bg-white/35 px-3 py-2 shadow-[0_12px_32px_rgba(35,55,85,0.18),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-[36px] backdrop-saturate-[220%] dark:border-white/25 dark:bg-slate-950/45 dark:shadow-[0_14px_36px_rgba(0,0,0,0.52),inset_0_1px_0_rgba(255,255,255,0.16)]">
-          <Button type="button" variant="ghost" title={pick("Location", "الموقع")} aria-label={pick("Location", "الموقع")} className="flex size-[72px] shrink-0 items-center justify-center rounded-full border border-white/65 bg-white/15 p-0 text-sky-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl transition-all duration-200 hover:bg-white/30 active:scale-95 disabled:opacity-60 dark:border-white/20 dark:bg-white/[0.07] dark:text-sky-300 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:hover:bg-white/[0.12]" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
-            <MapPin className="!size-11 shrink-0" strokeWidth={2.1} />
+      <div dir="rtl" className="tapwash-employee-dock-wrap pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
+        <div className="tapwash-employee-dock pointer-events-auto mx-auto flex w-full max-w-[350px] items-center justify-around gap-2 rounded-[34px] px-3 py-2">
+          <Button type="button" variant="ghost" title={pick("Location", "الموقع")} aria-label={pick("Location", "الموقع")} className="tapwash-employee-dock-button flex size-[72px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
+            <MapPin className="!size-[58px] shrink-0" strokeWidth={2} />
           </Button>
-          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="flex size-[72px] shrink-0 items-center justify-center rounded-full border border-white/65 bg-white/15 p-0 text-sky-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl transition-all duration-200 hover:bg-white/30 active:scale-95 disabled:opacity-60 dark:border-white/20 dark:bg-white/[0.07] dark:text-sky-300 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:hover:bg-white/[0.12]" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <ScanLine className="!size-11 shrink-0" strokeWidth={2.1} />
+          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="tapwash-employee-dock-button flex size-[72px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
+            <ScanLine className="!size-[58px] shrink-0" strokeWidth={2} />
           </Button>
-          <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="flex size-[72px] shrink-0 items-center justify-center rounded-full border border-white/65 bg-white/15 p-0 text-sky-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-2xl transition-all duration-200 hover:bg-white/30 active:scale-95 disabled:opacity-60 dark:border-white/20 dark:bg-white/[0.07] dark:text-sky-300 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] dark:hover:bg-white/[0.12]" onClick={() => setSupportOpen(true)}>
-            <MessageCircle className="!size-11 shrink-0" strokeWidth={2.1} />
+          <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="tapwash-employee-dock-button flex size-[72px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => setSupportOpen(true)}>
+            <MessageCircle className="!size-[58px] shrink-0" strokeWidth={2} />
           </Button>
         </div>
       </div>
