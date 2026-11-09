@@ -440,7 +440,7 @@ export function EmployeeDashboard() {
             <span className="truncate">{scanning ? pick("Scanning…", "جاري المسح…") : pick("Scan NFC", "مسح NFC")}</span>
           </Button>
           <Button type="button" variant="ghost" aria-label={pick("Support", "الدعم")} className="group relative flex h-[74px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[24px] border border-white/65 bg-white/55 px-1 text-[11px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => setSupportOpen(true)}>
-            <span className="flex size-9 items-center justify-center rounded-[13px] border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-white/15 dark:bg-white/10"><MessageCircle className="size-[19px]" /></span>
+            <span className="flex size-9 items-center justify-center rounded-[13px] border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MessageCircle className="size-[19px]" /></span>
             <span className="truncate">{pick("Support", "الدعم")}</span>
           </Button>
         </div>
