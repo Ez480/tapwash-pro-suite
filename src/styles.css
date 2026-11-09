@@ -132,3 +132,33 @@
 .dark .tapwash-employee-dock-button:hover {
   background: linear-gradient(145deg, rgba(170,200,240,.23), rgba(110,145,195,.12)) !important;
 }
+
+
+/* Unified floating iOS glass for dialogs, popovers, sheets and alerts. */
+.tapwash-floating-glass {
+  position: relative;
+  background: var(--glass-panel-bg) !important;
+  border: 1px solid var(--glass-panel-border) !important;
+  border-radius: 1.65rem !important;
+  color: var(--color-foreground);
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+  isolation: isolate;
+}
+.tapwash-floating-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255,255,255,.24), transparent 42%, rgba(255,255,255,.05));
+  opacity: .7;
+}
+.dark .tapwash-floating-glass::before {
+  background: linear-gradient(135deg, rgba(190,220,255,.16), transparent 46%, rgba(110,160,230,.08));
+  opacity: .85;
+}
+[data-radix-popper-content-wrapper] > .tapwash-floating-glass {
+  transform-origin: var(--radix-popover-content-transform-origin);
+}
