@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useUserRoles } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
+// Avoid reusing a still-subscribed Supabase channel during React StrictMode remounts.
+let employeeSummaryChannelSequence = 0;
+
 export function EmployeeDashboardSummary() {
   const { user } = useSession();
   const { data: roles = [] } = useUserRoles(user?.id);
@@ -26,7 +29,7 @@ export function EmployeeDashboardSummary() {
     };
     void load();
     const channel = supabase
-      .channel(`employee-summary-${user.id}`)
+      .channel(`employee-summary-${user.id}-${++employeeSummaryChannelSequence}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "employee_tasks", filter: `employee_id=eq.${user.id}` }, () => void load())
       .subscribe();
     return () => { mounted = false; void supabase.removeChannel(channel); };
