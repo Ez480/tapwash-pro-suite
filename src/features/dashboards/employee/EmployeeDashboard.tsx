@@ -34,6 +34,7 @@ function parseCustomerMapPoint(task: any): { lat: number; lng: number } | null {
 }
 
 function EmployeeMessagesButton() {
+  const { pick } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -46,13 +47,13 @@ function EmployeeMessagesButton() {
         <div className="flex items-center gap-2">
           <Bell className="size-5 text-primary" />
           <div>
-            <p className="font-bold">رسائل الإدارة</p>
-            <p className="text-xs text-muted-foreground">الرسائل الموجهة إليك من إدارة الشركة</p>
+            <p className="font-bold">{pick("Management messages", "رسائل الإدارة")}</p>
+            <p className="text-xs text-muted-foreground">{pick("Messages sent to you by company management", "الرسائل الموجهة إليك من إدارة الشركة")}</p>
           </div>
         </div>
         <div className="mt-4 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-sm font-medium">لا توجد رسائل لعرضها حاليًا</p>
-          <p className="mt-1 text-xs text-muted-foreground">سيتم تفعيل استقبال الرسائل في مرحلة الربط القادمة.</p>
+          <p className="text-sm font-medium">{pick("No messages to display right now", "لا توجد رسائل لعرضها حاليًا")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{pick("Message reception will be enabled in a future update.", "سيتم تفعيل استقبال الرسائل في مرحلة الربط القادمة.")}</p>
         </div>
       </PopoverContent>
     </Popover>
@@ -106,7 +107,7 @@ export function EmployeeDashboard() {
     return date >= todayStart && date <= todayEnd;
   });
   const todayCollection = todayOrders.reduce((sum: number, task: any) => sum + Number(task.collection_amount ?? 0), 0);
-  const money = (value: number) => `${value.toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${pick("EGP", "جنيه")}`;
+  const money = (value: number) => `${value.toLocaleString("en-US")} ${pick("EGP", "جنيه")}`;
   const activeTaskKey = active.map(t => String(t.id)).sort().join(",");
 
   useEffect(() => {
@@ -300,7 +301,7 @@ export function EmployeeDashboard() {
     const paymentMethod = displayValue(t.payment_method === "cash" ? pick("Cash", "كاش") : t.payment_method === "smart_wallet" ? pick("Smart Wallet", "محفظة") : t.payment_method === "instapay" ? "InstaPay" : t.payment_method === "bank_transfer" ? pick("Bank transfer", "تحويل بنكي") : t.payment_method || pick("Not specified", "غير محدد"));
     const paymentState = displayValue(t.payment_status === "paid" ? pick("Paid online", "مدفوع أونلاين") : t.payment_status === "pending" ? pick("Payment pending", "الدفع معلّق") : t.payment_status || (t.payment_method === "cash" ? pick("Pay on delivery", "الدفع كاش") : "—"));
     const amount = Number(t.collection_amount ?? t.amount ?? 0);
-    const appointmentTime = t.scheduled_at ? new Date(t.scheduled_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+    const appointmentTime = t.scheduled_at ? new Date(t.scheduled_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—";
     return <article key={t.id} className="panel p-4 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-bold">{displayValue(t.title || pick("Order", "أوردر"))}</h3><Badge>{displayValue(t.status)}</Badge><Badge variant="outline">#{displayValue(t.serial_number || String(t.id).slice(0, 8).toUpperCase())}</Badge></div><p className="text-sm text-muted-foreground">{displayValue(t.wash_type)}</p></div>{t.scheduled_at && <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary"><Clock3 className="size-4" />{fmtDate(t.scheduled_at)} · {appointmentTime}</span>}</div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><p className="font-bold">{displayValue(t.customer_name)}</p><p>{displayValue(t.customer_phone)}</p><p className="text-sm">{displayValue(t.customer_email)}</p></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Appointment", "موعد الغسيل")}</p><p className="font-bold">{t.scheduled_at ? `${fmtDate(t.scheduled_at)} · ${appointmentTime}` : "—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-muted-foreground">{pick("Order amount", "سعر الأوردر")}</p><p className="text-xl font-bold">{amount.toFixed(2)} EGP</p></div><div className="text-end"><p className="text-xs text-muted-foreground">{pick("Payment", "الدفع")}</p><p className="font-semibold">{paymentMethod}</p><p className="text-sm text-muted-foreground">{paymentState}</p></div></div></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Subscription / offer", "الاشتراك / العرض")}</p><p className="font-bold">{displayValue(t.package_name || t.offer_name)}</p><p>{t.remaining_washes != null ? `${displayValue(t.remaining_washes)} ${pick("remaining", "متبقي")}` : "—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-4" />{displayValue(t.location_text || t.location_url)}</p>{(t.location_url || t.location_text || t.latitude != null) && <Button className="mt-2" size="sm" variant="outline" onClick={() => openLocation(t)}><Navigation className="me-1 size-4" />{pick("Open location", "فتح الموقع")}</Button>}</div></div>{t.notes && <p className="mt-3 rounded-xl bg-muted p-4 text-sm">{displayValue(t.notes)}</p>}<div className="mt-4 flex flex-wrap gap-2">
       {t.status === "pending" && <Button disabled={loading === t.id} onClick={() => setStatus(t.id, "accepted")}>{pick("Accept order", "استلام الأوردر")}</Button>}
       {t.status === "accepted" && <Button disabled={loading === t.id} onClick={() => setStatus(t.id, "in_progress")}>{pick("Start", "بدء التنفيذ")}</Button>}
@@ -379,7 +380,7 @@ export function EmployeeDashboard() {
               <p><span className="text-muted-foreground">{pick("Order number", "رقم الأوردر")}: </span><strong>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</strong></p>
               <p><span className="text-muted-foreground">{pick("Customer", "اسم العميل")}: </span><strong>{displayValue(task.customer_name)}</strong></p>
               <p><span className="text-muted-foreground">{pick("Collection", "التحصيل")}: </span><strong>{money(Number(task.collection_amount ?? task.amount ?? 0))}</strong></p>
-              <p><span className="text-muted-foreground">{pick("Execution time", "وقت التنفيذ")}: </span><strong>{executedAt ? new Date(executedAt).toLocaleString(lang === "ar" ? "ar-EG" : "en-US") : "—"}</strong></p>
+              <p><span className="text-muted-foreground">{pick("Execution time", "وقت التنفيذ")}: </span><strong>{executedAt ? new Date(executedAt).toLocaleString("en-US") : "—"}</strong></p>
             </div>
           </article>;
         }) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No completed orders", "لا توجد أوردرات مكتملة")}</p>}
@@ -403,7 +404,7 @@ export function EmployeeDashboard() {
             {(driverLocation || map || customerMapPoint) && <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold">{pick("Live delivery location", "موقع الدليفري المباشر")}</p>
-                {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {new Date(driverLocation.updated_at).toLocaleTimeString()}</span>}
+                {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {new Date(driverLocation.updated_at).toLocaleTimeString("en-US")}</span>}
               </div>
               <DeliveryMap destination={customerMapPoint} driver={driverLocation && Number.isFinite(Number(driverLocation.latitude)) && Number.isFinite(Number(driverLocation.longitude)) ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : null} height="280px" />
               {!driverLocation && <p className="text-xs text-amber-600">{pick("Waiting for GPS permission and a location fix…", "في انتظار إذن الموقع وتحديد إحداثيات الهاتف…")}</p>}
@@ -422,17 +423,17 @@ export function EmployeeDashboard() {
       </Dialog>
       <div dir="rtl" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
         <div className="pointer-events-auto mx-auto flex w-full max-w-[390px] items-center justify-center gap-3 bg-transparent p-0">
-          <Button type="button" variant="ghost" aria-label={pick("Location", "الموقع")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
-            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MapPin className="size-[19px]" /></span>
-            <span className="truncate">{pick("Location", "الموقع")}</span>
+          <Button type="button" variant="ghost" title={pick("Location", "الموقع")} aria-label={pick("Location", "الموقع")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-0 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
+            <span className="flex size-11 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MapPin className="size-6" /></span>
+            
           </Button>
-          <Button type="button" variant="ghost" aria-label={pick("Scan NFC", "مسح NFC")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><ScanLine className="size-[21px]" /></span>
-            <span className="truncate">{scanning ? pick("Scanning…", "جاري المسح…") : pick("Scan NFC", "مسح NFC")}</span>
+          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
+            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><ScanLine className="size-6" /></span>
+            
           </Button>
-          <Button type="button" variant="ghost" aria-label={pick("Support", "الدعم")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => setSupportOpen(true)}>
-            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MessageCircle className="size-[19px]" /></span>
-            <span className="truncate">{pick("Support", "الدعم")}</span>
+          <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="group relative flex size-[82px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full border border-white/65 bg-white/55 px-1 text-[10px] font-semibold text-foreground shadow-[0_6px_18px_rgba(15,23,42,0.10),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-2xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/75 active:translate-y-0 disabled:opacity-60 dark:border-slate-600/70 dark:bg-slate-900/85 dark:text-slate-100 dark:shadow-[0_6px_18px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.08)] dark:hover:bg-slate-800/90" onClick={() => setSupportOpen(true)}>
+            <span className="flex size-9 items-center justify-center rounded-full border border-white/60 bg-white/55 text-primary shadow-sm transition-transform duration-200 group-hover:scale-105 dark:border-slate-600/70 dark:bg-slate-800/90 dark:text-sky-300"><MessageCircle className="size-6" /></span>
+            
           </Button>
         </div>
       </div>
