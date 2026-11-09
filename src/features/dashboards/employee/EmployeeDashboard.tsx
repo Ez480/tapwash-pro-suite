@@ -107,12 +107,6 @@ export function EmployeeDashboard() {
   });
   const todayCollection = todayOrders.reduce((sum: number, task: any) => sum + Number(task.collection_amount ?? 0), 0);
   const money = (value: number) => `${value.toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} ${pick("EGP", "جنيه")}`;
-  const archiveGroups = completed.reduce((groups: Record<string, any[]>, task: any) => {
-    const date = new Date(task.completed_at || task.updated_at || task.created_at);
-    const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    (groups[day] ??= []).push(task);
-    return groups;
-  }, {});
   const activeTaskKey = active.map(t => String(t.id)).sort().join(",");
 
   useEffect(() => {
