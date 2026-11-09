@@ -27,6 +27,32 @@ export const Route = createFileRoute("/_authenticated/employee-tasks")({
   component: EmployeeTasks,
 });
 
+function EmployeeMessagesButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" size="icon" aria-label="رسائل الإدارة" title="رسائل الإدارة" className="shrink-0">
+          <Bell className="size-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[min(92vw,360px)] p-4">
+        <div className="flex items-center gap-2">
+          <Bell className="size-5 text-primary" />
+          <div>
+            <p className="font-bold">رسائل الإدارة</p>
+            <p className="text-xs text-muted-foreground">الرسائل الموجهة إليك من إدارة الشركة</p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl border border-dashed p-6 text-center">
+          <p className="text-sm font-medium">لا توجد رسائل لعرضها حاليًا</p>
+          <p className="mt-1 text-xs text-muted-foreground">سيتم تفعيل استقبال الرسائل في مرحلة الربط القادمة.</p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function EmployeeTasks() {
   const { pick, fmtDate, lang, setLang } = useI18n();
   const { user } = useSession();
