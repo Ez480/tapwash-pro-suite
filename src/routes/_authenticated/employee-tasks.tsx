@@ -14,8 +14,26 @@ import { useI18n } from "@/lib/i18n";
 import { useSession, useUserRoles } from "@/lib/auth";
 import { useAdminTable, useMyEmployee, useProfile, useSettings } from "@/lib/data";
 import { uploadImage } from "@/lib/media";
+import { DeliveryMap } from "@/components/app/DeliveryMap";
 
 declare global { interface Window { NDEFReader?: any } }
+
+function parseCustomerMapPoint(task: any): { lat: number; lng: number } | null {
+  const lat = Number(task?.latitude), lng = Number(task?.longitude);
+  if (task?.latitude != null && task?.longitude != null && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+  const url = String(task?.location_url ?? "");
+  if (!url) return null;
+  try {
+    const decoded = decodeURIComponent(url);
+    const candidates = [decoded.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/), decoded.match(/[?&](?:q|ll|query|center)=(-?\d+(?:\.\d+)?)[,%20]+(-?\d+(?:\.\d+)?)/i), decoded.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)];
+    for (const match of candidates) {
+      if (!match) continue;
+      const a = Number(match[1]), b = Number(match[2]);
+      if (Number.isFinite(a) && Number.isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180) return { lat: a, lng: b };
+    }
+  } catch {}
+  return null;
+}
 export const Route = createFileRoute("/_authenticated/employee-tasks")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
@@ -69,6 +87,7 @@ function EmployeeTasks() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [map, setMap] = useState<{ lat: number; lng: number } | null>(null);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number; updated_at: string } | null>(null);
   const [selectedMapTaskId, setSelectedMapTaskId] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
@@ -120,6 +139,24 @@ function EmployeeTasks() {
   const openLocation = (t: any) => { const u = t.location_url || (t.latitude != null && t.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}` : t.location_text ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}` : null); if (u) window.open(u, "_blank", "noopener,noreferrer"); };
   const mapTask = active.find((task: any) => String(task.id) === selectedMapTaskId) || active[0] || null;
   const customerMapQuery = mapTask ? (mapTask.latitude != null && mapTask.longitude != null ? String(mapTask.latitude) + "," + String(mapTask.longitude) : String(mapTask.location_text || mapTask.location_url || "").trim()) : "";
+  const customerMapPoint = mapTask ? parseCustomerMapPoint(mapTask) : null;
+
+  useEffect(() => {
+    if (!mapDialogOpen || !mapTask?.id || !user?.id) { setDriverLocation(null); return; }
+    let mounted = true;
+    const loadDriverLocation = async () => {
+      const { data, error } = await (supabase as any).from("employee_locations").select("task_id,employee_id,latitude,longitude,updated_at").eq("task_id", mapTask.id).eq("employee_id", user.id).maybeSingle();
+      if (!mounted) return;
+      if (error) { console.warn("Could not load delivery location", error); setDriverLocation(null); return; }
+      setDriverLocation(data ?? null);
+    };
+    void loadDriverLocation();
+    const channel = supabase.channel("employee-map-location-" + user.id + "-" + String(mapTask.id)).on("postgres_changes", { event: "*", schema: "public", table: "employee_locations", filter: "task_id=eq." + mapTask.id }, (payload: any) => {
+      const row = payload.new as any;
+      if (row?.employee_id === user.id) setDriverLocation(row);
+    }).subscribe();
+    return () => { mounted = false; void supabase.removeChannel(channel); };
+  }, [mapDialogOpen, mapTask?.id, user?.id]);
   const openCustomerMap = (provider: "google" | "waze" | "apple" | "osm") => {
     if (!customerMapQuery) return toast.error(pick("The current order has no customer location.", "الأوردر الحالي لا يحتوي على موقع للعميل."));
     const q = encodeURIComponent(customerMapQuery);
@@ -304,7 +341,15 @@ function EmployeeTasks() {
           {active.length > 1 && <div className="flex flex-wrap gap-2">{active.map((task: any) => <Button key={task.id} size="sm" variant={String(mapTask?.id) === String(task.id) ? "default" : "outline"} onClick={() => setSelectedMapTaskId(String(task.id))}>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</Button>)}</div>}
           {mapTask ? <>
             <div className="rounded-xl border p-3"><p className="font-semibold">{displayValue(mapTask.customer_name)}</p><p className="text-sm text-muted-foreground">{displayValue(mapTask.location_text || mapTask.location_url || customerMapQuery)}</p></div>
-            {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No location was added to this order.", "لم يتم إضافة موقع لهذا الأوردر.")}</p>}
+            {(driverLocation || map || customerMapPoint) && <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold">{pick("Live delivery location", "موقع الدليفري المباشر")}</p>
+                {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {new Date(driverLocation.updated_at).toLocaleTimeString()}</span>}
+              </div>
+              <DeliveryMap destination={customerMapPoint} driver={driverLocation ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : map ? { lat: map.lat, lng: map.lng } : null} height="280px" />
+              {!driverLocation && <p className="text-xs text-amber-600">{pick("Showing this phone GPS until its saved delivery location is available.", "يتم عرض GPS الهاتف الحالي لحين توفر آخر موقع محفوظ للدليفري.")}</p>}
+            </div>}
+            {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : !customerMapPoint && !driverLocation && !map ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No customer or delivery GPS location is available yet.", "لا يتوفر موقع GPS للعميل أو الدليفري حتى الآن.")}</p> : null}
             <p className="text-sm font-semibold">{pick("Open with", "فتح باستخدام")}</p>
             <div className="grid grid-cols-2 gap-2">
               <Button variant="outline" onClick={() => openCustomerMap("google")} disabled={!customerMapQuery}>Google Maps</Button>
