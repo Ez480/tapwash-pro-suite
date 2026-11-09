@@ -424,13 +424,13 @@ export function EmployeeDashboard() {
       <div dir="rtl" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
         <div className="pointer-events-auto mx-auto flex w-full max-w-[300px] items-center justify-center gap-4 rounded-full border border-white/45 bg-white/25 px-4 py-3 shadow-[0_12px_36px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/35 dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)]">
           <Button type="button" variant="ghost" title={pick("Location", "الموقع")} aria-label={pick("Location", "الموقع")} className="flex size-[68px] shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/55 p-0 text-primary shadow-[0_8px_22px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/75 hover:shadow-[0_12px_26px_rgba(15,23,42,0.18)] active:scale-95 dark:border-white/15 dark:bg-slate-800/65 dark:text-sky-300 dark:shadow-[0_8px_22px_rgba(0,0,0,0.35)] dark:hover:bg-slate-700/80" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
-            <MapPin className="size-8" strokeWidth={2.2} />
+            <MapPin className="!size-12" strokeWidth={2.6} />
           </Button>
           <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="flex size-[68px] shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/55 p-0 text-primary shadow-[0_8px_22px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/75 hover:shadow-[0_12px_26px_rgba(15,23,42,0.18)] active:scale-95 disabled:opacity-60 dark:border-white/15 dark:bg-slate-800/65 dark:text-sky-300 dark:shadow-[0_8px_22px_rgba(0,0,0,0.35)] dark:hover:bg-slate-700/80" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <ScanLine className="size-8" strokeWidth={2.2} />
+            <ScanLine className="!size-12" strokeWidth={2.6} />
           </Button>
           <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="flex size-[68px] shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/55 p-0 text-primary shadow-[0_8px_22px_rgba(15,23,42,0.13),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:bg-white/75 hover:shadow-[0_12px_26px_rgba(15,23,42,0.18)] active:scale-95 dark:border-white/15 dark:bg-slate-800/65 dark:text-sky-300 dark:shadow-[0_8px_22px_rgba(0,0,0,0.35)] dark:hover:bg-slate-700/80" onClick={() => setSupportOpen(true)}>
-            <MessageCircle className="size-8" strokeWidth={2.2} />
+            <MessageCircle className="!size-12" strokeWidth={2.6} />
           </Button>
         </div>
       </div>
