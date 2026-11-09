@@ -89,44 +89,46 @@
 }
 
 
-/* Employee bottom dock: one translucent glass rail with three large, unframed icons. */
+/* Employee bottom dock: compact, balanced controls inside one connected glass rail. */
 .tapwash-employee-dock {
-  background: linear-gradient(135deg, rgba(255,255,255,.42), rgba(255,255,255,.20)) !important;
-  border: 1px solid rgba(255,255,255,.82) !important;
-  box-shadow: 0 14px 38px rgba(35,55,85,.16), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(120,140,165,.08) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.48), rgba(255,255,255,.22) 55%, rgba(255,255,255,.34)) !important;
+  border: 1px solid rgba(255,255,255,.86) !important;
+  box-shadow: 0 12px 32px rgba(35,55,85,.15), inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(120,140,165,.08) !important;
   -webkit-backdrop-filter: blur(30px) saturate(185%) !important;
   backdrop-filter: blur(30px) saturate(185%) !important;
 }
 .tapwash-employee-dock-button {
-  border: 1px solid rgba(255,255,255,.48) !important;
-  background: rgba(255,255,255,.16) !important;
+  border: 1px solid rgba(255,255,255,.58) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,.42), rgba(255,255,255,.16)) !important;
   color: #1769b2 !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.58) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(175%) !important;
-  backdrop-filter: blur(22px) saturate(175%) !important;
+  box-shadow: 0 3px 10px rgba(45,70,105,.07), inset 0 1px 0 rgba(255,255,255,.78), inset 0 -1px 0 rgba(120,140,165,.06) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(175%) !important;
+  backdrop-filter: blur(20px) saturate(175%) !important;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease !important;
 }
 .tapwash-employee-dock-button:hover {
-  background: rgba(255,255,255,.30) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,.62), rgba(255,255,255,.28)) !important;
+  box-shadow: 0 5px 14px rgba(45,70,105,.11), inset 0 1px 0 rgba(255,255,255,.9) !important;
 }
-.tapwash-employee-dock-button:active {
-  transform: scale(.96);
-}
+.tapwash-employee-dock-button:active { transform: scale(.94); }
 .tapwash-employee-dock-button:disabled { opacity: .55 !important; }
 .tapwash-employee-dock-button svg {
-  width: 32px !important;
-  height: 32px !important;
+  width: 26px !important;
+  height: 26px !important;
   max-width: none !important;
   max-height: none !important;
 }
 .dark .tapwash-employee-dock {
-  background: linear-gradient(135deg, rgba(68,103,150,.46), rgba(11,20,37,.72)) !important;
-  border-color: rgba(185,210,245,.28) !important;
-  box-shadow: 0 16px 42px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.20) !important;
+  background: linear-gradient(135deg, rgba(68,103,150,.48), rgba(18,29,49,.78) 58%, rgba(11,20,37,.82)) !important;
+  border-color: rgba(185,210,245,.30) !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(120,165,220,.12) !important;
 }
 .dark .tapwash-employee-dock-button {
-  background: rgba(150,180,220,.09) !important;
-  border-color: rgba(190,215,245,.16) !important;
-  color: #a9d4ff !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12) !important;
+  background: linear-gradient(145deg, rgba(170,200,240,.15), rgba(110,145,195,.06)) !important;
+  border-color: rgba(190,215,245,.20) !important;
+  color: #b9dcff !important;
+  box-shadow: 0 3px 12px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.16) !important;
 }
-.dark .tapwash-employee-dock-button:hover { background: rgba(150,180,220,.17) !important; }
+.dark .tapwash-employee-dock-button:hover {
+  background: linear-gradient(145deg, rgba(170,200,240,.23), rgba(110,145,195,.12)) !important;
+}
