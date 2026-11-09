@@ -15,7 +15,7 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
     : null;
 
   return (
-    <section className="relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-4">
+    <section className="tapwash-nfc-card relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-4">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-primary/10" />
 
       <div className="relative rounded-[1.4rem] border border-white/35 bg-white/25 p-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-5">
