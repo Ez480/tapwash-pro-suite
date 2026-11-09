@@ -335,6 +335,7 @@ export function EmployeeDashboard() {
         <nav aria-label={pick("Employee work navigation", "قائمة تنقل الموظف")} className="flex w-full items-center gap-2 overflow-x-auto border-t border-border/60 py-2">
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "current" ? "default" : "ghost"} onClick={() => setEmployeePage("current")}><ClipboardList className="size-4" />{pick("Current orders", "الأوردرات الحالية")}<Badge variant={employeePage === "current" ? "secondary" : "outline"}>{active.length}</Badge></Button>
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "archive" ? "default" : "ghost"} onClick={() => setEmployeePage("archive")}><Archive className="size-4" />{pick("Previous orders", "الأوردرات السابقة")}<Badge variant={employeePage === "archive" ? "secondary" : "outline"}>{completed.length}</Badge></Button>
+          <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "profile" ? "default" : "ghost"} onClick={() => setEmployeePage("profile")}><UserCog className="size-4" />{pick("My data", "بياناتي")}</Button>
           <EmployeeMessagesButton />
         </nav>
       </div>
