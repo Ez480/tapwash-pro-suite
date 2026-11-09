@@ -363,8 +363,8 @@ export function EmployeeDashboard() {
             [pick("Date of birth", "تاريخ الميلاد"), employee?.birth_date ? fmtDate(employee.birth_date) : null],
             [pick("Qualification", "المؤهل"), employee?.qualification],
             [pick("National ID", "الرقم القومي"), employee?.national_id],
-            [pick("Phone", "رقم الهاتف"), employee?.phone || profile?.phone],
-            [pick("Email", "البريد الإلكتروني"), employee?.email || profile?.email || user?.email],
+            [pick("Phone", "رقم الهاتف"), profile?.phone],
+            [pick("Email", "البريد الإلكتروني"), profile?.email || user?.email],
           ].map(([label, value]) => <div key={String(label)} className="min-w-0 rounded-2xl border border-white/35 bg-white/15 p-3 shadow-inner backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]"><p className="truncate text-xs text-muted-foreground">{label}</p><p className="mt-1 break-words font-semibold">{value ? String(value) : "—"}</p></div>)}
         </div>
         <p className="mt-3 rounded-xl border border-white/25 bg-white/10 p-3 text-xs text-muted-foreground dark:border-white/10 dark:bg-white/[0.04]">{pick("Your employee information is view-only. Contact the manager for any correction or account change.", "بيانات الموظف للعرض فقط. المدير وحده المسؤول عن تعديلها أو إجراء أي تغيير على حساب الموظف.")}</p>
