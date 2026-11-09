@@ -68,6 +68,8 @@ function EmployeeTasks() {
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [map, setMap] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [selectedMapTaskId, setSelectedMapTaskId] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
   const [employeePage, setEmployeePage] = useState<"current" | "archive" | "profile" | "scan">("current"); const [supportOpen, setSupportOpen] = useState(false);
@@ -116,6 +118,19 @@ function EmployeeTasks() {
   const changePassword = async () => { if (password.length < 6) return; const { error } = await supabase.auth.updateUser({ password }); if (error) return toast.error(error.message); toast.success(pick("Password changed", "تم تغيير كلمة المرور")); setPassword(""); setPasswordOpen(false); };
   const logout = async () => { await supabase.auth.signOut(); window.location.href = "/login"; };
   const openLocation = (t: any) => { const u = t.location_url || (t.latitude != null && t.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}` : t.location_text ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}` : null); if (u) window.open(u, "_blank", "noopener,noreferrer"); };
+  const mapTask = active.find((task: any) => String(task.id) === selectedMapTaskId) || active[0] || null;
+  const customerMapQuery = mapTask ? (mapTask.latitude != null && mapTask.longitude != null ? String(mapTask.latitude) + "," + String(mapTask.longitude) : String(mapTask.location_text || mapTask.location_url || "").trim()) : "";
+  const openCustomerMap = (provider: "google" | "waze" | "apple" | "osm") => {
+    if (!customerMapQuery) return toast.error(pick("The current order has no customer location.", "الأوردر الحالي لا يحتوي على موقع للعميل."));
+    const q = encodeURIComponent(customerMapQuery);
+    const urls = {
+      google: "https://www.google.com/maps/search/?api=1&query=" + q,
+      waze: "https://waze.com/ul?q=" + q + "&navigate=yes",
+      apple: "https://maps.apple.com/?q=" + q,
+      osm: "https://www.openstreetmap.org/search?query=" + q,
+    };
+    window.open(urls[provider], "_blank", "noopener,noreferrer");
+  };
 
   const displayValue = (value: any) => {
     if (value == null || value === "") return "—";
@@ -287,27 +302,37 @@ function EmployeeTasks() {
                 ))}
               </div>
             </section>
-          )) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>
-        )}
-      </div></section>}
-      <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{pick("TapWash support", "دعم TapWash")}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-xl border p-3">
-              <span className="size-2 rounded-full bg-amber-500" />
-              <p className="text-sm font-semibold">{pick("Management connection is being prepared", "جاري تجهيز الربط مع الإدارة")}</p>
+          )) : <p className="py-8 text-center text-sm text-muted-foreground">{pi      <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><MapPin className="size-5 text-primary" />{pick("Customer location — current order", "موقع العميل — الأوردر الحالي")}</DialogTitle></DialogHeader>
+          {active.length > 1 && <div className="flex flex-wrap gap-2">{active.map((task: any) => <Button key={task.id} size="sm" variant={String(mapTask?.id) === String(task.id) ? "default" : "outline"} onClick={() => setSelectedMapTaskId(String(task.id))}>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</Button>)}</div>}
+          {mapTask ? <>
+            <div className="rounded-xl border p-3"><p className="font-semibold">{displayValue(mapTask.customer_name)}</p><p className="text-sm text-muted-foreground">{displayValue(mapTask.location_text || mapTask.location_url || customerMapQuery)}</p></div>
+            {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No location was added to this order.", "لم يتم إضافة موقع لهذا الأوردر.")}</p>}
+            <p className="text-sm font-semibold">{pick("Open with", "فتح باستخدام")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => openCustomerMap("google")} disabled={!customerMapQuery}>Google Maps</Button>
+              <Button variant="outline" onClick={() => openCustomerMap("waze")} disabled={!customerMapQuery}>Waze</Button>
+              <Button variant="outline" onClick={() => openCustomerMap("apple")} disabled={!customerMapQuery}>Apple Maps</Button>
+              <Button variant="outline" onClick={() => openCustomerMap("osm")} disabled={!customerMapQuery}>OpenStreetMap</Button>
             </div>
-            <p className="text-sm text-muted-foreground">{pick("Direct messaging with management will be enabled in the next development step. This button is ready as the entry point.", "سيتم تفعيل المراسلة المباشرة مع الإدارة في خطوة التطوير القادمة. الزر جاهز ليكون نقطة الدخول.")}</p>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setSupportOpen(false)}>{pick("Close", "إغلاق")}</Button></DialogFooter>
+            <p className="text-xs text-muted-foreground">{pick("Your phone will open the selected app if installed; otherwise it may open the service in your browser.", "سيُفتح التطبيق المحدد إذا كان مثبتًا على الهاتف، وإلا فقد تُفتح الخدمة في المتصفح.")}</p>
+          </> : <p className="py-8 text-center text-sm text-muted-foreground">{pick("There is no active order assigned to you.", "لا يوجد أوردر حالي مسند إليك.")}</p>}
         </DialogContent>
       </Dialog>
-      <div dir="rtl" className="fixed inset-x-0 bottom-0 z-40 border-t border-white/20 bg-background/90 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 shadow-[0_-8px_30px_rgba(0,0,0,0.10)] backdrop-blur-2xl">
-        <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
-          <Button type="button" variant="ghost" className="flex h-[68px] min-w-[88px] flex-1 flex-col gap-1 rounded-2xl text-xs" onClick={() => {
-            if (!map) return toast.error(pick("Your location is not available yet.", "موقعك الحالي غير متاح حتى الآن."));
-            window.open(`https://www.google.com/maps/search/?api=1&query=${map.lat},${map.lng}`, "_blank", "noopener,noreferrer");
+      <div dir="rtl" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
+        <div className="pointer-events-auto mx-auto flex w-full max-w-md items-center justify-between gap-3 rounded-[28px] border border-white/35 bg-white/55 p-2 shadow-[0_12px_40px_rgba(0,0,0,0.20)] backdrop-blur-2xl dark:border-white/15 dark:bg-slate-950/55">
+          <Button type="button" variant="ghost" className="flex h-[66px] min-w-0 flex-1 flex-col gap-1 rounded-2xl border border-white/30 bg-white/35 text-xs shadow-sm backdrop-blur-xl hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.07] dark:hover:bg-white/[0.13]" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary"><MapPin className="size-5" /></span>{pick("Customer map", "خريطة العميل")}
+          </Button>
+          <Button type="button" className="flex h-[66px] min-w-0 flex-1 flex-col gap-1 rounded-2xl border border-white/25 bg-primary/90 text-xs shadow-lg backdrop-blur-xl" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary-foreground/15"><ScanLine className="size-6" /></span>{scanning ? pick("Scanning…", "جاري المسح…") : pick("Scan NFC", "مسح NFC")}
+          </Button>
+          <Button type="button" variant="ghost" className="flex h-[66px] min-w-0 flex-1 flex-col gap-1 rounded-2xl border border-white/30 bg-white/35 text-xs shadow-sm backdrop-blur-xl hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.07] dark:hover:bg-white/[0.13]" onClick={() => setSupportOpen(true)}>
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary"><MessageCircle className="size-5" /></span>{pick("Support", "الدعم")}
+          </Button>
+        </div>
+      </div>);
           }}>
             <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin className="size-5" /></span>
             {pick("My location", "موقعي")}
