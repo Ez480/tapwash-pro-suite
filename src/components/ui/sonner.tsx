@@ -9,9 +9,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position="top-center"
       expand={false}
       visibleToasts={4}
+      duration={2000}
+      style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: "50%", right: "auto", transform: "translateX(-50%)", width: "fit-content", maxWidth: "90vw" }}
       className="toaster group !fixed !left-1/2 !right-auto !top-4 !w-fit !max-w-[90vw] !-translate-x-1/2 !px-0"
       toastOptions={{
         ...props.toastOptions,
+        duration: 2000,
         classNames: {
           ...props.toastOptions?.classNames,
           toast:
