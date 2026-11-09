@@ -286,23 +286,19 @@ function EmployeeTasks() {
       {(employeePage === "current" || employeePage === "archive") && <section className="panel p-4 sm:p-5"><div className="mb-4"><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">{employeePage === "current" ? <ClipboardList className="size-5 text-primary" /> : <Archive className="size-5 text-primary" />}{employeePage === "current" ? pick("Current orders", "الأوردرات الحالية") : pick("Previous orders", "الأوردرات السابقة")}</h2><p className="text-sm text-muted-foreground">{employeePage === "current" ? pick("Orders assigned to you that still need action.", "الأوردرات المسندة إليك والتي لم تنتهِ بعد.") : pick("Your completed orders, grouped by completion day.", "أوردراتك المكتملة مقسمة حسب يوم الإنجاز.")}</p></div><div className="space-y-4">
         {employeePage === "current" ? (
           active.length ? active.map(renderOrder) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>
-        ) : (
-          Object.entries(archiveGroups).sort(([a], [b]) => b.localeCompare(a)).length ? Object.entries(archiveGroups).sort(([a], [b]) => b.localeCompare(a)).map(([day, dayOrders]) => (
-            <section key={day} className="space-y-3">
-              <h3 className="rounded-xl bg-muted/60 px-4 py-2 text-sm font-bold">{new Date(`${day}T12:00:00`).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {dayOrders.map((order: any) => (
-                  <article key={order.id} className="rounded-xl border bg-card p-4">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="min-w-0"><p className="text-xs text-muted-foreground">{pick("Order number", "رقم الأوردر")}</p><p className="mt-1 break-words font-bold">#{displayValue(order.serial_number || String(order.id).slice(0, 8).toUpperCase())}</p></div>
-                      <div className="min-w-0"><p className="text-xs text-muted-foreground">{pick("Wash type", "نوع الغسيل")}</p><p className="mt-1 break-words font-bold">{displayValue(order.wash_type)}</p></div>
-                      <div className="min-w-0"><p className="text-xs text-muted-foreground">{pick("Collection", "التحصيل")}</p><p className="mt-1 break-words font-bold">{Number(order.collection_amount ?? 0).toLocaleString(lang === "ar" ? "ar-EG" : "en-US")} {pick("EGP", "جنيه")}</p></div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )) : <p className="py-8 text-center text-sm text-muted-foreground">{pi      <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
+        )}
+      </div></section>}
+      <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{pick("TapWash support", "دعم TapWash")}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 rounded-xl border p-3"><span className="size-2 rounded-full bg-amber-500" /><p className="text-sm font-semibold">{pick("Management connection is being prepared", "جاري تجهيز الربط مع الإدارة")}</p></div>
+            <p className="text-sm text-muted-foreground">{pick("Direct messaging with management will be enabled in the next development step. This button is ready as the entry point.", "سيتم تفعيل المراسلة المباشرة مع الإدارة في خطوة التطوير القادمة. الزر جاهز ليكون نقطة الدخول.")}</p>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setSupportOpen(false)}>{pick("Close", "إغلاق")}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
         <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><MapPin className="size-5 text-primary" />{pick("Customer location — current order", "موقع العميل — الأوردر الحالي")}</DialogTitle></DialogHeader>
           {active.length > 1 && <div className="flex flex-wrap gap-2">{active.map((task: any) => <Button key={task.id} size="sm" variant={String(mapTask?.id) === String(task.id) ? "default" : "outline"} onClick={() => setSelectedMapTaskId(String(task.id))}>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</Button>)}</div>}
@@ -332,20 +328,5 @@ function EmployeeTasks() {
             <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary"><MessageCircle className="size-5" /></span>{pick("Support", "الدعم")}
           </Button>
         </div>
-      </div>);
-          }}>
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin className="size-5" /></span>
-            {pick("My location", "موقعي")}
-          </Button>
-          <Button type="button" className="flex h-[68px] min-w-[104px] flex-1 flex-col gap-1 rounded-2xl text-xs shadow-lg" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary-foreground/15"><ScanLine className="size-6" /></span>
-            {scanning ? pick("Scanning…", "جاري المسح…") : pick("Scan NFC", "مسح NFC")}
-          </Button>
-          <Button type="button" variant="ghost" className="flex h-[68px] min-w-[88px] flex-1 flex-col gap-1 rounded-2xl text-xs" onClick={() => setSupportOpen(true)}>
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><MessageCircle className="size-5" /></span>
-            {pick("Support", "الدعم")}
-          </Button>
-        </div>
       </div>
     </main></div>;
-}
