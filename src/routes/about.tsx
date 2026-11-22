@@ -48,7 +48,7 @@ function About() {
         </p>
         <img
           src={nfcKit}
-          alt={pick("TapWash NFC kit", "أدوات NFC من تاب واش")}
+          alt={pick("TapWash NFC kit", "أدوات NFC من TapWash")}
           loading="lazy"
           width={1408}
           height={1008}
