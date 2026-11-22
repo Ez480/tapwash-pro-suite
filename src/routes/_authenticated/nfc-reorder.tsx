@@ -98,7 +98,7 @@ function NfcReorderPage() {
     const { error } = await (supabase as any).rpc("create_customer_nfc_reorder", { p_card_id: card.card_id, p_scheduled_at: when.toISOString(), p_payment_method: payment });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success(pick("Your reorder request has been sent to TapWash.", "تم إرسال طلب إعادة الطلب لتاب وش."));
+    toast.success(pick("Your reorder request has been sent to TapWash.", "تم إرسال طلب إعادة الطلب إلى TapWash."));
     setCard(null); setTime("");
   };
 
