@@ -132,3 +132,19 @@
 .dark .tapwash-employee-dock-button:hover {
   background: linear-gradient(145deg, rgba(170,200,240,.23), rgba(110,145,195,.12)) !important;
 }
+
+
+/* Mobile navigation: use the exact shared site glass palette in both themes. */
+.mobile-menu-glass {
+  background: var(--glass-panel-bg) !important;
+  color: var(--color-foreground) !important;
+  border-color: var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.mobile-menu-glass a { color: var(--color-foreground) !important; }
+.mobile-menu-glass a:hover,
+.mobile-menu-glass a.text-primary { color: var(--color-primary) !important; }
+.mobile-menu-glass > button,
+.mobile-menu-glass [data-radix-dialog-close] { color: var(--color-foreground) !important; }
