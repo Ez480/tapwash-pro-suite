@@ -148,3 +148,65 @@
 .mobile-menu-glass a.text-primary { color: var(--color-primary) !important; }
 .mobile-menu-glass > button,
 .mobile-menu-glass [data-radix-dialog-close] { color: var(--color-foreground) !important; }
+
+
+/* iOS-inspired individual glass tiles inside the mobile navigation sheet. */
+.mobile-menu-glass {
+  border-radius: 1.75rem !important;
+  overflow: hidden;
+}
+.mobile-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+.mobile-menu-item {
+  display: flex;
+  min-height: 5.8rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.85rem 0.5rem;
+  border: 1px solid color-mix(in oklch, var(--glass-panel-border) 72%, transparent);
+  border-radius: 1.15rem;
+  color: var(--color-foreground) !important;
+  text-align: center;
+  background: color-mix(in oklch, var(--color-card) 22%, transparent);
+  box-shadow: 0 8px 22px -16px oklch(0.16 0.025 265 / 0.34), inset 0 1px 0 oklch(1 0 0 / 0.38);
+  -webkit-backdrop-filter: blur(18px) saturate(175%);
+  backdrop-filter: blur(18px) saturate(175%);
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.mobile-menu-icon {
+  display: flex;
+  width: 2.65rem;
+  height: 2.65rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklch, var(--glass-panel-border) 78%, transparent);
+  border-radius: 0.95rem;
+  color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 8%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.48), 0 5px 14px -12px oklch(0.15 0.03 265 / 0.5);
+}
+.mobile-menu-item:hover,
+.mobile-menu-item.is-active {
+  color: var(--color-primary) !important;
+  border-color: color-mix(in oklch, var(--color-primary) 36%, var(--glass-panel-border));
+  background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+  box-shadow: 0 10px 24px -18px color-mix(in oklch, var(--color-primary) 42%, transparent), inset 0 1px 0 oklch(1 0 0 / 0.48);
+}
+.mobile-menu-item:active { transform: scale(0.97); }
+.dark .mobile-menu-item {
+  background: color-mix(in oklch, var(--color-card) 32%, transparent);
+  box-shadow: 0 10px 24px -18px oklch(0 0 0 / 0.8), inset 0 1px 0 oklch(1 0 0 / 0.12);
+}
+.dark .mobile-menu-icon {
+  background: color-mix(in oklch, var(--color-primary) 13%, transparent);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.14), 0 6px 16px -12px oklch(0 0 0 / 0.9);
+}
+@media (max-width: 360px) {
+  .mobile-menu-grid { gap: 0.5rem; }
+  .mobile-menu-item { min-height: 5.4rem; padding-inline: 0.3rem; }
+}
