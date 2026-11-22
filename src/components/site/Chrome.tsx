@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, Moon, Sun, Home, Info, CarFront, Package, Tag, Phone } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -12,8 +12,8 @@ import { useSettings } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { to: "/", key: "nav_home", icon: Home }, { to: "/about", key: "nav_about", icon: Info }, { to: "/services", key: "nav_services", icon: CarFront },
-  { to: "/packages", key: "nav_packages", icon: Package }, { to: "/offers", key: "nav_offers", icon: Tag }, { to: "/contact", key: "nav_contact", icon: Phone },
+  { to: "/", key: "nav_home" }, { to: "/about", key: "nav_about" }, { to: "/services", key: "nav_services" },
+  { to: "/packages", key: "nav_packages" }, { to: "/offers", key: "nav_offers" }, { to: "/contact", key: "nav_contact" },
 ] as const;
 
 const glassIcon = "border border-white/45 bg-white/28 text-foreground shadow-[0_3px_12px_rgba(15,23,42,0.10)] backdrop-blur-xl hover:bg-white/42 hover:shadow-[0_5px_16px_rgba(15,23,42,0.14)] dark:border-white/15 dark:bg-white/[0.07] dark:text-foreground dark:hover:bg-white/[0.12] dark:shadow-[0_3px_14px_rgba(0,0,0,0.30)]";
@@ -44,7 +44,7 @@ export function ThemeToggle() {
 export function Header() {
   const { t, pick } = useI18n(); const { user } = useSession(); const [open, setOpen] = useState(false); const pathname = useRouterState({ select: (s) => s.location.pathname });
   const nav = <>{links.map((l) => <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={cn("text-sm font-medium transition-colors hover:text-foreground", pathname === l.to ? "text-foreground" : "text-muted-foreground")}>{t(l.key)}</Link>)}</>;
-  const mobileNav = <>{links.map((l) => { const Icon = l.icon; return <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={cn("mobile-menu-item", pathname === l.to && "is-active")}><span className="mobile-menu-icon"><Icon className="size-6" strokeWidth={1.8} /></span><span className="text-sm font-semibold">{t(l.key)}</span></Link>; })}</>;
+  const mobileNav = <>{links.map((l) => <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={cn("mobile-menu-item", pathname === l.to && "is-active")}>{t(l.key)}</Link>)}</>;
   return <header className="sticky top-0 z-50 w-full min-w-0 overflow-x-clip border-b border-border/70 bg-background/80 shadow-sm backdrop-blur-2xl supports-[backdrop-filter]:bg-background/55"><div className="mx-auto flex h-16 w-full max-w-7xl min-w-0 items-center gap-2.5 px-3 sm:gap-4 sm:px-6"><Link to="/" aria-label={pick("Home", "الرئيسية")} className="flex min-w-0 shrink items-center gap-2"><span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent p-0"><img src="/icons/tapwash-brand.svg?v=20260929" alt="TapWash" className="h-10 w-10 object-contain" /></span><span className="flex min-w-0 flex-col leading-none"><span className="truncate font-display text-sm font-bold tracking-tight text-foreground sm:text-base">TapWash</span><span className="hidden text-[10px] font-medium uppercase tracking-widest text-muted-foreground sm:block">{t("tagline")}</span></span></Link><nav className="mx-auto hidden items-center gap-7 lg:flex">{nav}</nav><div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:ms-0"><LanguageToggle /><ThemeToggle /><Button asChild size="sm" className="hidden border border-white/30 shadow-sm sm:inline-flex"><Link to={user ? "/dashboard" : "/login"}>{user ? t("nav_dashboard") : t("nav_login")}</Link></Button><Sheet open={open} onOpenChange={setOpen}><SheetTrigger asChild><Button variant="ghost" size="icon" className={cn("lg:hidden", glassIcon)} aria-label="Menu"><Menu className="size-5" /></Button></SheetTrigger><SheetContent side="top" className="mobile-menu-glass pt-12"><nav className="mobile-menu-grid">{mobileNav}</nav><Button asChild className="mt-6 w-full"><Link to={user ? "/dashboard" : "/login"} onClick={() => setOpen(false)}>{user ? t("nav_dashboard") : t("nav_login")}</Link></Button></SheetContent></Sheet></div></div></header>;
 }
 
