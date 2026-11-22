@@ -60,7 +60,7 @@ function Home() {
               <Nfc className="size-3.5" /> {t("hero_badge")}
             </span>
             <h1 className="animate-fade-up mt-6 text-4xl font-extrabold text-balance-tight md:text-6xl">
-              {page ? pick(page.title_en, page.title_ar) : t("brand")}
+              TapWash
             </h1>
             <p className="animate-fade-up mt-5 max-w-xl text-lg text-muted-foreground">
               {page
