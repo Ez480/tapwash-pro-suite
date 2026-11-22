@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-// TapWash production Supabase project: El.EZZ CAR WASH.
+// TapWash production Supabase project.
 const SUPABASE_URL = "https://aualcmbftzymhkgqfojw.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_PKyGTmUBRBajj3J5mOzfRg_ecOJu5Bd";
