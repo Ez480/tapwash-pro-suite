@@ -153,7 +153,7 @@ const dict = {
   login_title: { en: "Welcome back", ar: "مرحباً بعودتك" },
   login_sub: { en: "Sign in to manage your membership.", ar: "سجّل الدخول لإدارة عضويتك." },
   signup_title: { en: "Create your account", ar: "أنشئ حسابك" },
-  signup_sub: { en: "Start your TapWash membership.", ar: "ابدأ عضويتك في تاب واش." },
+  signup_sub: { en: "Start your TapWash membership.", ar: "ابدأ عضويتك في TapWash." },
   password: { en: "Password", ar: "كلمة المرور" },
   sign_in: { en: "Sign in", ar: "دخول" },
   sign_up: { en: "Sign up", ar: "إنشاء حساب" },
