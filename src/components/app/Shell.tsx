@@ -9,7 +9,6 @@ import { LanguageToggle, ThemeToggle } from "@/components/site/Chrome";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useIsAdmin, useSession, useUserRoles } from "@/lib/auth";
-import { useSettings } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const glassIcon = "inline-flex size-8 shrink-0 items-center justify-center rounded-xl border border-white/50 bg-white/35 text-primary shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/10";
@@ -18,14 +17,14 @@ const toolbarButton = "shrink-0 rounded-xl border border-white/45 bg-white/30 te
 export function useSignOut(){const queryClient=useQueryClient();const navigate=useNavigate();return async()=>{await queryClient.cancelQueries();queryClient.clear();await supabase.auth.signOut();navigate({to:"/login",replace:true});};}
 
 export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
-  const{t,pick}=useI18n();const signOut=useSignOut();const navigate=useNavigate();const{data:s}=useSettings();const{user}=useSession();const{data:roles}=useIsAdmin(user?.id);const{data:userRoles=[]}=useUserRoles(user?.id);const isAdmin=(roles??[]).includes("admin");const isEmployee=!isAdmin&&userRoles.includes("employee");const pathname=useRouterState({select:state=>state.location.pathname});const isAdminArea=pathname.startsWith("/admin");const mobileEmployee=isEmployee&&pathname==="/dashboard";
+  const{t,pick}=useI18n();const signOut=useSignOut();const navigate=useNavigate();const{user}=useSession();const{data:roles}=useIsAdmin(user?.id);const{data:userRoles=[]}=useUserRoles(user?.id);const isAdmin=(roles??[]).includes("admin");const isEmployee=!isAdmin&&userRoles.includes("employee");const pathname=useRouterState({select:state=>state.location.pathname});const isAdminArea=pathname.startsWith("/admin");const mobileEmployee=isEmployee&&pathname==="/dashboard";
   return <header className={cn("sticky top-0 z-40 w-full border-b border-white/30 bg-background/85 px-2 text-foreground shadow-lg backdrop-blur-2xl sm:px-4",mobileEmployee&&"px-1 sm:px-4")}>
     <div className={cn("mx-auto flex min-h-16 w-full max-w-7xl items-center gap-2 rounded-b-2xl",mobileEmployee&&"min-h-16")}>
       <Link to="/" aria-label={pick("Home","الرئيسية")} className="flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-1 py-1">
         <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent">
           <img src="/icons/tapwash-brand.svg?v=20260929" alt="TapWash" className="h-10 w-10 object-contain" />
         </span>
-        <span className="hidden max-w-32 truncate text-xs font-black sm:block">{s?pick(s.company_name_en,s.company_name_ar):t("brand")}</span>
+        <span className="hidden max-w-32 truncate text-xs font-black sm:block">TapWash</span>
       </Link>
       {!isAdmin&&user&&<Button asChild variant="ghost" size="sm" className={cn(toolbarButton,"h-9 px-2.5 sm:px-3")}><Link to="/orders" title={pick("My orders","طلباتي")}><ClipboardList className="size-4 sm:me-1.5"/><span className="hidden sm:inline">{pick("My orders","طلباتي")}</span></Link></Button>}
       <div className="mx-1 hidden h-7 w-px bg-border/60 md:block"/>
