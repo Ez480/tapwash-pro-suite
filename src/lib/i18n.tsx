@@ -12,7 +12,7 @@ export type Lang = "ar" | "en";
 
 const dict = {
   // brand / nav
-  brand: { en: "TapWash", ar: "تاب واش" },
+  brand: { en: "TapWash", ar: "TapWash" },
   tagline: { en: "NFC Car Care", ar: "عناية سيارات بتقنية NFC" },
   nav_home: { en: "Home", ar: "الرئيسية" },
   nav_about: { en: "About Us", ar: "من نحن" },
@@ -83,7 +83,7 @@ const dict = {
   cta_title: { en: "Ready to stop washing your own car?", ar: "جاهز تتوقف عن غسل سيارتك بنفسك؟" },
   cta_sub: {
     en: "Join TapWash today and get your NFC tag delivered anywhere in Cairo.",
-    ar: "انضم إلى تاب واش اليوم واستلم أداة NFC في أي مكان بالقاهرة.",
+    ar: "انضم إلى TapWash اليوم واستلم أداة NFC في أي مكان بالقاهرة.",
   },
   get_started: { en: "Get started", ar: "ابدأ الآن" },
 
