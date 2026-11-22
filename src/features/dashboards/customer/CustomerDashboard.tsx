@@ -19,8 +19,8 @@ type EmployeeInfo = { employee_id: string | null; job_title: string | null; full
 const orderStages = [
   { key: "pending", en: "Your order has been received", ar: "تم استلام طلبك", icon: "📥" },
   { key: "confirmed", en: "Your order has been confirmed", ar: "تم تأكيد طلبك", icon: "✅" },
-  { key: "on_the_way", en: "TapWash is on the way", ar: "تاب وش في الطريق", icon: "🚗" },
-  { key: "arrived", en: "TapWash has arrived", ar: "تم وصول تاب وش", icon: "📍" },
+  { key: "on_the_way", en: "TapWash is on the way", ar: "TapWash في الطريق", icon: "🚗" },
+  { key: "arrived", en: "TapWash has arrived", ar: "تم وصول TapWash", icon: "📍" },
   { key: "in_progress", en: "Service has started", ar: "بدء التنفيذ", icon: "✨" },
   { key: "completed", en: "Your order is complete", ar: "تم انهاء طلبك", icon: "🏁" },
 ];
