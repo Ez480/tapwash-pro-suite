@@ -136,7 +136,7 @@
 
 /* Compact mobile navigation with a theme-safe close control and subtle glass buttons. */
 .mobile-menu-glass {
-  background: #ffffff !important;
+  background: var(--color-background) !important;
   color: var(--color-foreground) !important;
   border: 1px solid rgba(255, 255, 255, 0.34) !important;
   border-radius: 1.35rem !important;
