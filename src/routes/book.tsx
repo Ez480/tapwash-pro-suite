@@ -126,7 +126,7 @@ function BookingPage() {
         .from("cars")
         .select("id,brand,model,color,plate_number")
         .eq("customer_id", user.id)
-        .order("id", { ascending: false });
+        .order("created_at", { ascending: false });
       if (!live) return;
       if (error) {
         toast.error(error.message);
