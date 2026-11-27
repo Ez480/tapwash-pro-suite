@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Nfc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useMySubscription } from "@/lib/data";
+import { QUIRKFY_LOGO } from "@/components/app/quirkfyLogo";
 
 export function CustomerNfcGlassCard({ cards, customerName, remaining }: { cards?: any[]; customerName?: string | null; remaining: number }) {
   const card = cards?.[0];
@@ -58,9 +59,14 @@ export function CustomerNfcGlassCard({ cards, customerName, remaining }: { cards
           Tap NFC TapWash
         </Link>
 
-        <p className="mt-2 text-center text-sm font-black tracking-wide text-muted-foreground" dir="ltr">
-          Powered by Quirk.fy
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-2" dir="ltr">
+          <span className="inline-flex items-center justify-center rounded-full bg-white/85 p-1">
+            <img src={QUIRKFY_LOGO} alt="Quirk.fy" className="h-5 w-auto object-contain" />
+          </span>
+          <p className="text-center text-sm font-black tracking-wide text-muted-foreground">
+            Powered by Quirk.fy
+          </p>
+        </div>
       </div>
     </section>
   );
