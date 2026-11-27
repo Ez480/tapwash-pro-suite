@@ -2,7 +2,7 @@ import { Link, Outlet } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { BadgeDollarSign, Bell, CalendarDays, ClipboardCheck, ClipboardList, CreditCard, FileText, Gift, LayoutDashboard, Package, PieChart, Settings, Users, UserSquare, Archive, Mail, CalendarClock } from "lucide-react";
+import { BadgeDollarSign, Bell, CalendarDays, ClipboardCheck, ClipboardList, CreditCard, FileText, Gift, LayoutDashboard, Package, PieChart, Settings, Users, UserSquare, Archive, Mail, CalendarClock, MessageCircle, MapPinned } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AdminNav, AppTopbar } from "@/components/app/Shell";
@@ -34,6 +34,8 @@ export function AdminLayout() {
     { to: "/admin/archive", label: "الأرشيف والبحث", icon: Archive },
     { to: "/admin/booking-requests", label: "طلبات الحجز", icon: ClipboardCheck },
     { to: "/admin/messages", label: "الرسائل", icon: Mail },
+    { to: "/admin/support", label: "الدعم", icon: MessageCircle },
+    { to: "/admin/live-orders", label: "تتبع السائقين", icon: MapPinned },
     { to: "/admin/tasks", label: "المهام / Tasks", icon: ClipboardList },
     { to: "/admin/customers", label: "العملاء", icon: Users },
     { to: "/admin/cards", label: "كروت NFC", icon: CreditCard },
