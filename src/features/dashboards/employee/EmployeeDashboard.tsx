@@ -321,7 +321,7 @@ export function EmployeeDashboard() {
         <div className="flex min-h-[68px] items-center justify-between gap-3 py-2">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl">
-              <img src={settings?.logo_url || "/icons/tapwash-mark.svg"} alt="TapWash" className="h-10 w-10 object-contain" />
+              <img src="/icons/tapwash-logo.svg" alt="TapWash" className="h-10 w-10 object-contain" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-base font-black tracking-wide">TapWash</p>
