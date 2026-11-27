@@ -829,3 +829,34 @@ html body .tapwash-nfc-card * {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.24) !important;
   }
 }
+
+
+/* Delivery screens: keep map overlays opaque without backdrop filtering. */
+.delivery-map-frame [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Employee header and navigation: keep the blue brand surface consistent in light and dark themes. */
+html body .employee-topbar-glass {
+  background: linear-gradient(135deg, oklch(0.67 0.17 255), oklch(0.43 0.19 260)) !important;
+  color: #fff !important;
+  border-color: rgba(147, 197, 253, .3) !important;
+}
+html body.dark .employee-topbar-glass,
+html .dark .employee-topbar-glass {
+  background: linear-gradient(135deg, #0c1a45, #0b1536) !important;
+}
+html body .employee-topbar-glass > div > div > button {
+  color: #fff !important;
+}
+html body .employee-topbar-glass .employee-nav-glass {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, .2) !important;
+}
+html body .employee-topbar-glass .employee-nav-glass button {
+  color: #fff !important;
+}
+html body .employee-topbar-glass .employee-nav-glass button[class*="!bg-white"] {
+  color: #1e40af !important;
+}
