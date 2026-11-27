@@ -705,3 +705,42 @@
     backdrop-filter: none;
   }
 }
+
+
+/* Enforce accessibility fallbacks after all surface-specific styling. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .customer-site .panel, .customer-site article, .customer-site [data-slot="card"],
+  .customer-dashboard .panel, .customer-dashboard .rounded-2xl.border, .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .booking-page-glass .panel, .booking-page-glass .rounded-xl.border, .booking-page-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-3xl.border, .customer-orders-glass .rounded-2xl.border, .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel, .nfc-page-glass .rounded-xl.border, .nfc-page-glass .rounded-2xl.border,
+  .customer-site input, .customer-site textarea, .customer-site select,
+  .auth-page-glass input, .auth-page-glass textarea,
+  .booking-page-glass input, .booking-page-glass textarea, .booking-page-glass select,
+  .customer-orders-glass input, .customer-orders-glass textarea, .customer-orders-glass select,
+  .nfc-page-glass input, .nfc-page-glass textarea, .nfc-page-glass select,
+  .admin-nav-glass, .employee-nav-glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--color-card) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .customer-site .panel, .customer-site article, .customer-site [data-slot="card"],
+  .customer-dashboard .panel, .customer-dashboard .rounded-2xl.border, .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .booking-page-glass .panel, .booking-page-glass .rounded-xl.border, .booking-page-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-3xl.border, .customer-orders-glass .rounded-2xl.border, .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel, .nfc-page-glass .rounded-xl.border, .nfc-page-glass .rounded-2xl.border,
+  .customer-site input, .customer-site textarea, .customer-site select,
+  .auth-page-glass input, .auth-page-glass textarea,
+  .booking-page-glass input, .booking-page-glass textarea, .booking-page-glass select,
+  .customer-orders-glass input, .customer-orders-glass textarea, .customer-orders-glass select,
+  .nfc-page-glass input, .nfc-page-glass textarea, .nfc-page-glass select,
+  .admin-nav-glass, .employee-nav-glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--color-card) !important;
+  }
+}
