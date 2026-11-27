@@ -746,7 +746,7 @@
 }
 
 /* Batch 2 performance */
-html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -759,7 +759,7 @@ html body .tapwash-nfc-card * {
   -webkit-backdrop-filter: none !important;
 }
 @media (max-width: 768px), (hover: none) {
-  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -769,7 +769,7 @@ html body .tapwash-nfc-card * {
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -888,7 +888,7 @@ html.dark .public-menu-glass,
   backdrop-filter: blur(14px) saturate(140%);
 }
 /* Keep the public drawer frosted on every viewport, including the mobile no-blur fallback. */
-html body [data-slot="sheet-content"].public-menu-glass {
+html body .public-menu-glass {
   -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
   backdrop-filter: blur(14px) saturate(140%) !important;
 }
