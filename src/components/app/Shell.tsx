@@ -78,20 +78,20 @@ export function AdminNav({items,mode="all"}:{items:{to:string;label:string;icon:
     const active=pathname===i.to;
     const isPayments=i.to==="/admin/payments",isBookings=i.to==="/admin/booking-requests",isMessages=i.to==="/admin/messages",isSubscriptions=i.to==="/admin/subscriptions";
     const badgeCount=isPayments?pendingPayments:isBookings?pendingBookings:isMessages?unreadMessages:isSubscriptions?pendingSubscriptions:0;
-    return <Link key={i.to} to={i.to} onClick={close} className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",active?"bg-white/20 text-white shadow-sm ring-1 ring-white/20":"text-white/85 hover:bg-white/10 hover:text-white")}>
+    return <Link key={i.to} to={i.to} onClick={close} className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",active?"bg-white/20 text-white shadow-sm ring-1 ring-white/20 dark:bg-white/10 dark:ring-white/15":"text-white/85 hover:bg-white/10 hover:text-white dark:hover:bg-white/5")}>
       <i.icon className="size-5 shrink-0"/><span className="min-w-0 flex-1">{i.label}</span>
-      {badgeCount>0&&<span className={cn("inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold",active?"bg-white text-blue-700":"bg-red-500 text-white")}>{badgeCount>99?"99+":badgeCount}</span>}
+      {badgeCount>0&&<span className={cn("inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold",active?"bg-white text-blue-700 dark:text-blue-300":"bg-red-500 text-white")}>{badgeCount>99?"99+":badgeCount}</span>}
     </Link>;
   })}</nav>;
-  const brand=<div className="mb-6 flex items-center gap-3 border-b border-white/20 px-2 pb-5"><img src="/icons/tapwash-logo.svg" alt="TapWash" className="size-11 object-contain"/><span className="text-xl font-black tracking-tight text-white">TapWash</span></div>;
+  const brand=<div className="mb-6 flex items-center gap-3 border-b border-white/20 px-2 pb-5 dark:border-white/10"><img src="/icons/tapwash-logo.svg" alt="TapWash" className="size-11 object-contain"/><span className="text-xl font-black tracking-tight text-white">TapWash</span></div>;
   return <>
-    {mode!=="mobile"&&<aside className="hidden min-h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] px-4 py-6 text-white shadow-xl lg:flex">
+    {mode!=="mobile"&&<aside className="hidden min-h-[calc(100vh-4rem)] w-[260px] shrink-0 flex-col border border-transparent bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] px-4 py-6 text-white shadow-xl dark:from-[#0c1a45] dark:via-[#0b1536] dark:to-[#070d22] dark:border dark:border-white/10 lg:flex">
       {brand}{renderLinks()}
     </aside>}
     {mode!=="desktop"&&<div className="lg:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild><Button variant="outline" size="icon" aria-label={pick("Open admin menu","فتح قائمة الإدارة")} className="border-white/30 bg-primary text-white hover:bg-primary/90"><span className="text-xl leading-none">☰</span></Button></SheetTrigger>
-        <SheetContent side={dir==="rtl"?"right":"left"} className="w-[min(88vw,320px)] border-0 bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] p-5 text-white">
+        <SheetContent side={dir==="rtl"?"right":"left"} className="w-[min(88vw,320px)] border border-transparent bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] p-5 text-white dark:from-[#0c1a45] dark:via-[#0b1536] dark:to-[#070d22] dark:border dark:border-white/10 [&>button]:text-white">
           {brand}{renderLinks(()=>setOpen(false))}
         </SheetContent>
       </Sheet>

@@ -790,3 +790,7 @@ html body .tapwash-nfc-card * {
     background-color: var(--color-card);
   }
 }
+
+
+/* Keep Leaflet panes and controls inside their own stacking context. */
+.leaflet-container { position: relative; z-index: 0; isolation: isolate; }
