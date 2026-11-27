@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ function ResetPasswordPage() {
     <div className="min-h-screen bg-background px-6 py-8">
       <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-8 pt-20">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="surface-blue flex size-9 items-center justify-center rounded-xl shadow-luxe"><Sparkles className="size-4" /></span>
+          <span className="surface-blue flex size-9 items-center justify-center rounded-xl shadow-luxe"><img src="/icons/tapwash-logo.svg" alt="TapWash" className="size-9 object-contain" /></span>
           <span className="font-display text-base font-bold">TapWash</span>
         </Link>
         <div className="absolute end-6 top-6 flex items-center gap-2">

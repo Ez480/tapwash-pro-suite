@@ -22,7 +22,7 @@ export function AppTopbar({title,extra}:{title:string;extra?:ReactNode}){
     <div className={cn("mx-auto flex min-h-16 w-full max-w-7xl items-center gap-2 rounded-b-2xl",mobileEmployee&&"min-h-16")}>
       <Link to="/" aria-label={pick("Home","الرئيسية")} className="flex min-w-0 shrink-0 items-center gap-2 rounded-xl px-1 py-1">
         <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent">
-          <img src="/icons/tapwash-brand.svg?v=20260929" alt="TapWash" className="h-10 w-10 object-contain" />
+          <img src="/icons/tapwash-logo.svg" alt="TapWash" className="h-10 w-10 object-contain" />
         </span>
         <span className="hidden max-w-32 truncate text-xs font-black sm:block">TapWash</span>
       </Link>
