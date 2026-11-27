@@ -12,6 +12,20 @@ export const claimAdmin = createServerFn({ method: "POST" })
     if (countError) throw new Error(countError.message);
     if ((count ?? 0) > 0) throw new Error("An admin already exists");
 
+    // First-admin recovery is intentionally fail-closed. Only the configured,
+    // verified initial-admin email may claim the role when no admin exists.
+    const initialAdminEmail = process.env["TAPWASH_INITIAL_ADMIN_EMAIL"]?.trim().toLowerCase();
+    if (!initialAdminEmail) {
+      throw new Error("First-admin setup is disabled. Configure TAPWASH_INITIAL_ADMIN_EMAIL in the server environment first.");
+    }
+
+    const { data: candidate, error: userError } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    if (userError) throw new Error(userError.message);
+    const candidateEmail = candidate.user?.email?.trim().toLowerCase();
+    if (!candidateEmail || candidateEmail !== initialAdminEmail || !candidate.user?.email_confirmed_at) {
+      throw new Error("Only the configured, verified initial-admin email can claim the first admin role.");
+    }
+
     const { error } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: context.userId, role: "admin" });

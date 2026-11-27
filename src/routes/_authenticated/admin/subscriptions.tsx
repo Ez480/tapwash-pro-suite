@@ -41,7 +41,15 @@ function AdminSubscriptions() {
     const url = locationUrl || (latitude != null && longitude != null ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}` : address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "");
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
-  const cancelRequest = async (r: any) => { const { error } = await (supabase as any).from("subscription_requests").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); await (supabase as any).from("subscriptions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("request_id", r.id); toast.success("تم إلغاء الاشتراك ونقله للأرشيف"); refresh(); };
+  const cancelRequest = async (r: any) => {
+    const { error } = await (supabase as any).rpc("close_subscription_request", {
+      p_request_id: r.id,
+      p_outcome: "cancelled",
+    });
+    if (error) return toast.error(error.message);
+    toast.success("تم إلغاء الاشتراك ونقله للأرشيف");
+    refresh();
+  };
   const addWash = async (row: Row) => { const used = Number(row["used_washes"] ?? 0); const { error } = await supabase.from("washes").insert({ customer_id: String(row["customer_id"]), subscription_id: String(row["id"]) }); if (error) return void toast.error(error.message); const { error: updateError } = await supabase.from("subscriptions").update({ used_washes: used + 1 }).eq("id", String(row["id"])); if (updateError) return void toast.error(updateError.message); toast.success(t("saved")); refresh(); };
   const removeWash = async (row: Row) => { const used = Number(row["used_washes"] ?? 0); if (used <= 0) return; const { error } = await supabase.from("subscriptions").update({ used_washes: used - 1 }).eq("id", String(row["id"])); if (error) return void toast.error(error.message); toast.success(t("saved")); refresh(); };
 
