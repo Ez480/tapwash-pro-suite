@@ -145,7 +145,7 @@ export function NfcCheckin() {
       };
     } catch (error) {
       setScanning(false);
-      toast.error(error instanceof Error ? error.message : pick("NFC scan failed", "فشل مسح NFC"));
+      toast.error(error instanceof Error && !/permission|denied|NotAllowed|aborted/i.test(`${error.name} ${error.message}`) ? error.message : pick("Allow NFC access for this site in your browser settings, make sure NFC is on, then try again.", "اسمح للموقع باستخدام NFC من إعدادات المتصفح وتأكد إن NFC مفعّل، وبعدين جرّب تاني."));
     }
   };
 

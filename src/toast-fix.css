@@ -1,0 +1,4 @@
+/* sonner shifts the toaster left by the mobile offset in RTL; keep it centered */
+@media (max-width: 600px) {
+  [data-sonner-toaster][dir="rtl"] { left: var(--mobile-offset-left) !important; right: var(--mobile-offset-right) !important; }
+}
