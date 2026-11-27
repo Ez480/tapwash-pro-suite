@@ -156,7 +156,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
     setTimeout(() => map.invalidateSize(), 50);
   }
 
-  return <div className="overflow-hidden rounded-3xl border border-white/20 bg-slate-100 shadow-inner dark:bg-slate-900" style={{ height }}>
+  return <div className="relative isolate z-0 overflow-hidden rounded-3xl border border-white/20 bg-slate-100 shadow-inner dark:bg-slate-900" style={{ height }}>
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" aria-label="خريطة تتبع الدليفري" />
       <div className="pointer-events-none absolute bottom-3 start-3 z-[500] flex items-center gap-2 rounded-2xl border border-white/40 bg-white/90 px-3 py-2 text-xs font-medium text-slate-700 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90 dark:text-slate-100">

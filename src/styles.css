@@ -791,7 +791,11 @@ html body .tapwash-nfc-card * {
   }
 }
 
- 
+
+/* Keep Leaflet panes and controls inside their own stacking context. */
+.leaflet-container { position: relative; z-index: 0; isolation: isolate; }
+
+
 /* Reduce mobile rendering cost: use solid surfaces instead of backdrop filters. */
 @media (max-width: 768px), (hover: none) {
   html body *,
