@@ -746,7 +746,7 @@
 }
 
 /* Batch 2 performance */
-html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -759,7 +759,7 @@ html body .tapwash-nfc-card * {
   -webkit-backdrop-filter: none !important;
 }
 @media (max-width: 768px), (hover: none) {
-  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -769,7 +769,7 @@ html body .tapwash-nfc-card * {
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]):not(.public-menu-glass) {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -798,7 +798,7 @@ html body .tapwash-nfc-card * {
 
 /* Reduce mobile rendering cost: use solid surfaces instead of backdrop filters. */
 @media (max-width: 768px), (hover: none) {
-  html body *,
+  html body *:not(.public-menu-glass),
   html body *::before,
   html body *::after {
     backdrop-filter: none !important;
@@ -859,4 +859,36 @@ html body .employee-topbar-glass .employee-nav-glass button {
 }
 html body .employee-topbar-glass .employee-nav-glass button[class*="!bg-white"] {
   color: #1e40af !important;
+}
+
+/* Public navigation drawer: lightweight translucent blue glass, with mobile blur disabled by the existing no-blur rule. */
+.public-menu-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 35%),
+    linear-gradient(135deg, rgba(36, 97, 233, .58), rgba(39, 63, 199, .56)) !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, .22) !important;
+}
+html body.dark .public-menu-glass,
+html.dark .public-menu-glass,
+.dark .public-menu-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .10), transparent 35%),
+    linear-gradient(135deg, rgba(12, 26, 69, .62), rgba(11, 21, 54, .60)) !important;
+}
+.public-menu-glass nav a {
+  border: 1px solid rgba(255, 255, 255, .16);
+  background-color: rgba(255, 255, 255, .10);
+}
+.public-menu-glass nav a.ring-1 {
+  border-color: rgba(255, 255, 255, .20);
+  background-color: rgba(255, 255, 255, .20);
+}
+.public-menu-glass {
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+/* Keep the public drawer frosted on every viewport, including the mobile no-blur fallback. */
+html body .public-menu-glass {
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
 }
