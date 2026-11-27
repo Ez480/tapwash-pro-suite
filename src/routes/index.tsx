@@ -43,13 +43,6 @@ function Home() {
     { icon: Timer, t: t("how_3_t"), d: t("how_3_d") },
   ];
 
-  const stats = [
-    { v: "12,400+", l: t("stat_cards") },
-    { v: "86,000+", l: t("stat_washes") },
-    { v: "3,150", l: t("stat_members") },
-    { v: "4.9", l: t("stat_rating") },
-  ];
-
   return (
     <SiteLayout>
       {/* Hero */}
@@ -124,18 +117,6 @@ function Home() {
               <p className="mt-5 text-xs font-bold tracking-widest text-primary">0{i + 1}</p>
               <h3 className="mt-1 text-xl font-semibold">{s.t}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="surface-ink">
-        <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-14 sm:px-6 md:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.l}>
-              <p className="font-display text-4xl font-extrabold">{s.v}</p>
-              <p className="mt-1 text-sm text-ink-foreground/60">{s.l}</p>
             </div>
           ))}
         </div>
