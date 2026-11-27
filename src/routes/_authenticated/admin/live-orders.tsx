@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format";
 import { createFileRoute } from "@tanstack/react-router";
 import { Camera, MapPinned, RefreshCw, Search, Truck, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -47,7 +48,7 @@ function distanceKm(a: Point, b: Point) {
   const x = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 }
-function formatDate(value: string | null | undefined) { return value ? new Date(value).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "—"; }
+function formatDate(value: string | null | undefined) { return value ? formatDateTime(value, { dateStyle: "medium", timeStyle: "short" }) : "—"; }
 function LiveOrdersPage() {
   const { fmtDate } = useI18n();
   const [tasks, setTasks] = useState<Task[]>([]);
