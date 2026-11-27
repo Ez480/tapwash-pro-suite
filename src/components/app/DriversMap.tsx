@@ -81,5 +81,5 @@ export function DriversMap({ drivers, onSelect }: { drivers: DriverPoint[]; onSe
     if (!points.length) mapInstance.setView([30.0444, 31.2357], 6);
     setTimeout(() => mapInstance.invalidateSize(), 40);
   }
-  return <div className="overflow-hidden rounded-3xl border bg-muted/20 shadow-inner"><div ref={container} className="h-[480px] w-full" aria-label="خريطة تتبع الموظفين" /></div>;
+  return <div className="relative isolate z-0 overflow-hidden rounded-3xl border bg-muted/20 shadow-inner"><div ref={container} className="h-[480px] w-full" aria-label="خريطة تتبع الموظفين" /></div>;
 }
