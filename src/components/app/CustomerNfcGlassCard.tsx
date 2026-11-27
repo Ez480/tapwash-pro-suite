@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Nfc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
   const { data: subscription } = useMySubscription(card?.customer_id);
   const subscriptionActive = String(subscription?.status ?? "").toLowerCase() === "active";
   const validUntil = subscriptionActive && subscription?.end_date
-    ? new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(subscription.end_date))
+    ? formatDate(subscription.end_date, { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
 
   return (
