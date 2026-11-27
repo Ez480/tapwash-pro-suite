@@ -208,3 +208,121 @@
   .mobile-menu-grid { gap: 0.4rem; }
   .mobile-menu-item { min-height: 2.95rem; padding-inline: 0.35rem; font-size: 0.9rem; }
 }
+
+
+/* Frosted-glass refresh: preserve the existing TapWash blue and ink palette. */
+:root {
+  --radius: 1.5rem;
+  --glass-panel-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 90%, transparent), color-mix(in oklch, var(--color-card) 85%, transparent) 54%, color-mix(in oklch, var(--color-primary) 5%, transparent));
+  --glass-soft-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 92%, transparent), color-mix(in oklch, var(--color-card) 86%, transparent));
+  --glass-panel-border: oklch(1 0 0 / 0.92);
+  --glass-panel-shadow: 0 18px 48px -30px oklch(0.2 0.025 265 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.92), inset 0 -1px 0 oklch(0.45 0.015 265 / 0.05);
+  --glass-soft-shadow: 0 10px 28px -20px oklch(0.2 0.025 265 / 0.16), inset 0 1px 0 oklch(1 0 0 / 0.88);
+  --glass-panel-filter: blur(40px) saturate(145%);
+}
+.dark {
+  --glass-panel-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 18%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent) 54%, color-mix(in oklch, var(--color-card) 78%, transparent));
+  --glass-soft-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent));
+  --glass-panel-border: oklch(1 0 0 / 0.22);
+  --glass-panel-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 -1px 0 oklch(0.65 0.1 245 / 0.08);
+  --glass-soft-shadow: 0 12px 30px -22px oklch(0 0 0 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.12);
+}
+
+/* Glass is reserved for shared overlays and navigation; dashboard cards stay opaque for mobile performance. */
+:where(.glass-card, .glass-soft, .glass-ios, [class*="glass-"]):not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 1.6rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.panel {
+  background: color-mix(in oklch, var(--color-card) 88%, transparent);
+  border-color: color-mix(in oklch, var(--color-border) 78%, white 22%);
+  border-radius: 1.6rem;
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.customer-site .panel,
+.auth-page-glass .rounded-2xl.border,
+.nfc-page-glass .panel {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+
+/* App dashboards: translucent fills, no per-card blur. */
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.panel, .rounded-2xl.border, .rounded-xl.border, .glass-employee-card) {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 90%, transparent), color-mix(in oklch, var(--color-card) 86%, transparent));
+  border-color: color-mix(in oklch, var(--color-border) 70%, white 30%);
+  box-shadow: 0 12px 32px -24px oklch(0.18 0.08 260 / 0.24), inset 0 1px 0 oklch(1 0 0 / 0.56);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark :where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.panel, .rounded-2xl.border, .rounded-xl.border, .glass-employee-card) {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent));
+  border-color: oklch(1 0 0 / 0.14);
+  box-shadow: 0 14px 34px -24px oklch(0 0 0 / 0.48), inset 0 1px 0 oklch(1 0 0 / 0.10);
+}
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.app-topbar-glass, .employee-topbar-glass, .customer-dashboard > header) {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.language-toggle-glass, .theme-toggle-glass {
+  border-radius: 9999px !important;
+  border-color: var(--glass-panel-border) !important;
+  background: var(--glass-soft-bg) !important;
+  box-shadow: var(--glass-soft-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.admin-dashboard-shell > .border-b:has(.admin-nav-glass) {
+  background: var(--glass-soft-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-soft-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.admin-nav-glass, .employee-nav-glass {
+  border-radius: 1rem;
+  background: color-mix(in oklch, var(--color-card) 88%, transparent);
+  padding: 0.35rem;
+}
+.tapwash-employee-dock {
+  border-radius: 1.7rem;
+}
+.tapwash-employee-dock-button { border-radius: 9999px; }
+
+@media (max-width: 640px) {
+  :root { --glass-panel-filter: blur(22px) saturate(140%); }
+  .glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass { border-radius: 1.4rem; }
+  .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel { -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
