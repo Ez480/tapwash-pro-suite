@@ -56,7 +56,7 @@ export function AdminLayout() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="admin-dashboard-shell min-h-screen bg-background">
         <AppTopbar title="لوحة الإدارة" />
         <div className="mx-auto max-w-lg px-4 py-20 text-center">
           <h2 className="font-display text-2xl font-bold">الإدارة للمصرح لهم فقط</h2>
