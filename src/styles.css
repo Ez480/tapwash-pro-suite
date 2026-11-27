@@ -829,3 +829,10 @@ html body .tapwash-nfc-card * {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.24) !important;
   }
 }
+
+
+/* Delivery screens: keep map overlays opaque without backdrop filtering. */
+.delivery-map-frame [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
