@@ -860,3 +860,44 @@ html body .employee-topbar-glass .employee-nav-glass button {
 html body .employee-topbar-glass .employee-nav-glass button[class*="!bg-white"] {
   color: #1e40af !important;
 }
+
+/* Public navigation drawer: lightweight translucent blue glass, with mobile blur disabled by the existing no-blur rule. */
+.public-menu-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 35%),
+    linear-gradient(135deg, rgba(36, 97, 233, .86), rgba(39, 63, 199, .84)) !important;
+  border-inline-end: 1px solid rgba(255, 255, 255, .22) !important;
+}
+html body.dark .public-menu-glass,
+html.dark .public-menu-glass,
+.dark .public-menu-glass {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .10), transparent 35%),
+    linear-gradient(135deg, rgba(12, 26, 69, .88), rgba(11, 21, 54, .86)) !important;
+}
+.public-menu-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 35%);
+}
+.public-menu-glass > * {
+  position: relative;
+  z-index: 1;
+}
+.public-menu-glass nav a {
+  border: 1px solid rgba(255, 255, 255, .16);
+  background-color: rgba(255, 255, 255, .10);
+}
+.public-menu-glass nav a.ring-1 {
+  border-color: rgba(255, 255, 255, .20);
+  background-color: rgba(255, 255, 255, .20);
+}
+@media (min-width: 769px) and (hover: hover) {
+  .public-menu-glass {
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+}
