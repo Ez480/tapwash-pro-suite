@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { AdminShifts } from "@/components/app/AdminShifts";
 
 export const Route = createFileRoute("/_authenticated/admin/daily")({ component: AdminDaily });
 
@@ -58,6 +59,7 @@ function AdminDaily() {
   const rejectSubscription = async (r: any) => { if (r.status !== "pending") return; const { error } = await (supabase as any).from("subscription_requests").update({ payment_status: "rejected", status: "rejected" }).eq("id", r.id).eq("status", "pending"); if (error) return toast.error(error.message); toast.success(pick("Subscription request rejected.", "تم رفض طلب الاشتراك.")); scheduleReload(); };
 
   return <div className="space-y-6">
+    <AdminShifts />
     <div className="flex flex-wrap items-center justify-between gap-3"><div><div className="flex items-center gap-2"><CalendarDays className="size-6 text-primary"/><h1 className="text-2xl font-bold">{pick("Today", "طلبات اليوم")}</h1></div><p className="text-sm text-muted-foreground">{today}</p></div><Button asChild variant="outline"><a href="/admin/archive"><Archive className="me-2 size-4"/>{pick("Archive & search", "الأرشيف والبحث")}</a></Button></div>
     <div className="relative"><Search className="absolute start-3 top-3 size-4 text-muted-foreground"/><Input className="ps-9" value={search} onChange={e=>setSearch(e.target.value)} placeholder={pick("Search today's requests and orders", "ابحث في طلبات وأوردرات اليوم")}/></div>
     <div className="grid gap-4 sm:grid-cols-4"><div className="panel p-5"><p className="text-sm text-muted-foreground">{pick("Orders", "الأوردرات")}</p><p className="mt-2 text-3xl font-bold">{filteredTasks.length}</p></div><div className="panel p-5"><p className="text-sm text-muted-foreground">{pick("Subscription requests", "طلبات الاشتراك")}</p><p className="mt-2 text-3xl font-bold">{filteredSubscriptionRequests.length}</p></div><div className="panel p-5"><p className="text-sm text-muted-foreground">{pick("Booking requests", "طلبات الحجز")}</p><p className="mt-2 text-3xl font-bold">{filteredBookings.length}</p></div><div className="panel p-5"><p className="text-sm text-muted-foreground">{pick("Payments", "المدفوعات")}</p><p className="mt-2 text-3xl font-bold">{filteredPayments.length}</p></div></div>
