@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format";
 import { useEffect, useRef } from "react";
 
 declare global { interface Window { L?: any } }
@@ -71,7 +72,7 @@ export function DriversMap({ drivers, onSelect }: { drivers: DriverPoint[]; onSe
         animations.current.set(row.employee_id, requestAnimationFrame(animate));
         marker.setIcon(L.divIcon({ className: "tapwash-driver-label", html, iconSize: null, iconAnchor: [10, 18] }));
       }
-      marker.bindPopup(`<b>${row.name}</b><br/>${label}<br/>دقة الموقع: ${Math.round(row.accuracy)} متر<br/>آخر ظهور: ${new Date(row.updated_at).toLocaleString("ar-EG")}`);
+      marker.bindPopup(`<b>${row.name}</b><br/>${label}<br/>دقة الموقع: ${Math.round(row.accuracy)} متر<br/>آخر ظهور: ${formatDateTime(row.updated_at)}`);
       let circle = circles.current.get(row.employee_id);
       if (!circle) { circle = L.circle(point, { radius: row.accuracy, color, weight: 1, fillOpacity: 0.08 }).addTo(mapInstance); circles.current.set(row.employee_id, circle); }
       else circle.setLatLng(point).setRadius(row.accuracy);
