@@ -356,3 +356,9 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], [class*="backdrop-blur"], .panel, .rounded-2xl.border, .rounded-xl.border):not(.app-topbar-glass):not(.employee-topbar-glass):not(.tapwash-employee-dock) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
