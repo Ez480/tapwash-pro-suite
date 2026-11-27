@@ -249,3 +249,18 @@
     background-color: var(--color-card);
   }
 }
+
+/* Dashboard glass surfaces: subtle fill and restrained shadow, no nested blur. */
+.dark .customer-dashboard > div > .panel,
+.dark .customer-dashboard section.panel,
+.dark .admin-dashboard-shell .panel,
+.dark .admin-dashboard-shell .rounded-2xl.border,
+.dark .admin-dashboard-shell .rounded-xl.border {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, var(--color-card) 82%), color-mix(in oklch, var(--color-card) 76%, transparent));
+  border-color: oklch(1 0 0 / 0.14);
+  box-shadow: 0 8px 24px -18px oklch(0 0 0 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.1);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.dark .customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border,
+.dark .customer-dashboard .mt-4.grid > .panel { -webkit-backdrop-filter: none; backdrop-filter: none; }

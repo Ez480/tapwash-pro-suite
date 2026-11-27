@@ -729,3 +729,20 @@
     background-color: var(--color-card);
   }
 }
+
+/* Dashboard surfaces use lightweight translucent fills; nested cards stay blur-free. */
+.customer-dashboard > div > .panel,
+.customer-dashboard section.panel,
+.admin-dashboard-shell .panel,
+.admin-dashboard-shell .rounded-2xl.border,
+.admin-dashboard-shell .rounded-xl.border {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 82%, transparent), color-mix(in oklch, var(--color-primary) 5%, var(--color-card) 72%));
+  border: 1px solid color-mix(in oklch, var(--color-border) 72%, white 28%);
+  box-shadow: 0 8px 24px -18px oklch(0.2 0.04 265 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.42);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.customer-dashboard section.panel.relative.mt-6 { background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 8%, var(--color-card) 84%), color-mix(in oklch, var(--color-card) 72%, transparent)); }
+.customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border,
+.customer-dashboard .mt-4.grid > .panel,
+.admin-dashboard-shell [class*="backdrop-blur"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
