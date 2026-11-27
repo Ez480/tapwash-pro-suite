@@ -33,11 +33,10 @@ export function CustomerNfcGlassCard({ cards, customerName, remaining }: { cards
           </Badge>
         </div>
 
-        {validUntil && (
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-white/35 bg-white/20 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
             <p className="text-xs font-semibold text-muted-foreground">Washes remaining</p>
-            <p className="mt-1 text-lg font-black text-foreground">{remaining}</p>
+            <p className="mt-1 text-lg font-black text-foreground">{remaining.toLocaleString("en-US")}</p>
           </div>
           <div className="rounded-xl border border-white/35 bg-white/20 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
             <p className="text-xs font-semibold text-muted-foreground">Card number</p>
@@ -48,7 +47,6 @@ export function CustomerNfcGlassCard({ cards, customerName, remaining }: { cards
           <div className="mt-3 text-sm font-bold text-muted-foreground">
             Valid until <span className="font-black text-foreground">{validUntil}</span>
           </div>
-        )}
         )}
 
         <Link
