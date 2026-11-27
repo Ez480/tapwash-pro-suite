@@ -165,3 +165,24 @@
     backdrop-filter: none !important;
   }
 }
+
+
+.dark .tapwash-employee-dock {
+  background: var(--glass-panel-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.dark .tapwash-employee-dock-button {
+  background: var(--glass-soft-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  color: var(--color-foreground) !important;
+  box-shadow: var(--glass-soft-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark :where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], [class*="backdrop-blur"], .panel, .rounded-2xl.border, .rounded-xl.border):not(.app-topbar-glass):not(.employee-topbar-glass):not(.tapwash-employee-dock) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
