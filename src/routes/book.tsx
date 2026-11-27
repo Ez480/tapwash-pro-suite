@@ -338,7 +338,7 @@ function BookingPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-20 text-center">
+      <div className="booking-page-glass mx-auto max-w-xl px-4 py-20 text-center">
         <h1 className="text-2xl font-bold">{pick("Login required", "لازم تسجل دخول")}</h1>
         <Button asChild className="mt-6"><Link to="/login">{pick("Login", "تسجيل الدخول")}</Link></Button>
       </div>
@@ -347,7 +347,7 @@ function BookingPage() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-20">
+      <div className="booking-page-glass mx-auto max-w-2xl px-4 py-20">
         <div className="panel p-8 text-center">
           <CheckCircle2 className="mx-auto size-14 text-primary" />
           <h1 className="mt-4 text-2xl font-bold">{isSubscription ? pick("Subscription request sent", "تم إرسال طلب الاشتراك") : pick("Booking request sent", "تم إرسال طلب الحجز")}</h1>
@@ -373,7 +373,7 @@ function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="booking-page-glass min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="mb-8">
           <Badge>{isSubscription ? pick("Subscription", "اشتراك") : type === "offer" ? pick("Offer", "عرض") : pick("Package", "باقة")}</Badge>
