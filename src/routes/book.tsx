@@ -42,7 +42,7 @@ type WashChoice = { date: string; time: string };
 type SavedCar = { id: string; brand: string | null; model: string | null; color: string | null; plate_number: string | null };
 
 function normalizePlate(value: string) {
-  return value.trim().replace(/\\s+/g, " ").replace(/[a-z]/g, (letter) => letter.toUpperCase());
+  return value.trim().replace(/\s+/g, " ").replace(/[a-z]/g, (letter) => letter.toUpperCase());
 }
 
 const today = new Date().toISOString().slice(0, 10);
