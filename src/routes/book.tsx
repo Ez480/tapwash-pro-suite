@@ -274,7 +274,7 @@ function BookingPage() {
     setSaving(true);
 
     let carId: string | null = null;
-    const normalizedPlate = normalizePlate(form.plate);
+    const normalizedPlate = form.plate.trim();
 
     if (normalizedPlate) {
       const { data: existingCar, error: existingCarError } = await (supabase as any)
