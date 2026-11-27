@@ -57,7 +57,7 @@ export function AdminLayout() {
   if (!isAdmin) {
     return (
       <div className="admin-dashboard-shell min-h-screen bg-background">
-        <AppTopbar title={pick("Admin dashboard", "لوحة الإدارة")} />
+        <AppTopbar title={pick("Admin dashboard", "لوحة الإدارة")} extra={<AdminNav items={items} mode="mobile" />} />
         <div className="mx-auto max-w-lg px-4 py-20 text-center">
           <h2 className="font-display text-2xl font-bold">{pick("Administrators only", "الإدارة للمصرح لهم فقط")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{pick("You do not have permission to access the admin dashboard.", "ليس لديك صلاحية الوصول إلى لوحة الإدارة.")}</p>
@@ -100,13 +100,11 @@ export function AdminLayout() {
           </Button>
         }
       />
-      <div className="border-b border-border bg-card/40 px-4 py-3 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          <AdminNav items={items} />
-        </div>
-      </div>
-      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-        <Outlet />
+      <div className="flex min-w-0">
+        <AdminNav items={items} mode="desktop" />
+        <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-6 sm:px-6 lg:py-8">
+          <div className="mx-auto w-full max-w-7xl"><Outlet /></div>
+        </main>
       </div>
     </div>
   );
