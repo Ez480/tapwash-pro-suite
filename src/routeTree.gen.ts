@@ -1,18 +1,4 @@
-/* esl
-    '/_authenticated/admin/support': {
-      id: '/_authenticated/admin/support'
-      path: '/support'
-      fullPath: '/admin/support'
-      preLoaderRoute: typeof AuthenticatedAdminSupportRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    },
-    '/_authenticated/admin/live-orders': {
-      id: '/_authenticated/admin/live-orders'
-      path: '/live-orders'
-      fullPath: '/admin/live-orders'
-      preLoaderRoute: typeof AuthenticatedAdminLiveOrdersRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    },int-disable */
+/* eslint-disable */
 
 // @ts-nocheck
 
@@ -222,6 +208,8 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
+  '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/live-orders': typeof AuthenticatedAdminLiveOrdersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -298,6 +286,8 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/subscriptions'
+    | '/admin/support'
+    | '/admin/live-orders'
     | '/admin'
   id:
     | '__root__'
@@ -488,6 +478,20 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/subscriptions': {
+    '/_authenticated/admin/support': {
+      id: '/_authenticated/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AuthenticatedAdminSupportRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/live-orders': {
+      id: '/_authenticated/admin/live-orders'
+      path: '/live-orders'
+      fullPath: '/admin/live-orders'
+      preLoaderRoute: typeof AuthenticatedAdminLiveOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
       id: '/_authenticated/admin/subscriptions'
       path: '/subscriptions'
       fullPath: '/admin/subscriptions'
