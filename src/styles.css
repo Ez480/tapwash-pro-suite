@@ -875,18 +875,6 @@ html.dark .public-menu-glass,
     linear-gradient(180deg, rgba(255, 255, 255, .10), transparent 35%),
     linear-gradient(135deg, rgba(12, 26, 69, .88), rgba(11, 21, 54, .86)) !important;
 }
-.public-menu-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 35%);
-}
-.public-menu-glass > * {
-  position: relative;
-  z-index: 1;
-}
 .public-menu-glass nav a {
   border: 1px solid rgba(255, 255, 255, .16);
   background-color: rgba(255, 255, 255, .10);
