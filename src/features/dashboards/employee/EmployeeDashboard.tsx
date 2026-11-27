@@ -341,7 +341,7 @@ export function EmployeeDashboard() {
       };
     } catch (e) {
       setScanning(false);
-      toast.error(e instanceof Error ? e.message : pick("NFC scan failed", "فشل مسح NFC"));
+      toast.error(e instanceof Error && !/permission|denied|NotAllowed|aborted/i.test(`${e.name} ${e.message}`) ? e.message : pick("Allow NFC access for this site in your browser settings, make sure NFC is on, then try again.", "اسمح للموقع باستخدام NFC من إعدادات المتصفح وتأكد إن NFC مفعّل، وبعدين جرّب تاني."));
     }
   };
 

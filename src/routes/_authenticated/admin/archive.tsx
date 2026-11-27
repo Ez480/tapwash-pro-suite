@@ -11,8 +11,13 @@ export const Route = createFileRoute("/_authenticated/admin/archive")({ componen
 
 function AdminArchive(){
  const {pick}=useI18n();
+ const [lookups,setLookups]=useState<{profiles:any[];bookings:any[]}>({profiles:[],bookings:[]});
  const [date,setDate]=useState(""); const [search,setSearch]=useState(""); const [rows,setRows]=useState<any[]>([]); const [loading,setLoading]=useState(false);
  const openLocation=(address:any,url:any,lat?:any,lng?:any)=>{const target=url||(lat!=null&&lng!=null?`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`:address?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`:"");if(target)window.open(target,"_blank","noopener,noreferrer");};
+ const profile=(id:any)=>lookups.profiles.find((p:any)=>String(p.id)===String(id)); const bookingById=(id:any)=>lookups.bookings.find((b:any)=>String(b.id)===String(id));
+ const employeeName=(x:any)=>profile(x.employee_id)?.full_name||x.employee_name||x.assigned_employee_name||x.employee_full_name||"—";
+ const requestCreatedAt=(x:any)=>bookingById(x.booking_request_id)?.created_at||x.created_at;
+ const orderSource=(x:any)=>x.booking_request_id?pick("Customer booking","طلب عميل"):x.offer_id?pick("Offer","عرض"):x.subscription_id?pick("Subscription","اشتراك"):x.scheduled_at?pick("Scheduled","مجدول"):pick("Task","مهمة");
  const load=async(requestedDate=date)=>{setLoading(true);try{
   await(supabase as any).rpc("expire_due_subscriptions"); const q=search.trim();
   const [tasksRes,bookingsRes,paymentsRes,subsRes,washesRes,profilesRes]=await Promise.all([
@@ -23,9 +28,8 @@ function AdminArchive(){
    supabase.from("washes").select("*").order("washed_at",{ascending:false}),
    supabase.from("profiles").select("id,full_name,phone,address_text,location_url,latitude,longitude")
   ]);
-  const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));
+  setLookups({profiles:profilesRes.data??[],bookings:bookingsRes.data??[]}); const profiles=profilesRes.data??[]; const profile=(id:any)=>profiles.find((p:any)=>String(p.id)===String(id));
   const bookingById=(id:any)=>(bookingsRes.data??[]).find((b:any)=>String(b.id)===String(id));
-  const orderSource=(x:any)=>x.booking_request_id?pick("Customer booking","طلب عميل"):x.offer_id?pick("Offer","عرض"):x.subscription_id?pick("Subscription","اشتراك"):x.scheduled_at?pick("Scheduled","مجدول"):pick("Task","مهمة");
   const employeeName=(x:any)=>profile(x.employee_id)?.full_name||x.employee_name||x.assigned_employee_name||x.employee_full_name||"—";
   const requestCreatedAt=(x:any)=>bookingById(x.booking_request_id)?.created_at||x.created_at;
   let all=[...(tasksRes.data??[]).map(x=>({...x,_type:"order",_ref:x.serial_number||x.id})),...(bookingsRes.data??[]).map(x=>({...x,_type:"booking",_ref:x.id})),...(paymentsRes.data??[]).map(x=>({...x,_type:"payment",_ref:x.order_id||x.id})),...(subsRes.data??[]).map(x=>({...x,_type:"subscription",_ref:x.id,_washes:(washesRes.data??[]).filter((w:any)=>String(w.subscription_id)===String(x.id)),_tasks:(tasksRes.data??[]).filter((t:any)=>String(t.subscription_id)===String(x.id)),_customer:profile(x.customer_id)}))];

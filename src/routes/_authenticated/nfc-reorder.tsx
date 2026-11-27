@@ -76,7 +76,7 @@ function NfcReorderPage() {
         setCard(data); setDate(today); setTime("");
         toast.success(pick("Card verified. Choose a new date, time and payment method.", "تم التحقق من الكارت. اختار اليوم والساعة وطريقة الدفع."));
       };
-    } catch (error) { setScanning(false); toast.error(error instanceof Error ? error.message : pick("NFC scan failed.", "فشل مسح NFC.")); }
+    } catch (error) { setScanning(false); toast.error(error instanceof Error && !/permission|denied|NotAllowed|aborted/i.test(`${error.name} ${error.message}`) ? error.message : pick("Allow NFC access for this site in your browser settings, make sure NFC is on, then try again.", "اسمح للموقع باستخدام NFC من إعدادات المتصفح وتأكد إن NFC مفعّل، وبعدين جرّب تاني.")); }
   };
 
   useEffect(() => {
