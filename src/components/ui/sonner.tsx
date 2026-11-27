@@ -1,3 +1,4 @@
+import "@/solid-glass.css";
 import "@/toast-fix.css";
 import { Toaster as Sonner } from "sonner";
 
