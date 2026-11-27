@@ -76,7 +76,7 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background px-6 py-8">
+    <div className="auth-page-glass min-h-screen bg-background px-6 py-8">
       <div className="mx-auto flex max-w-md flex-col items-center justify-center gap-8 pt-20">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="surface-blue flex size-9 items-center justify-center rounded-xl shadow-luxe"><img src="/icons/tapwash-logo.svg" alt="TapWash" className="size-9 object-contain" /></span>

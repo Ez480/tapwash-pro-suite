@@ -2,11 +2,10 @@ import { formatDate } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Nfc } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
 import { useMySubscription } from "@/lib/data";
+import { QUIRKFY_LOGO } from "@/components/app/quirkfyLogo";
 
-export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
-  const { pick } = useI18n();
+export function CustomerNfcGlassCard({ cards, customerName, remaining }: { cards?: any[]; customerName?: string | null; remaining: number }) {
   const card = cards?.[0];
   const active = String(card?.status ?? "active").toLowerCase() === "active";
   const { data: subscription } = useMySubscription(card?.customer_id);
@@ -16,7 +15,7 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
     : null;
 
   return (
-    <section className="tapwash-nfc-card relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-4">
+    <section className="tapwash-nfc-card relative mt-4 overflow-hidden rounded-[1.75rem] border border-primary/20 bg-gradient-to-br from-cyan-400/15 via-sky-500/10 to-blue-600/15 p-3 shadow-xl backdrop-blur-xl sm:mt-5 sm:p-4" dir="ltr">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-primary/10" />
 
       <div className="relative rounded-[1.4rem] border border-white/35 bg-white/25 p-4 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] sm:p-5">
@@ -27,18 +26,27 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
               <Nfc className="size-8" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary/80">TapWash NFC</p>
-              <h3 className="mt-0.5 text-base font-black">{pick("NFC card", "كارت NFC")}</h3>
+              <p className="text-base font-black">{customerName?.trim() ? `Welcome, ${customerName.trim()}` : "Welcome"}</p>
             </div>
           </div>
           <Badge variant={active ? "default" : "destructive"} className="rounded-full px-3 py-1">
-            {active ? pick("Active", "نشط") : pick("Suspended", "موقوف")}
+            {active ? "Active" : "Suspended"}
           </Badge>
         </div>
 
+        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-xl border border-white/35 bg-white/20 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+            <p className="text-xs font-semibold text-muted-foreground">Washes remaining</p>
+            <p className="mt-1 text-lg font-black text-foreground">{remaining.toLocaleString("en-US")}</p>
+          </div>
+          <div className="rounded-xl border border-white/35 bg-white/20 p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.05]">
+            <p className="text-xs font-semibold text-muted-foreground">Card number</p>
+            <p className="mt-1 truncate font-mono text-sm font-black text-foreground">{card?.serial_number || card?.uid || "—"}</p>
+          </div>
+        </div>
         {validUntil && (
-          <div className="mt-4 text-sm font-bold text-muted-foreground">
-            صالح حتى <span className="font-black text-foreground">{validUntil}</span>
+          <div className="mt-3 text-sm font-bold text-muted-foreground">
+            Valid until <span className="font-black text-foreground">{validUntil}</span>
           </div>
         )}
 
@@ -51,9 +59,14 @@ export function CustomerNfcGlassCard({ cards }: { cards?: any[] }) {
           Tap NFC TapWash
         </Link>
 
-        <p className="mt-2 text-center text-sm font-black tracking-wide text-muted-foreground" dir="ltr">
-          {card?.serial_number || card?.uid || "—"}
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-2" dir="ltr">
+          <span className="inline-flex items-center justify-center rounded-full bg-white/85 p-1">
+            <img src={QUIRKFY_LOGO} alt="Quirk.fy" className="h-5 w-auto object-contain" />
+          </span>
+          <p className="text-center text-sm font-black tracking-wide text-muted-foreground">
+            Powered by Quirk.fy
+          </p>
+        </div>
       </div>
     </section>
   );

@@ -105,3 +105,122 @@
 .dark :where(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], [class*="backdrop-blur"], .panel):not(.tapwash-nfc-card):not(.tapwash-nfc-card *):hover {
   border-color: oklch(0.88 0.07 235 / 0.48) !important;
 }
+
+
+/* Final dark-theme pass for the frosted redesign. */
+.dark :where(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass):not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+  background: var(--glass-panel-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.dark :where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.panel, .rounded-2xl.border, .rounded-xl.border, .glass-employee-card) {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent)) !important;
+  border-color: oklch(1 0 0 / 0.14) !important;
+  box-shadow: 0 14px 34px -24px oklch(0 0 0 / 0.48), inset 0 1px 0 oklch(1 0 0 / 0.10) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark .customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border,
+.dark .customer-dashboard [class~="sm:grid-cols-2"] > .panel {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent)) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark :where(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock) {
+  background: var(--glass-panel-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.dark .language-toggle-glass,
+.dark .theme-toggle-glass {
+  background: var(--glass-soft-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  color: var(--color-foreground) !important;
+}
+.dark .admin-nav-glass,
+.dark .employee-nav-glass {
+  background: color-mix(in oklch, var(--color-card) 82%, transparent) !important;
+}
+@media (max-width: 640px) {
+  .dark :where(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass) {
+    -webkit-backdrop-filter: blur(22px) saturate(140%) !important;
+    backdrop-filter: blur(22px) saturate(140%) !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dark :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dark :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+
+.dark .tapwash-employee-dock {
+  background: var(--glass-panel-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.dark .tapwash-employee-dock-button {
+  background: var(--glass-soft-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  color: var(--color-foreground) !important;
+  box-shadow: var(--glass-soft-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark :where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], [class*="backdrop-blur"], .panel, .rounded-2xl.border, .rounded-xl.border):not(.app-topbar-glass):not(.employee-topbar-glass):not(.tapwash-employee-dock) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+/* Customer dashboard uses full frosted surfaces; keep the physical NFC card unchanged. */
+.dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+.dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+.dark .customer-dashboard .rounded-xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 16%, color-mix(in oklch, var(--color-card) 82%, transparent)),
+    color-mix(in oklch, var(--color-card) 76%, transparent)) !important;
+  border-color: oklch(0.88 0.055 245 / 0.26) !important;
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+@media (max-width: 640px) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+    backdrop-filter: blur(22px) saturate(150%) !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

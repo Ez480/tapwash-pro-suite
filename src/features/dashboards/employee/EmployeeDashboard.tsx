@@ -315,8 +315,8 @@ export function EmployeeDashboard() {
     </div></article>;
   };
 
-  return <div className="min-h-screen w-full overflow-x-hidden bg-background text-foreground">
-    <header className="sticky top-0 z-20 w-full border-b border-white/30 bg-background/90 shadow-lg backdrop-blur-2xl">
+  return <div className="employee-dashboard-shell min-h-screen w-full overflow-x-hidden bg-background text-foreground">
+    <header className="employee-topbar-glass sticky top-0 z-20 w-full border-b border-white/30 bg-background/90 shadow-lg backdrop-blur-2xl">
       <div className="mx-auto w-full max-w-7xl px-3 sm:px-6">
         <div className="flex min-h-[68px] items-center justify-between gap-3 py-2">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -334,7 +334,7 @@ export function EmployeeDashboard() {
             <Button variant="ghost" size="icon" aria-label={pick("Log out", "تسجيل الخروج")} onClick={logout}><LogOut className="size-4" /></Button>
           </div>
         </div>
-        <nav aria-label={pick("Employee work navigation", "قائمة تنقل الموظف")} className="flex w-full items-center gap-2 overflow-x-auto border-t border-border/60 py-2">
+        <nav aria-label={pick("Employee work navigation", "قائمة تنقل الموظف")} className="employee-nav-glass flex w-full items-center gap-2 overflow-x-auto border-t border-border/60 py-2">
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "current" ? "default" : "ghost"} onClick={() => setEmployeePage("current")}><ClipboardList className="size-4" />{pick("Current orders", "الأوردرات الحالية")}<Badge variant={employeePage === "current" ? "secondary" : "outline"}>{active.length}</Badge></Button>
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "archive" ? "default" : "ghost"} onClick={() => setEmployeePage("archive")}><Archive className="size-4" />{pick("Previous orders", "الأوردرات السابقة")}<Badge variant={employeePage === "archive" ? "secondary" : "outline"}>{completed.length}</Badge></Button>
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "profile" ? "default" : "ghost"} onClick={() => setEmployeePage("profile")}><UserCog className="size-4" />{pick("My data", "بياناتي")}</Button>
