@@ -8,7 +8,7 @@ declare global {
 
 type DeliveryMapProps = {
   destination?: { lat: number; lng: number } | null;
-  driver?: { lat: number; lng: number; updatedAt?: string | null } | null;
+  driver?: { lat: number; lng: number; updatedAt?: string | null; accuracy?: number | null } | null;
   height?: string;
 };
 
@@ -51,7 +51,9 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
   const mapRef = useRef<any>(null);
   const destinationMarkerRef = useRef<any>(null);
   const driverMarkerRef = useRef<any>(null);
-  const latestPointsRef = useRef<{ destination?: { lat: number; lng: number } | null; driver?: { lat: number; lng: number; updatedAt?: string | null } | null }>({});
+  const driverAccuracyRef = useRef<any>(null);
+  const driverAnimationRef = useRef<number | null>(null);
+  const latestPointsRef = useRef<{ destination?: { lat: number; lng: number } | null; driver?: { lat: number; lng: number; updatedAt?: string | null; accuracy?: number | null } | null }>({});
   latestPointsRef.current = { destination, driver };
 
   useEffect(() => {
@@ -78,6 +80,8 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
         mapRef.current = null;
         destinationMarkerRef.current = null;
         driverMarkerRef.current = null;
+        driverAccuracyRef.current = null;
+        if (driverAnimationRef.current != null) cancelAnimationFrame(driverAnimationRef.current);
       }
     };
   }, []);
@@ -85,7 +89,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
   useEffect(() => {
     if (!window.L || !mapRef.current) return;
     updateMap(window.L, destination, driver);
-  }, [destination?.lat, destination?.lng, driver?.lat, driver?.lng]);
+  }, [destination?.lat, destination?.lng, driver?.lat, driver?.lng, driver?.accuracy]);
 
   function updateMap(L: any, destination?: { lat: number; lng: number } | null, driver?: { lat: number; lng: number; updatedAt?: string | null } | null) {
     const map = mapRef.current;
@@ -121,15 +125,33 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
         });
         driverMarkerRef.current = L.marker([driver.lat, driver.lng], { icon, zIndexOffset: 1000 }).addTo(map);
       }
-      driverMarkerRef.current.setLatLng([driver.lat, driver.lng]);
+      if (driverAnimationRef.current != null) cancelAnimationFrame(driverAnimationRef.current);
+      const start = driverMarkerRef.current.getLatLng();
+      const startedAt = performance.now();
+      const animate = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / 900);
+        const eased = progress * (2 - progress);
+        driverMarkerRef.current?.setLatLng([
+          start.lat + (driver.lat - start.lat) * eased,
+          start.lng + (driver.lng - start.lng) * eased,
+        ]);
+        if (progress < 1) driverAnimationRef.current = requestAnimationFrame(animate);
+        else driverAnimationRef.current = null;
+      };
+      driverAnimationRef.current = requestAnimationFrame(animate);
+      if (driver.accuracy != null && driver.accuracy <= 100) {
+        if (!driverAccuracyRef.current) driverAccuracyRef.current = L.circle([driver.lat, driver.lng], { radius: driver.accuracy, color: "#059669", weight: 1, fillOpacity: 0.08 }).addTo(map);
+        else driverAccuracyRef.current.setLatLng([driver.lat, driver.lng]).setRadius(driver.accuracy);
+      } else if (driverAccuracyRef.current) { driverAccuracyRef.current.remove(); driverAccuracyRef.current = null; }
       driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${new Date(driver.updatedAt).toLocaleTimeString("en-US")}` : "الدليفري الآن");
     } else if (driverMarkerRef.current) {
       driverMarkerRef.current.remove();
       driverMarkerRef.current = null;
+      if (driverAccuracyRef.current) { driverAccuracyRef.current.remove(); driverAccuracyRef.current = null; }
+      if (driverAnimationRef.current != null) { cancelAnimationFrame(driverAnimationRef.current); driverAnimationRef.current = null; }
     }
 
-    if (points.length === 1) map.setView(points[0], 15);
-    if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [45, 45], maxZoom: 16 });
+    if (points.length && !map.__tapwashInitialView) { if (points.length === 1) map.setView(points[0], 15); else map.fitBounds(L.latLngBounds(points), { padding: [45, 45], maxZoom: 16 }); map.__tapwashInitialView = true; }
     setTimeout(() => map.invalidateSize(), 50);
   }
 

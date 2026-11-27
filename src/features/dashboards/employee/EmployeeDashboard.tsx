@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Archive, Banknote, Bell, Camera, CheckCircle2, ClipboardList, Clock3, Droplets, LogOut, MapPin, MessageCircle, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
+import { Archive, Banknote, Camera, CheckCircle2, ClipboardList, Clock3, Droplets, LogOut, MapPin, MessageCircle, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { useSession, useUserRoles } from "@/lib/auth";
 import { useAdminTable, useMyEmployee, useProfile, useSettings } from "@/lib/data";
 import { uploadImage } from "@/lib/media";
 import { DeliveryMap } from "@/components/app/DeliveryMap";
+import { SupportChatThread } from "@/components/app/SupportChat";
 
 declare global { interface Window { NDEFReader?: any } }
 
@@ -33,32 +34,6 @@ function parseCustomerMapPoint(task: any): { lat: number; lng: number } | null {
   return null;
 }
 
-function EmployeeMessagesButton() {
-  const { pick } = useI18n();
-  const [open, setOpen] = useState(false);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button type="button" variant="outline" size="sm" aria-label={pick("Management messages", "رسائل الإدارة")} title={pick("Management messages", "رسائل الإدارة")} className="shrink-0 gap-2">
-          <Bell className="size-4" /><span>{pick("Management messages", "رسائل الإدارة")}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(92vw,360px)] p-4">
-        <div className="flex items-center gap-2">
-          <Bell className="size-5 text-primary" />
-          <div>
-            <p className="font-bold">{pick("Management messages", "رسائل الإدارة")}</p>
-            <p className="text-xs text-muted-foreground">{pick("Messages sent to you by company management", "الرسائل الموجهة إليك من إدارة الشركة")}</p>
-          </div>
-        </div>
-        <div className="mt-4 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-sm font-medium">{pick("No messages to display right now", "لا توجد رسائل لعرضها حاليًا")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{pick("Message reception will be enabled in a future update.", "سيتم تفعيل استقبال الرسائل في مرحلة الربط القادمة.")}</p>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 export function EmployeeDashboard() {
   const { pick, fmtDate, lang, setLang } = useI18n();
@@ -109,6 +84,28 @@ export function EmployeeDashboard() {
   const todayCollection = todayOrders.reduce((sum: number, task: any) => sum + Number(task.collection_amount ?? 0), 0);
   const money = (value: number) => `${value.toLocaleString("en-US")} ${pick("EGP", "جنيه")}`;
   const activeTaskKey = active.map(t => String(t.id)).sort().join(",");
+  useEffect(() => {
+    if (!user?.id || !navigator.geolocation) return;
+    let lastSentAt = 0;
+    let stopped = false;
+    const sendPresence = async (position: GeolocationPosition) => {
+      if (stopped || position.coords.accuracy > 100 || Date.now() - lastSentAt < 10000) return;
+      lastSentAt = Date.now();
+      const { error } = await (supabase as any).from("employee_presence").upsert({
+        employee_id: user.id, latitude: position.coords.latitude, longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy ?? null, is_online: true, active_task_id: active[0]?.id ?? null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "employee_id" });
+      if (error) console.warn("Employee presence update failed", error);
+    };
+    const watchId = navigator.geolocation.watchPosition(sendPresence, () => undefined, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+    return () => {
+      stopped = true;
+      navigator.geolocation.clearWatch(watchId);
+      void (supabase as any).from("employee_presence").update({ is_online: false, active_task_id: null, updated_at: new Date().toISOString() }).eq("employee_id", user.id);
+    };
+  }, [user?.id, activeTaskKey]);
+
 
   useEffect(() => {
     if (!user?.id || !activeTaskKey || !navigator.geolocation) return;
@@ -340,11 +337,15 @@ export function EmployeeDashboard() {
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "current" ? "default" : "ghost"} onClick={() => setEmployeePage("current")}><ClipboardList className="size-4" />{pick("Current orders", "الأوردرات الحالية")}<Badge variant={employeePage === "current" ? "secondary" : "outline"}>{active.length}</Badge></Button>
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "archive" ? "default" : "ghost"} onClick={() => setEmployeePage("archive")}><Archive className="size-4" />{pick("Previous orders", "الأوردرات السابقة")}<Badge variant={employeePage === "archive" ? "secondary" : "outline"}>{completed.length}</Badge></Button>
           <Button size="sm" className="shrink-0 gap-2" variant={employeePage === "profile" ? "default" : "ghost"} onClick={() => setEmployeePage("profile")}><UserCog className="size-4" />{pick("My data", "بياناتي")}</Button>
-          <EmployeeMessagesButton />
+          <Button size="sm" className="shrink-0 gap-2" variant="outline" onClick={() => setSupportOpen(true)}><MessageCircle className="size-4" />{pick("Support", "الدعم")}</Button>
         </nav>
       </div>
     </header>
     <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 pb-28 pt-4 sm:px-6 sm:pb-32 sm:pt-6">
+      <div className="mb-4 flex items-start gap-3 rounded-2xl border border-sky-300/40 bg-sky-50/70 p-3 text-sm text-sky-900 shadow-sm dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-100">
+        <MapPin className="mt-0.5 size-4 shrink-0" />
+        <p>{pick("Your location is shared with management while the employee workspace is open. Location updates require your browser permission.", "موقعك بيتشارك مع الإدارة أثناء فتح لوحة الموظف. تحديث الموقع يتطلب موافقتك من المتصفح.")}</p>
+      </div>
       {employeePage === "profile" && <section className="glass-employee-card mb-4 rounded-3xl border border-white/45 bg-white/10 p-4 shadow-2xl backdrop-blur-2xl dark:border-white/15 dark:bg-white/[0.06] sm:mb-6 sm:p-5">
         <div className="flex items-center gap-4">
           <div className="shrink-0">{profile?.avatar_url ? <img src={profile.avatar_url} alt={employee?.full_name || profile.full_name || "Employee"} className="size-16 rounded-2xl border border-white/40 object-cover shadow-md sm:size-20" /> : <div className="glass-soft flex size-16 items-center justify-center rounded-2xl border border-white/40 text-2xl font-bold shadow-md sm:size-20">{(employee?.full_name || profile?.full_name || user?.email || "E").slice(0, 1).toUpperCase()}</div>}</div>
@@ -386,13 +387,9 @@ export function EmployeeDashboard() {
         }) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No completed orders", "لا توجد أوردرات مكتملة")}</p>}
       </div></section>}
       <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[88vh] overflow-hidden p-3 sm:max-w-2xl">
           <DialogHeader><DialogTitle>{pick("TapWash support", "دعم TapWash")}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 rounded-xl border p-3"><span className="size-2 rounded-full bg-amber-500" /><p className="text-sm font-semibold">{pick("Management connection is being prepared", "جاري تجهيز الربط مع الإدارة")}</p></div>
-            <p className="text-sm text-muted-foreground">{pick("Direct messaging with management will be enabled in the next development step. This button is ready as the entry point.", "سيتم تفعيل المراسلة المباشرة مع الإدارة في خطوة التطوير القادمة. الزر جاهز ليكون نقطة الدخول.")}</p>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setSupportOpen(false)}>{pick("Close", "إغلاق")}</Button></DialogFooter>
+          {user?.id && <SupportChatThread employeeId={user.id} isAdmin={false} />}
         </DialogContent>
       </Dialog>
       <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>

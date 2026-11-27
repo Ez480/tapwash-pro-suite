@@ -1,4 +1,18 @@
-/* eslint-disable */
+/* esl
+    '/_authenticated/admin/support': {
+      id: '/_authenticated/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AuthenticatedAdminSupportRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    },
+    '/_authenticated/admin/live-orders': {
+      id: '/_authenticated/admin/live-orders'
+      path: '/live-orders'
+      fullPath: '/admin/live-orders'
+      preLoaderRoute: typeof AuthenticatedAdminLiveOrdersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    },int-disable */
 
 // @ts-nocheck
 
@@ -31,6 +45,8 @@ import { Route as AuthenticatedAdminPaymentsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminSubscriptionsRouteImport } from './routes/_authenticated/admin/subscriptions'
+import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated/admin/support'
+import { Route as AuthenticatedAdminLiveOrdersRouteImport } from './routes/_authenticated/admin/live-orders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -150,6 +166,16 @@ const AuthenticatedAdminSubscriptionsRoute =
     path: '/subscriptions',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminSupportRoute = AuthenticatedAdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminLiveOrdersRoute = AuthenticatedAdminLiveOrdersRouteImport.update({
+  id: '/live-orders',
+  path: '/live-orders',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,6 +198,8 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
+  '/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/admin/live-orders': typeof AuthenticatedAdminLiveOrdersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -219,6 +247,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/subscriptions': typeof AuthenticatedAdminSubscriptionsRoute
+  '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
+  '/_authenticated/admin/live-orders': typeof AuthenticatedAdminLiveOrdersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -244,6 +274,8 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/subscriptions'
+    | '/admin/support'
+    | '/admin/live-orders'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -290,6 +322,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/subscriptions'
+    | '/_authenticated/admin/support'
+    | '/_authenticated/admin/live-orders'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -475,6 +509,8 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSubscriptionsRoute: typeof AuthenticatedAdminSubscriptionsRoute
+  AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
+  AuthenticatedAdminLiveOrdersRoute: typeof AuthenticatedAdminLiveOrdersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -491,6 +527,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
     AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
     AuthenticatedAdminSubscriptionsRoute: AuthenticatedAdminSubscriptionsRoute,
+    AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
+    AuthenticatedAdminLiveOrdersRoute: AuthenticatedAdminLiveOrdersRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }
 
