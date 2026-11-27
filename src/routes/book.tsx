@@ -41,8 +41,8 @@ type FormState = {
 type WashChoice = { date: string; time: string };
 type SavedCar = { id: string; brand: string | null; model: string | null; color: string | null; plate_number: string | null };
 
-function normalizePlate(value: string) {
-  return value.trim().replace(/\s+/g, " ").replace(/[a-z]/g, (letter) => letter.toUpperCase());
+function plateKey(value: string) {
+  return value.trim().replace(/\s+/g, "").replace(/[a-z]/gi, (letter) => letter.toUpperCase());
 }
 
 const today = new Date().toISOString().slice(0, 10);
@@ -268,6 +268,10 @@ function BookingPage() {
       return toast.error(pick("Choose a date and time.", "اختار التاريخ والوقت."));
     }
 
+    if (selectedCarId === null && savedCars.some((car) => plateKey(car.plate_number ?? "") === plateKey(form.plate))) {
+      return toast.error(pick("You already have a car with this plate. Choose it from your saved cars.", "عندك عربية بنفس رقم اللوحة ده. اختارها من العربيات المحفوظة."));
+    }
+
     const whatsappWindow = form.payment_method === "smart_wallet" && typeof window !== "undefined"
       ? window.open("about:blank", "_blank")
       : null;
@@ -280,7 +284,9 @@ function BookingPage() {
       const { data: existingCar, error: existingCarError } = await (supabase as any)
         .from("cars")
         .select("id, customer_id")
+        .eq("customer_id", user.id)
         .eq("plate_number", normalizedPlate)
+        .limit(1)
         .maybeSingle();
 
       if (existingCarError) {
@@ -290,11 +296,6 @@ function BookingPage() {
       }
 
       if (existingCar) {
-        if (existingCar.customer_id !== user.id) {
-          whatsappWindow?.close();
-          setSaving(false);
-          return toast.error(pick("This plate number is already registered to another customer.", "رقم اللوحة ده مسجل بالفعل لعميل آخر."));
-        }
         carId = existingCar.id;
         const { error: updateCarError } = await (supabase as any).from("cars").update({
           brand: form.brand || null,
@@ -324,7 +325,7 @@ function BookingPage() {
         whatsappWindow?.close();
         setSaving(false);
         return toast.error(carError.code === "23505"
-          ? pick("This plate number is already registered. Check the plate and try again.", "رقم اللوحة ده مسجل بالفعل. راجع الرقم وحاول تاني.")
+          ? pick("Could not save this plate number. Check the plate and try again.", "تعذر حفظ رقم اللوحة ده. راجع الرقم وحاول تاني.")
           : carError.message);
       }
       carId = car?.id ?? null;
