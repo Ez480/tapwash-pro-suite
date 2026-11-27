@@ -39,6 +39,11 @@ type FormState = {
 };
 
 type WashChoice = { date: string; time: string };
+type SavedCar = { id: string; brand: string | null; model: string | null; color: string | null; plate_number: string | null };
+
+function plateKey(value: string) {
+  return value.trim().replace(/\s+/g, "").replace(/[a-z]/gi, (letter) => letter.toUpperCase());
+}
 
 const today = new Date().toISOString().slice(0, 10);
 const initial: FormState = {
@@ -81,6 +86,8 @@ function BookingPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [savedCars, setSavedCars] = useState<SavedCar[]>([]);
+  const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
 
   const item: any = type === "offer"
     ? (offers ?? []).find((x: any) => x.id === id)
@@ -106,6 +113,46 @@ function BookingPage() {
       email: profile.email ?? user?.email ?? "",
     }));
   }, [profile, user?.email]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setSavedCars([]);
+      setSelectedCarId(null);
+      return;
+    }
+    let live = true;
+    (async () => {
+      const { data, error } = await (supabase as any)
+        .from("cars")
+        .select("id,brand,model,color,plate_number")
+        .eq("customer_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!live) return;
+      if (error) {
+        toast.error(error.message);
+        setSavedCars([]);
+        setSelectedCarId(null);
+        return;
+      }
+      const cars = (data ?? []) as SavedCar[];
+      setSavedCars(cars);
+      if (cars.length > 0) {
+        const first = cars[0];
+        setSelectedCarId(first.id);
+        setForm((current) => ({
+          ...current,
+          brand: first.brand ?? "",
+          model: first.model ?? "",
+          color: first.color ?? "",
+          plate: first.plate_number ?? "",
+          car_type: `${first.brand ?? ""} ${first.model ?? ""}`.trim(),
+        }));
+      } else {
+        setSelectedCarId(null);
+      }
+    })();
+    return () => { live = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (isSubscription || !form.date) return;
@@ -140,7 +187,28 @@ function BookingPage() {
     return result;
   }, [start, end, step]);
 
-  const set = (key: keyof FormState, value: string) => setForm((f) => ({ ...f, [key]: value }));
+  const set = (key: keyof FormState, value: string) => setForm((f) => {
+    const updated = { ...f, [key]: value };
+    if (key === "brand" || key === "model") updated.car_type = `${key === "brand" ? value : updated.brand} ${key === "model" ? value : updated.model}`.trim();
+    return updated;
+  });
+
+  const chooseSavedCar = (car: SavedCar) => {
+    setSelectedCarId(car.id);
+    setForm((current) => ({
+      ...current,
+      brand: car.brand ?? "",
+      model: car.model ?? "",
+      color: car.color ?? "",
+      plate: car.plate_number ?? "",
+      car_type: `${car.brand ?? ""} ${car.model ?? ""}`.trim(),
+    }));
+  };
+
+  const chooseManualCar = () => {
+    setSelectedCarId(null);
+    setForm((current) => ({ ...current, brand: "", model: "", color: "", plate: "", car_type: "" }));
+  };
 
   const paymentConfigured = (method: string) =>
     method === "cash" ||
@@ -177,7 +245,7 @@ function BookingPage() {
 
   const submit = async () => {
     if (!user || !item) return;
-    if (!form.full_name || !form.phone || !form.car_type || !form.address) {
+    if (!form.full_name || !form.phone || !form.brand.trim() || !form.model.trim() || !form.plate.trim() || !form.address) {
       return toast.error(pick("Complete all required customer and car details.", "اكمل بيانات العميل والسيارة المطلوبة."));
     }
     if (!paymentConfigured(form.payment_method)) {
@@ -200,6 +268,10 @@ function BookingPage() {
       return toast.error(pick("Choose a date and time.", "اختار التاريخ والوقت."));
     }
 
+    if (selectedCarId === null && savedCars.some((car) => plateKey(car.plate_number ?? "") === plateKey(form.plate))) {
+      return toast.error(pick("You already have a car with this plate. Choose it from your saved cars.", "عندك عربية بنفس رقم اللوحة ده. اختارها من العربيات المحفوظة."));
+    }
+
     const whatsappWindow = form.payment_method === "smart_wallet" && typeof window !== "undefined"
       ? window.open("about:blank", "_blank")
       : null;
@@ -212,7 +284,9 @@ function BookingPage() {
       const { data: existingCar, error: existingCarError } = await (supabase as any)
         .from("cars")
         .select("id, customer_id")
+        .eq("customer_id", user.id)
         .eq("plate_number", normalizedPlate)
+        .limit(1)
         .maybeSingle();
 
       if (existingCarError) {
@@ -222,11 +296,6 @@ function BookingPage() {
       }
 
       if (existingCar) {
-        if (existingCar.customer_id !== user.id) {
-          whatsappWindow?.close();
-          setSaving(false);
-          return toast.error(pick("This plate number is already registered to another customer.", "رقم اللوحة ده مسجل بالفعل لعميل آخر."));
-        }
         carId = existingCar.id;
         const { error: updateCarError } = await (supabase as any).from("cars").update({
           brand: form.brand || null,
@@ -256,7 +325,7 @@ function BookingPage() {
         whatsappWindow?.close();
         setSaving(false);
         return toast.error(carError.code === "23505"
-          ? pick("This plate number is already registered. Check the plate and try again.", "رقم اللوحة ده مسجل بالفعل. راجع الرقم وحاول تاني.")
+          ? pick("Could not save this plate number. Check the plate and try again.", "تعذر حفظ رقم اللوحة ده. راجع الرقم وحاول تاني.")
           : carError.message);
       }
       carId = car?.id ?? null;
@@ -416,11 +485,57 @@ function BookingPage() {
 
         <section className="panel p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold"><Car className="size-5 text-primary" />{pick("Customer & car", "بيانات العميل والسيارة")}</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {([['full_name','Full name','الاسم'],['phone','Contact phone','رقم التواصل'],['car_type','Car type','نوع العربية'],['brand','Brand','الماركة'],['model','Model','الموديل'],['color','Color','اللون'],['plate','Plate number','رقم اللوحة']] as const).map(([key, en, ar]) => (
-              <div key={key} className="space-y-2"><Label>{pick(en, ar)}</Label><Input value={form[key]} onChange={(e) => set(key, e.target.value)} /></div>
+          {savedCars.length > 0 && (
+            <div className="mt-5">
+              <p className="mb-3 text-sm font-semibold">{pick("Choose a saved car", "اختار عربية محفوظة")}</p>
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                {savedCars.map((car) => {
+                  const selected = selectedCarId === car.id;
+                  return (
+                    <button
+                      key={car.id}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => chooseSavedCar(car)}
+                      className={`flex items-start gap-3 min-w-0 rounded-xl border p-4 text-start transition-colors ${selected ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                    >
+                      <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? "border-[#2f7bff]" : "border-muted-foreground/50"}`}>
+                        {selected && <span className="size-2.5 rounded-full bg-[#2f7bff]" />}
+                      </span>
+                      <div className="min-w-0 flex-1 text-start">
+                        <p dir="ltr" className="break-words text-start font-semibold">{car.plate_number || "—"}</p>
+                        <p className="mt-1 break-words font-medium">{[car.brand, car.model].filter(Boolean).join(" ") || "—"}</p>
+                        <p className="mt-1 break-words text-sm text-muted-foreground">{car.color || pick("Color not specified", "اللون غير محدد")}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  aria-pressed={selectedCarId === null}
+                  onClick={chooseManualCar}
+                  className={`flex items-start gap-3 min-h-24 min-w-0 rounded-xl border border-dashed p-4 text-start text-sm font-semibold transition-colors ${selectedCarId === null ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                >
+                  <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${selectedCarId === null ? "border-[#2f7bff]" : "border-muted-foreground/50"}`}>
+                    {selectedCarId === null && <span className="size-2.5 rounded-full bg-[#2f7bff]" />}
+                  </span>
+                  <span className="min-w-0 flex-1 text-start">{pick("Enter a new car manually", "إدخال عربية جديدة يدوي")}</span>
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2">
+            {([['full_name','Full name','الاسم'],['phone','Contact phone','رقم التواصل']] as const).map(([key, en, ar]) => (
+              <div key={key} className="min-w-0 space-y-2"><Label>{pick(en, ar)}</Label><Input value={form[key]} onChange={(e) => set(key, e.target.value)} /></div>
             ))}
-            <div className="space-y-2 sm:col-span-2"><Label>{pick("Address", "العنوان")}</Label><div className="flex gap-2"><MapPin className="mt-2 size-5 text-primary" /><Input value={form.address} onChange={(e) => set("address", e.target.value)} /></div></div>
+            {(!selectedCarId) && (
+              <>
+                {([['brand','Brand','الماركة'],['model','Model','الموديل'],['color','Color','اللون'],['plate','Plate number','رقم اللوحة']] as const).map(([key, en, ar]) => (
+                  <div key={key} className="min-w-0 space-y-2"><Label>{pick(en, ar)}{key !== "color" ? " *" : ""}</Label><Input value={form[key]} onChange={(e) => set(key, e.target.value)} /></div>
+                ))}
+              </>
+            )}
+            <div className="min-w-0 space-y-2 sm:col-span-2"><Label>{pick("Address", "العنوان")}</Label><div className="flex min-w-0 gap-2"><MapPin className="mt-2 size-5 shrink-0 text-primary" /><Input value={form.address} onChange={(e) => set("address", e.target.value)} /></div></div>
             <div className="space-y-2 sm:col-span-2"><Label>{pick("Map link", "لينك الموقع")}</Label><Input value={form.location_url} onChange={(e) => set("location_url", e.target.value)} placeholder="https://maps.google.com/..." /></div>
             <div className="space-y-2 sm:col-span-2"><Label>{pick("Notes", "ملاحظات")}</Label><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} /></div>
           </div>
