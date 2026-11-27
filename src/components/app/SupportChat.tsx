@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Loader2, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -91,7 +92,7 @@ export function SupportChatThread({ employeeId, isAdmin, employeeName, focusDate
     yesterday.setDate(yesterday.getDate() - 1);
     for (const message of messages) {
       const key = localDayKey(message.created_at);
-      let label = new Date(message.created_at).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+      let label = formatDate(message.created_at, { day: "numeric", month: "long", year: "numeric" });
       if (key === localDayKey(today.toISOString())) label = pick("Today", "اليوم");
       else if (key === localDayKey(yesterday.toISOString())) label = pick("Yesterday", "أمس");
       let group = groups[groups.length - 1];
@@ -149,7 +150,7 @@ export function SupportChatThread({ employeeId, isAdmin, employeeName, focusDate
             <article className={`max-w-[85%] rounded-2xl px-3 py-2 shadow-sm ${mine ? "rounded-ee-md bg-primary text-primary-foreground" : "rounded-es-md border bg-card"}`}>
               {message.body && <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>}
               {message.attachmentUrl && <a href={message.attachmentUrl} target="_blank" rel="noreferrer"><img src={message.attachmentUrl} alt={pick("Support attachment", "مرفق الدعم")} className="mt-2 max-h-64 rounded-xl object-contain" /></a>}
-              <p className={`mt-1 text-end text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{new Date(message.created_at).toLocaleTimeString(lang === "ar" ? "ar-EG" : "en-GB", { hour: "2-digit", minute: "2-digit" })}{mine && message.read_at ? " ✓✓" : ""}</p>
+              <p className={`mt-1 text-end text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{formatTime(message.created_at)}{mine && message.read_at ? " ✓✓" : ""}</p>
             </article>
           </div>;
         })}
