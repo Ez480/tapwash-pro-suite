@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { LanguageToggle, ThemeToggle } from "@/components/site/Chrome";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordPage() {
+  const { pick } = useI18n();
   const navigate = useNavigate();
   const { user, ready } = useSession();
   const [email, setEmail] = useState("");
@@ -49,9 +51,9 @@ function ResetPasswordPage() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      toast.success("تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني.");
+      toast.success(pick("Password reset link sent to your email.", "تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني."));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر إرسال رابط إعادة التعيين.");
+      toast.error(pick("Could not send the reset link.", "تعذر إرسال رابط إعادة التعيين."));
     } finally {
       setBusy(false);
     }
@@ -59,17 +61,17 @@ function ResetPasswordPage() {
 
   const updatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) return toast.error("كلمة السر يجب أن تكون 6 أحرف على الأقل.");
-    if (password !== confirmPassword) return toast.error("كلمتا السر غير متطابقتين.");
+    if (password.length < 6) return toast.error(pick("Password must be at least 6 characters.", "كلمة السر يجب أن تكون 6 أحرف على الأقل."));
+    if (password !== confirmPassword) return toast.error(pick("Passwords do not match.", "كلمتا السر غير متطابقتين."));
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast.success("تم تغيير كلمة السر بنجاح.");
+      toast.success(pick("Password changed successfully.", "تم تغيير كلمة السر بنجاح."));
       await supabase.auth.signOut();
       navigate({ to: "/login", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر تغيير كلمة السر.");
+      toast.error(pick("Could not change the password.", "تعذر تغيير كلمة السر."));
     } finally {
       setBusy(false);
     }
@@ -89,23 +91,23 @@ function ResetPasswordPage() {
         <div className="w-full rounded-2xl border bg-card p-6 shadow-sm">
           {recoverySession ? (
             <>
-              <h1 className="text-2xl font-bold">تعيين كلمة سر جديدة</h1>
-              <p className="mt-2 text-sm text-muted-foreground">اكتب كلمة السر الجديدة لحسابك.</p>
+              <h1 className="text-2xl font-bold">{pick("Reset your password", "تعيين كلمة سر جديدة")}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{pick("Enter your new password for your account.", "اكتب كلمة السر الجديدة لحسابك.")}</p>
               <form onSubmit={updatePassword} className="mt-6 space-y-4">
-                <div className="space-y-2"><Label htmlFor="new-password">كلمة السر الجديدة</Label><Input id="new-password" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></div>
-                <div className="space-y-2"><Label htmlFor="confirm-password">تأكيد كلمة السر</Label><Input id="confirm-password" type="password" minLength={6} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" /></div>
-                <Button type="submit" className="w-full" disabled={busy}>حفظ كلمة السر</Button>
+                <div className="space-y-2"><Label htmlFor="new-password">{pick("New password", "كلمة السر الجديدة")}</Label><Input id="new-password" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></div>
+                <div className="space-y-2"><Label htmlFor="confirm-password">{pick("Confirm password", "تأكيد كلمة السر")}</Label><Input id="confirm-password" type="password" minLength={6} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" /></div>
+                <Button type="submit" className="w-full" disabled={busy}>{pick("Save password", "حفظ كلمة السر")}</Button>
               </form>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold">هل نسيت كلمة السر؟</h1>
-              <p className="mt-2 text-sm text-muted-foreground">اكتب بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة السر.</p>
+              <h1 className="text-2xl font-bold">{pick("Forgot your password?", "هل نسيت كلمة السر؟")}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">{pick("Enter your email and we'll send you a link to reset your password.", "اكتب بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة السر.")}</p>
               <form onSubmit={sendReset} className="mt-6 space-y-4">
-                <div className="space-y-2"><Label htmlFor="reset-email">البريد الإلكتروني</Label><Input id="reset-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
-                <Button type="submit" className="w-full" disabled={busy}>إرسال رابط إعادة التعيين</Button>
+                <div className="space-y-2"><Label htmlFor="reset-email">{pick("Email", "البريد الإلكتروني")}</Label><Input id="reset-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
+                <Button type="submit" className="w-full" disabled={busy}>{pick("Send reset link", "إرسال رابط إعادة التعيين")}</Button>
               </form>
-              <Link to="/login" className="mt-5 block text-center text-sm font-medium text-primary hover:underline">العودة لتسجيل الدخول</Link>
+              <Link to="/login" className="mt-5 block text-center text-sm font-medium text-primary hover:underline">{pick("Back to sign in", "العودة لتسجيل الدخول")}</Link>
             </>
           )}
         </div>
