@@ -61,7 +61,7 @@ export function MyCars({ customerId }: { customerId?: string }) {
       .from("cars")
       .select("id,customer_id,brand,model,color,plate_number,notes")
       .eq("customer_id", customerId)
-      .order("id", { ascending: false });
+      .order("created_at", { ascending: false });
     if (error) {
       toast.error(error.message);
       setCars([]);
