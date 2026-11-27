@@ -22,9 +22,13 @@ create index if not exists support_messages_employee_unread_idx
 alter table public.support_messages enable row level security;
 grant select, insert, update on public.support_messages to authenticated;
 
+drop policy if exists support_messages_admin_select on public.support_messages;
+
 create policy support_messages_admin_select
   on public.support_messages for select to authenticated
   using (public.has_role((select auth.uid()), 'admin'::app_role));
+
+drop policy if exists support_messages_admin_insert on public.support_messages;
 
 create policy support_messages_admin_insert
   on public.support_messages for insert to authenticated
@@ -34,10 +38,14 @@ create policy support_messages_admin_insert
     and public.has_role((select auth.uid()), 'admin'::app_role)
   );
 
+drop policy if exists support_messages_admin_update on public.support_messages;
+
 create policy support_messages_admin_update
   on public.support_messages for update to authenticated
   using (public.has_role((select auth.uid()), 'admin'::app_role))
   with check (public.has_role((select auth.uid()), 'admin'::app_role));
+
+drop policy if exists support_messages_employee_select on public.support_messages;
 
 create policy support_messages_employee_select
   on public.support_messages for select to authenticated
@@ -45,6 +53,8 @@ create policy support_messages_employee_select
     employee_id = (select auth.uid())
     and public.has_role((select auth.uid()), 'employee'::app_role)
   );
+
+drop policy if exists support_messages_employee_insert on public.support_messages;
 
 create policy support_messages_employee_insert
   on public.support_messages for insert to authenticated
@@ -74,9 +84,13 @@ create index if not exists employee_presence_active_task_idx
 alter table public.employee_presence enable row level security;
 grant select, insert, update on public.employee_presence to authenticated;
 
+drop policy if exists employee_presence_admin_select on public.employee_presence;
+
 create policy employee_presence_admin_select
   on public.employee_presence for select to authenticated
   using (public.has_role((select auth.uid()), 'admin'::app_role));
+
+drop policy if exists employee_presence_employee_select on public.employee_presence;
 
 create policy employee_presence_employee_select
   on public.employee_presence for select to authenticated
@@ -85,12 +99,16 @@ create policy employee_presence_employee_select
     and public.has_role((select auth.uid()), 'employee'::app_role)
   );
 
+drop policy if exists employee_presence_employee_insert on public.employee_presence;
+
 create policy employee_presence_employee_insert
   on public.employee_presence for insert to authenticated
   with check (
     employee_id = (select auth.uid())
     and public.has_role((select auth.uid()), 'employee'::app_role)
   );
+
+drop policy if exists employee_presence_employee_update on public.employee_presence;
 
 create policy employee_presence_employee_update
   on public.employee_presence for update to authenticated
@@ -118,9 +136,13 @@ create index if not exists delivery_status_logs_task_changed_idx
 alter table public.delivery_status_logs enable row level security;
 grant select, insert on public.delivery_status_logs to authenticated;
 
+drop policy if exists delivery_status_logs_admin_select on public.delivery_status_logs;
+
 create policy delivery_status_logs_admin_select
   on public.delivery_status_logs for select to authenticated
   using (public.has_role((select auth.uid()), 'admin'::app_role));
+
+drop policy if exists delivery_status_logs_admin_insert on public.delivery_status_logs;
 
 create policy delivery_status_logs_admin_insert
   on public.delivery_status_logs for insert to authenticated
@@ -133,12 +155,16 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('support-media', 'support-media', false, 5242880, array['image/*'])
 on conflict (id) do nothing;
 
+drop policy if exists support_media_admin_read on storage.objects;
+
 create policy support_media_admin_read
   on storage.objects for select to authenticated
   using (
     bucket_id = 'support-media'
     and public.has_role((select auth.uid()), 'admin'::app_role)
   );
+
+drop policy if exists support_media_employee_read_own on storage.objects;
 
 create policy support_media_employee_read_own
   on storage.objects for select to authenticated
@@ -148,12 +174,16 @@ create policy support_media_employee_read_own
     and public.has_role((select auth.uid()), 'employee'::app_role)
   );
 
+drop policy if exists support_media_admin_insert on storage.objects;
+
 create policy support_media_admin_insert
   on storage.objects for insert to authenticated
   with check (
     bucket_id = 'support-media'
     and public.has_role((select auth.uid()), 'admin'::app_role)
   );
+
+drop policy if exists support_media_employee_insert_own on storage.objects;
 
 create policy support_media_employee_insert_own
   on storage.objects for insert to authenticated
