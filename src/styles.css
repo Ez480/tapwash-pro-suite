@@ -365,11 +365,6 @@
 
 
 /* PR #8 follow-up: extend the approved frosted material to public and customer surfaces. */
-.customer-site {
-  --customer-glass-fill: linear-gradient(135deg,
-    color-mix(in oklch, var(--color-card) 78%, white 22% / 0.72),
-    color-mix(in oklch, var(--color-primary) 7%, var(--color-card) 82% / 0.72));
-}
 .customer-site .panel,
 .customer-site article,
 .customer-site [data-slot="card"],
@@ -603,6 +598,33 @@
   .booking-page-glass textarea,
   .booking-page-glass select {
     background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Keep dashboard chrome light-glass while leaving admin/employee content untouched. */
+.admin-nav-glass,
+.employee-nav-glass {
+  background: var(--glass-soft-bg) !important;
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--glass-soft-shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  backdrop-filter: blur(16px) saturate(145%);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .admin-nav-glass,
+  .employee-nav-glass {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .admin-nav-glass,
+  .employee-nav-glass {
+    background: var(--color-card) !important;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
