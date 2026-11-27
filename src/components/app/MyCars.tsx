@@ -34,11 +34,11 @@ type CarForm = {
 const emptyForm: CarForm = { plate_number: "", brand: "", model: "", color: "" };
 
 function normalizePlate(value: string) {
-  return value.trim().replace(/\s+/g, " ").replace(/[a-z]/g, (letter) => letter.toUpperCase());
+  return value.trim().replace(/\s+/g, " ").replace(/[a-z]/gi, (letter) => letter.toUpperCase());
 }
 
 function plateKey(value: string) {
-  return normalizePlate(value).replace(/\s/g, "").toUpperCase();
+  return value.trim().replace(/\s+/g, "").replace(/[a-z]/gi, (letter) => letter.toUpperCase());
 }
 
 export function MyCars({ customerId }: { customerId?: string }) {
@@ -122,7 +122,7 @@ export function MyCars({ customerId }: { customerId?: string }) {
     setSaving(false);
     if (result.error) {
       toast.error(result.error.code === "23505"
-        ? pick("This plate number is already registered. Check the plate and try again.", "رقم اللوحة ده مسجل بالفعل. راجع الرقم وحاول تاني.")
+        ? pick("Could not save this plate number. Check the plate and try again.", "تعذر حفظ رقم اللوحة ده. راجع الرقم وحاول تاني.")
         : result.error.message);
       return;
     }
