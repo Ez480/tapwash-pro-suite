@@ -93,7 +93,7 @@ export function AdminLayout() {
   return (
     <div className="admin-dashboard-shell min-h-screen bg-background">
       <AppTopbar
-        title="لوحة الإدارة"
+        title={pick("Admin dashboard","لوحة الإدارة")}
         extra={
           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
             <Link to="/dashboard">{t("nav_dashboard")}</Link>
