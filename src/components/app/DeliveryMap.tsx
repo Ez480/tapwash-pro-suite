@@ -1,3 +1,4 @@
+import { formatTime } from "@/lib/format";
 import { useEffect, useRef } from "react";
 
 declare global {
@@ -143,7 +144,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
         if (!driverAccuracyRef.current) driverAccuracyRef.current = L.circle([driver.lat, driver.lng], { radius: driver.accuracy, color: "#059669", weight: 1, fillOpacity: 0.08 }).addTo(map);
         else driverAccuracyRef.current.setLatLng([driver.lat, driver.lng]).setRadius(driver.accuracy);
       } else if (driverAccuracyRef.current) { driverAccuracyRef.current.remove(); driverAccuracyRef.current = null; }
-      driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${new Date(driver.updatedAt).toLocaleTimeString("en-US")}` : "الدليفري الآن");
+      driverMarkerRef.current.bindPopup(driver.updatedAt ? `الدليفري • آخر تحديث ${formatTime(driver.updatedAt)}` : "الدليفري الآن");
     } else if (driverMarkerRef.current) {
       driverMarkerRef.current.remove();
       driverMarkerRef.current = null;

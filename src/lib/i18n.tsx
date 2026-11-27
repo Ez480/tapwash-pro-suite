@@ -1,3 +1,4 @@
+import { formatDate, formatNumber } from "@/lib/format";
 import {
   createContext,
   useCallback,
@@ -262,11 +263,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         const date = safeDate(v);
         if (!date) return "—";
         try {
-          return new Intl.DateTimeFormat("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }).format(date);
+          return formatDate(date);
         } catch {
           return "—";
         }
@@ -275,9 +272,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         if (v === null || v === undefined || v === "") return "—";
         const amount = Number(v);
         if (!Number.isFinite(amount)) return "—";
-        return `${new Intl.NumberFormat("en-US", {
-          maximumFractionDigits: 0,
-        }).format(amount)} ${t("egp")}`;
+        return `${formatNumber(amount, { maximumFractionDigits: 0 })} ${t("egp")}`;
       },
     };
   }, [lang, setLang]);

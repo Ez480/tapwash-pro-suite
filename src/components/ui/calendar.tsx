@@ -1,3 +1,4 @@
+import { formatDate } from "@/lib/format";
 "use client";
 
 import * as React from "react";
@@ -32,7 +33,7 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) => date.toLocaleString("default", { month: "short" }),
+        formatMonthDropdown: (date) => formatDate(date, { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -154,7 +155,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={formatDate(day.date, { year: "numeric", month: "2-digit", day: "2-digit" })}
       data-selected-single={
         modifiers["selected"] &&
         !modifiers["range_start"] &&

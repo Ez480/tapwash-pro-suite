@@ -208,3 +208,539 @@
   .mobile-menu-grid { gap: 0.4rem; }
   .mobile-menu-item { min-height: 2.95rem; padding-inline: 0.35rem; font-size: 0.9rem; }
 }
+
+
+/* Frosted-glass refresh: preserve the existing TapWash blue and ink palette. */
+:root {
+  --radius: 1.5rem;
+  --glass-panel-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 90%, transparent), color-mix(in oklch, var(--color-card) 85%, transparent) 54%, color-mix(in oklch, var(--color-primary) 5%, transparent));
+  --glass-soft-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 92%, transparent), color-mix(in oklch, var(--color-card) 86%, transparent));
+  --glass-panel-border: oklch(1 0 0 / 0.92);
+  --glass-panel-shadow: 0 18px 48px -30px oklch(0.2 0.025 265 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.92), inset 0 -1px 0 oklch(0.45 0.015 265 / 0.05);
+  --glass-soft-shadow: 0 10px 28px -20px oklch(0.2 0.025 265 / 0.16), inset 0 1px 0 oklch(1 0 0 / 0.88);
+  --glass-panel-filter: blur(40px) saturate(145%);
+}
+.dark {
+  --glass-panel-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 18%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent) 54%, color-mix(in oklch, var(--color-card) 78%, transparent));
+  --glass-soft-bg: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent));
+  --glass-panel-border: oklch(1 0 0 / 0.22);
+  --glass-panel-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.16), inset 0 -1px 0 oklch(0.65 0.1 245 / 0.08);
+  --glass-soft-shadow: 0 12px 30px -22px oklch(0 0 0 / 0.5), inset 0 1px 0 oklch(1 0 0 / 0.12);
+}
+
+/* Glass is reserved for shared overlays and navigation; dashboard cards stay opaque for mobile performance. */
+:where(.glass-card, .glass-soft, .glass-ios, [class*="glass-"]):not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 1.6rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.panel {
+  background: color-mix(in oklch, var(--color-card) 88%, transparent);
+  border-color: color-mix(in oklch, var(--color-border) 78%, white 22%);
+  border-radius: 1.6rem;
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.customer-site .panel,
+.auth-page-glass .rounded-2xl.border,
+.nfc-page-glass .panel {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+
+/* App dashboards: translucent fills, no per-card blur. */
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.panel, .rounded-2xl.border, .rounded-xl.border, .glass-employee-card) {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 90%, transparent), color-mix(in oklch, var(--color-card) 86%, transparent));
+  border-color: color-mix(in oklch, var(--color-border) 70%, white 30%);
+  box-shadow: 0 12px 32px -24px oklch(0.18 0.08 260 / 0.24), inset 0 1px 0 oklch(1 0 0 / 0.56);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.dark :where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.panel, .rounded-2xl.border, .rounded-xl.border, .glass-employee-card) {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-primary) 12%, color-mix(in oklch, var(--color-card) 78%, transparent)), color-mix(in oklch, var(--color-card) 72%, transparent));
+  border-color: oklch(1 0 0 / 0.14);
+  box-shadow: 0 14px 34px -24px oklch(0 0 0 / 0.48), inset 0 1px 0 oklch(1 0 0 / 0.10);
+}
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.app-topbar-glass, .employee-topbar-glass, .customer-dashboard > header) {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.language-toggle-glass, .theme-toggle-glass {
+  border-radius: 9999px !important;
+  border-color: var(--glass-panel-border) !important;
+  background: var(--glass-soft-bg) !important;
+  box-shadow: var(--glass-soft-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.admin-dashboard-shell > .border-b:has(.admin-nav-glass) {
+  background: var(--glass-soft-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-soft-shadow);
+  -webkit-backdrop-filter: var(--glass-panel-filter);
+  backdrop-filter: var(--glass-panel-filter);
+}
+.admin-nav-glass, .employee-nav-glass {
+  border-radius: 1rem;
+  background: color-mix(in oklch, var(--color-card) 88%, transparent);
+  padding: 0.35rem;
+}
+.tapwash-employee-dock {
+  border-radius: 1.7rem;
+}
+.tapwash-employee-dock-button { border-radius: 9999px; }
+
+@media (max-width: 640px) {
+  :root { --glass-panel-filter: blur(22px) saturate(140%); }
+  .glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass { border-radius: 1.4rem; }
+  .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel { -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :where(.glass-card, .glass-soft, .glass-ios, .site-header-glass, .app-topbar-glass, .employee-topbar-glass, .tapwash-employee-dock, .mobile-menu-glass, .customer-site .panel, .auth-page-glass .rounded-2xl.border, .nfc-page-glass .panel) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+
+/* Dashboard card specificity: keep all nested customer membership tiles unblurred too. */
+.customer-dashboard .panel,
+.customer-dashboard .rounded-2xl.border.p-6,
+.customer-dashboard .rounded-xl.border.p-4,
+.customer-dashboard .rounded-xl.border.p-5,
+.customer-dashboard section.panel.relative.mt-6 .rounded-2xl.border,
+.customer-dashboard [class~="sm:grid-cols-2"] > .panel {
+  background: linear-gradient(135deg, color-mix(in oklch, var(--color-card) 90%, transparent), color-mix(in oklch, var(--color-card) 86%, transparent));
+  border-color: color-mix(in oklch, var(--color-border) 70%, white 30%);
+  box-shadow: 0 12px 32px -24px oklch(0.18 0.08 260 / 0.24), inset 0 1px 0 oklch(1 0 0 / 0.56);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.tapwash-employee-dock {
+  background: var(--glass-panel-bg) !important;
+  border: 1px solid var(--glass-panel-border) !important;
+  box-shadow: var(--glass-panel-shadow) !important;
+  -webkit-backdrop-filter: var(--glass-panel-filter) !important;
+  backdrop-filter: var(--glass-panel-filter) !important;
+}
+.tapwash-employee-dock-button {
+  background: var(--glass-soft-bg) !important;
+  border-color: var(--glass-panel-border) !important;
+  color: var(--color-primary) !important;
+  box-shadow: var(--glass-soft-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+:where(.customer-dashboard, .admin-dashboard-shell, .employee-dashboard-shell) :is(.glass-card, .glass-soft, .glass-ios, [class*="glass-"], [class*="backdrop-blur"], .panel, .rounded-2xl.border, .rounded-xl.border):not(.app-topbar-glass):not(.employee-topbar-glass):not(.tapwash-employee-dock) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+
+/* PR #8 follow-up: extend the approved frosted material to public and customer surfaces. */
+.customer-site .panel,
+.customer-site article,
+.customer-site [data-slot="card"],
+.customer-site .booking-panel,
+.customer-site .booking-step-card {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 1.55rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.customer-site .surface-hero > div > .grid > div:first-child .rounded-full.border,
+.customer-site .surface-hero > div > .grid > div:first-child .rounded-full {
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.45);
+}
+.customer-site .surface-blue,
+.auth-page-glass .surface-blue {
+  background-image: var(--gradient-blue);
+}
+.customer-site button[class*="bg-primary"],
+.customer-site a[class*="bg-primary"],
+.auth-page-glass button[class*="bg-primary"],
+.customer-dashboard button[class*="bg-primary"] {
+  background-image: var(--gradient-blue);
+  color: var(--color-primary-foreground);
+  border-color: color-mix(in oklch, var(--color-primary) 70%, white 30%);
+  box-shadow: 0 10px 26px -16px color-mix(in oklch, var(--color-primary) 72%, transparent);
+}
+.customer-site input:not([type="checkbox"]):not([type="radio"]),
+.customer-site textarea,
+.customer-site select,
+.auth-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.auth-page-glass textarea,
+.customer-dashboard input:not([type="checkbox"]):not([type="radio"]),
+.customer-dashboard textarea,
+.customer-dashboard select {
+  color: var(--color-foreground);
+  background: color-mix(in oklch, var(--color-card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--glass-panel-border) 62%, var(--color-border));
+  border-radius: 0.95rem;
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.42), 0 8px 22px -18px oklch(0.15 0.04 265 / 0.3);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.customer-site input::placeholder,
+.customer-site textarea::placeholder,
+.auth-page-glass input::placeholder,
+.auth-page-glass textarea::placeholder,
+.customer-dashboard input::placeholder,
+.customer-dashboard textarea::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 1;
+}
+.customer-dashboard .panel,
+.customer-dashboard .rounded-2xl.border,
+.customer-dashboard .rounded-xl.border,
+.customer-dashboard [data-slot="card"] {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-card) 76%, transparent),
+    color-mix(in oklch, var(--color-primary) 5%, var(--color-card) 82%));
+  border-color: color-mix(in oklch, var(--color-border) 72%, white 28%);
+  box-shadow: 0 16px 42px -28px oklch(0.18 0.08 260 / 0.32), inset 0 1px 0 oklch(1 0 0 / 0.48);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+.customer-dashboard > header,
+.customer-dashboard .app-topbar-glass {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.auth-page-glass .rounded-2xl.border {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  border-radius: 1.65rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.dark .customer-site .panel,
+.dark .customer-site article,
+.dark .customer-site [data-slot="card"],
+.dark .customer-dashboard .panel,
+.dark .customer-dashboard .rounded-2xl.border,
+.dark .customer-dashboard .rounded-xl.border,
+.dark .auth-page-glass .rounded-2xl.border {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, color-mix(in oklch, var(--color-card) 84%, transparent)),
+    color-mix(in oklch, var(--color-card) 78%, transparent));
+  border-color: oklch(0.88 0.04 245 / 0.24);
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+.dark .customer-site input:not([type="checkbox"]):not([type="radio"]),
+.dark .customer-site textarea,
+.dark .customer-site select,
+.dark .auth-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.dark .auth-page-glass textarea,
+.dark .customer-dashboard input:not([type="checkbox"]):not([type="radio"]),
+.dark .customer-dashboard textarea,
+.dark .customer-dashboard select {
+  background: color-mix(in oklch, var(--color-card) 82%, transparent);
+  border-color: oklch(1 0 0 / 0.2);
+  color: var(--color-foreground);
+}
+@media (max-width: 640px) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .customer-site input,
+  .customer-site textarea,
+  .customer-site select,
+  .auth-page-glass input,
+  .auth-page-glass textarea {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .customer-site input,
+  .customer-site textarea,
+  .customer-site select,
+  .auth-page-glass input,
+  .auth-page-glass textarea {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Booking route is authenticated but intentionally outside the public SiteLayout. */
+.booking-page-glass {
+  background-image: radial-gradient(75% 45% at 100% 0%, oklch(0.54 0.216 263 / 0.09), transparent 70%),
+    radial-gradient(65% 45% at 0% 18%, oklch(0.68 0.14 250 / 0.07), transparent 70%);
+}
+.booking-page-glass .panel,
+.booking-page-glass .rounded-xl.border,
+.booking-page-glass .rounded-2xl.border {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.booking-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.booking-page-glass textarea,
+.booking-page-glass select {
+  color: var(--color-foreground);
+  background: color-mix(in oklch, var(--color-card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--glass-panel-border) 62%, var(--color-border));
+  border-radius: 0.95rem;
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.42), 0 8px 22px -18px oklch(0.15 0.04 265 / 0.3);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.booking-page-glass button[class*="bg-primary"] {
+  background-image: var(--gradient-blue);
+  color: var(--color-primary-foreground);
+  border-color: color-mix(in oklch, var(--color-primary) 70%, white 30%);
+  box-shadow: 0 10px 26px -16px color-mix(in oklch, var(--color-primary) 72%, transparent);
+}
+.dark .booking-page-glass .panel,
+.dark .booking-page-glass .rounded-xl.border,
+.dark .booking-page-glass .rounded-2xl.border {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, color-mix(in oklch, var(--color-card) 84%, transparent)),
+    color-mix(in oklch, var(--color-card) 78%, transparent));
+  border-color: oklch(0.88 0.04 245 / 0.24);
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+.dark .booking-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.dark .booking-page-glass textarea,
+.dark .booking-page-glass select {
+  background: color-mix(in oklch, var(--color-card) 82%, transparent);
+  border-color: oklch(1 0 0 / 0.2);
+  color: var(--color-foreground);
+}
+@media (max-width: 640px) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border,
+  .booking-page-glass input,
+  .booking-page-glass textarea,
+  .booking-page-glass select {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border,
+  .booking-page-glass input,
+  .booking-page-glass textarea,
+  .booking-page-glass select {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Keep dashboard chrome light-glass while leaving admin/employee content untouched. */
+.admin-nav-glass,
+.employee-nav-glass {
+  background: var(--glass-soft-bg) !important;
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--glass-soft-shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  backdrop-filter: blur(16px) saturate(145%);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .admin-nav-glass,
+  .employee-nav-glass {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .admin-nav-glass,
+  .employee-nav-glass {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Customer order history and NFC reorder are authenticated customer-facing screens. */
+.customer-orders-glass .rounded-3xl.border,
+.customer-orders-glass .rounded-2xl.border,
+.customer-orders-glass .rounded-xl.border,
+.customer-orders-glass .rounded-3xl.border.bg-card\/70,
+.nfc-page-glass .panel,
+.nfc-page-glass .rounded-xl.border,
+.nfc-page-glass .rounded-2xl.border {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.customer-orders-glass input:not([type="checkbox"]):not([type="radio"]),
+.nfc-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.customer-orders-glass textarea,
+.nfc-page-glass textarea,
+.customer-orders-glass select,
+.nfc-page-glass select {
+  color: var(--color-foreground);
+  background: color-mix(in oklch, var(--color-card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--glass-panel-border) 62%, var(--color-border));
+  border-radius: 0.95rem;
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.dark .customer-orders-glass .rounded-3xl.border,
+.dark .customer-orders-glass .rounded-2xl.border,
+.dark .customer-orders-glass .rounded-xl.border,
+.dark .nfc-page-glass .panel,
+.dark .nfc-page-glass .rounded-xl.border,
+.dark .nfc-page-glass .rounded-2xl.border {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, color-mix(in oklch, var(--color-card) 84%, transparent)),
+    color-mix(in oklch, var(--color-card) 78%, transparent));
+  border-color: oklch(0.88 0.04 245 / 0.24);
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+@media (max-width: 640px) {
+  .customer-orders-glass .rounded-3xl.border,
+  .customer-orders-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel,
+  .nfc-page-glass .rounded-xl.border,
+  .nfc-page-glass .rounded-2xl.border {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .customer-orders-glass .rounded-3xl.border,
+  .customer-orders-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel,
+  .nfc-page-glass .rounded-xl.border,
+  .nfc-page-glass .rounded-2xl.border {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .customer-orders-glass .rounded-3xl.border,
+  .customer-orders-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel,
+  .nfc-page-glass .rounded-xl.border,
+  .nfc-page-glass .rounded-2xl.border {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+
+/* Enforce accessibility fallbacks after all surface-specific styling. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .customer-site .panel, .customer-site article, .customer-site [data-slot="card"],
+  .customer-dashboard .panel, .customer-dashboard .rounded-2xl.border, .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .booking-page-glass .panel, .booking-page-glass .rounded-xl.border, .booking-page-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-3xl.border, .customer-orders-glass .rounded-2xl.border, .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel, .nfc-page-glass .rounded-xl.border, .nfc-page-glass .rounded-2xl.border,
+  .customer-site input, .customer-site textarea, .customer-site select,
+  .auth-page-glass input, .auth-page-glass textarea,
+  .booking-page-glass input, .booking-page-glass textarea, .booking-page-glass select,
+  .customer-orders-glass input, .customer-orders-glass textarea, .customer-orders-glass select,
+  .nfc-page-glass input, .nfc-page-glass textarea, .nfc-page-glass select,
+  .admin-nav-glass, .employee-nav-glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--color-card) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .customer-site .panel, .customer-site article, .customer-site [data-slot="card"],
+  .customer-dashboard .panel, .customer-dashboard .rounded-2xl.border, .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .booking-page-glass .panel, .booking-page-glass .rounded-xl.border, .booking-page-glass .rounded-2xl.border,
+  .customer-orders-glass .rounded-3xl.border, .customer-orders-glass .rounded-2xl.border, .customer-orders-glass .rounded-xl.border,
+  .nfc-page-glass .panel, .nfc-page-glass .rounded-xl.border, .nfc-page-glass .rounded-2xl.border,
+  .customer-site input, .customer-site textarea, .customer-site select,
+  .auth-page-glass input, .auth-page-glass textarea,
+  .booking-page-glass input, .booking-page-glass textarea, .booking-page-glass select,
+  .customer-orders-glass input, .customer-orders-glass textarea, .customer-orders-glass select,
+  .nfc-page-glass input, .nfc-page-glass textarea, .nfc-page-glass select,
+  .admin-nav-glass, .employee-nav-glass {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: var(--color-card) !important;
+  }
+}
