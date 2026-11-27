@@ -186,3 +186,41 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+
+/* Customer dashboard uses full frosted surfaces; keep the physical NFC card unchanged. */
+.dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+.dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+.dark .customer-dashboard .rounded-xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 16%, color-mix(in oklch, var(--color-card) 82%, transparent)),
+    color-mix(in oklch, var(--color-card) 76%, transparent)) !important;
+  border-color: oklch(0.88 0.055 245 / 0.26) !important;
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+}
+@media (max-width: 640px) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    -webkit-backdrop-filter: blur(22px) saturate(150%) !important;
+    backdrop-filter: blur(22px) saturate(150%) !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dark .customer-dashboard .panel:not(.tapwash-nfc-card):not(.tapwash-nfc-card *),
+  .dark .customer-dashboard .rounded-2xl.border:not(.tapwash-nfc-card):not(.tapwash-nfc-card *) {
+    background: var(--color-card) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
