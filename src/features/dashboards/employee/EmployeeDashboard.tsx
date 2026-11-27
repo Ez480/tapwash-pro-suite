@@ -1,6 +1,7 @@
+import "@/employee-look.css";
 import { formatNumber, formatTime, formatDateTime } from "@/lib/format";
 import { useEffect, useRef, useState } from "react";
-import { Archive, Banknote, Camera, CheckCircle2, ClipboardList, Clock3, Droplets, LogOut, MapPin, MessageCircle, Moon, Navigation, ScanLine, Sun, UserCog } from "lucide-react";
+import { Archive, Banknote, Camera, CheckCircle2, ClipboardList, Clock3, Droplets, LogOut, MapPin, MessageCircle, Navigation, ScanLine, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,17 +44,68 @@ export function EmployeeDashboard() {
   const { data: profile } = useProfile(user?.id);
   const { data: tasks = [], refetch } = useAdminTable("employee_tasks", "*", "created_at");
   const { data: employee, refetch: refetchEmployee } = useMyEmployee(user?.id);
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [map, setMap] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapDialogOpen, setMapDialogOpen] = useState(false);
   const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number; updated_at: string } | null>(null);
   const [selectedMapTaskId, setSelectedMapTaskId] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
   const [scanning, setScanning] = useState(false);
-  const [employeePage, setEmployeePage] = useState<"current" | "archive" | "profile" | "scan">("current"); const [supportOpen, setSupportOpen] = useState(false);
+  const [employeePage, setEmployeePage] = useState<"current" | "archive" | "profile" | "scan" | "map">("current"); const [supportOpen, setSupportOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState<string | null>(null);
   const locationWatchRef = useRef<number | null>(null);
+  const [shift, setShift] = useState<any>(null);
+  const [shiftLoaded, setShiftLoaded] = useState(false);
+  const [shiftError, setShiftError] = useState(false);
+  const [shiftBusy, setShiftBusy] = useState(false);
+  const [supportBusy, setSupportBusy] = useState<string | null>(null);
+  const [afterPhotoTasks, setAfterPhotoTasks] = useState<string[]>([]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add("dark");
+    const observer = new MutationObserver(() => { if (!root.classList.contains("dark")) root.classList.add("dark"); });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => {
+      observer.disconnect();
+      const stored = window.localStorage.getItem("tapwash.theme");
+      root.classList.toggle("dark", stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches));
+    };
+  }, []);
+
+  const loadShift = async () => {
+    if (!user?.id) return;
+    const { data, error } = await (supabase as any).from("employee_shifts").select("*").eq("employee_id", user.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
+    if (error) { setShiftError(true); setShift(null); } else { setShiftError(false); setShift(data?.[0] ?? null); }
+    setShiftLoaded(true);
+  };
+  useEffect(() => {
+    if (!user?.id) return;
+    void loadShift();
+    const channel = supabase.channel(`employee-shift-${user.id}-${Date.now()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "employee_shifts", filter: `employee_id=eq.${user.id}` }, () => void loadShift())
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [user?.id]);
+  const startShift = async () => {
+    if (!user?.id || shiftBusy) return;
+    setShiftBusy(true);
+    const { error } = await (supabase as any).from("employee_shifts").insert({ employee_id: user.id, started_by: user.id });
+    setShiftBusy(false);
+    if (error) return void toast.error(error.message);
+    toast.success(pick("Shift started", "تم بدء الشفت"));
+    await loadShift();
+  };
+  const endShift = async () => {
+    if (!user?.id || !shift?.id || shiftBusy) return;
+    setShiftBusy(true);
+    const { error } = await (supabase as any).from("employee_shifts").update({ ended_at: new Date().toISOString(), ended_by: user.id }).eq("id", shift.id).eq("employee_id", user.id);
+    setShiftBusy(false);
+    if (error) return void toast.error(error.message);
+    toast.success(pick("Shift ended", "تم إنهاء الشفت"));
+    await loadShift();
+  };
+  const shiftOpen = !!shift;
+  const shiftGated = shiftLoaded && !shiftError && !shiftOpen;
 
   useEffect(() => { if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => setMap({ lat: p.coords.latitude, lng: p.coords.longitude }), () => undefined, { enableHighAccuracy: true, timeout: 8000 }); }, []);
   useEffect(() => {
@@ -84,6 +136,13 @@ export function EmployeeDashboard() {
   const todayCollection = todayOrders.reduce((sum: number, task: any) => sum + Number(task.collection_amount ?? 0), 0);
   const money = (value: number) => `${formatNumber(value)} ${pick("EGP", "جنيه")}`;
   const activeTaskKey = active.map(t => String(t.id)).sort().join(",");
+  const loadAfterPhotos = async () => {
+    const ids = active.map((t: any) => String(t.id));
+    if (!ids.length) { setAfterPhotoTasks([]); return; }
+    const { data } = await (supabase as any).from("order_photos").select("task_id").eq("kind", "after").in("task_id", ids);
+    setAfterPhotoTasks(Array.from(new Set((data ?? []).map((r: any) => String(r.task_id)))));
+  };
+  useEffect(() => { void loadAfterPhotos(); }, [activeTaskKey]);
   useEffect(() => {
     if (!user?.id || !navigator.geolocation) return;
     let lastSentAt = 0;
@@ -122,16 +181,45 @@ export function EmployeeDashboard() {
     return () => { if (locationWatchRef.current != null) navigator.geolocation.clearWatch(locationWatchRef.current); locationWatchRef.current = null; };
   }, [user?.id, activeTaskKey]);
 
-  const toggleTheme = () => { const next = !document.documentElement.classList.contains("dark"); document.documentElement.classList.toggle("dark", next); localStorage.setItem("tapwash-theme", next ? "dark" : "light"); setDark(next); };
-  const setStatus = async (id: string, status: string) => { setLoading(id); const { error } = await (supabase as any).from("employee_tasks").update({ status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id).eq("employee_id", user?.id); setLoading(null); if (error) toast.error(error.message); else { toast.success(pick("Order updated", "تم تحديث الأوردر")); refetch(); } };
+  const setStatus = async (id: string, status: string) => { if (status === "completed") { const { data: afterRows } = await (supabase as any).from("order_photos").select("id").eq("task_id", id).eq("kind", "after").limit(1); if (!afterRows?.length) { toast.error(pick("Upload an after-wash photo before completing the order.", "ارفع صورة بعد الغسيل قبل إنهاء الأوردر.")); return; } } setLoading(id); const { error } = await (supabase as any).from("employee_tasks").update({ status, ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id).eq("employee_id", user?.id); setLoading(null); if (error) toast.error(error.message); else { toast.success(pick("Order updated", "تم تحديث الأوردر")); refetch(); } };
   const logout = async () => { await supabase.auth.signOut(); window.location.href = "/login"; };
   const openLocation = (t: any) => { const u = t.location_url || (t.latitude != null && t.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}` : t.location_text ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}` : null); if (u) window.open(u, "_blank", "noopener,noreferrer"); };
+  const locationLink = (t: any) => t.location_url || (t.latitude != null && t.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${t.latitude},${t.longitude}` : t.location_text ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location_text)}` : null);
+  const shareLocation = async (t: any) => {
+    const url = locationLink(t);
+    if (!url) return void toast.error(pick("This order has no customer location.", "الأوردر ده مفيهوش موقع للعميل."));
+    try {
+      if (navigator.share) { await navigator.share({ title: pick("Customer location", "موقع العميل"), text: String(t.customer_name ?? ""), url }); return; }
+      await navigator.clipboard.writeText(url);
+      toast.success(pick("Location link copied", "تم نسخ رابط الموقع"));
+    } catch (error) { if ((error as any)?.name !== "AbortError") toast.error(pick("Could not share the location.", "تعذر مشاركة الموقع.")); }
+  };
+  const sendOrderToSupport = async (t: any) => {
+    if (!user?.id || supportBusy) return;
+    setSupportBusy(String(t.id));
+    const paymentText = t.payment_method === "cash" ? pick("Cash", "كاش") : t.payment_method === "smart_wallet" ? pick("Smart Wallet", "محفظة") : t.payment_method === "instapay" ? "InstaPay" : t.payment_method === "bank_transfer" ? pick("Bank transfer", "تحويل بنكي") : String(t.payment_method ?? "—");
+    const lines = [
+      pick("I can't use NFC for this order. Order details:", "مش قادر أستخدم NFC في الأوردر ده. تفاصيل الأوردر:"),
+      `${pick("Order", "الأوردر")}: #${t.serial_number || String(t.id).slice(0, 8).toUpperCase()}${t.title ? ` · ${t.title}` : ""}`,
+      `${pick("Status", "الحالة")}: ${t.status ?? "—"}`,
+      `${pick("Customer", "العميل")}: ${t.customer_name ?? "—"} · ${t.customer_phone ?? "—"}`,
+      `${pick("Location", "الموقع")}: ${t.location_text || locationLink(t) || "—"}`,
+      `${pick("Appointment", "الموعد")}: ${t.scheduled_at ? `${fmtDate(t.scheduled_at)} · ${formatTime(t.scheduled_at)}` : "—"}`,
+      `${pick("Amount", "المبلغ")}: ${Number(t.collection_amount ?? t.amount ?? 0).toFixed(2)} EGP · ${paymentText}`,
+      `${pick("Package / offer", "الاشتراك / العرض")}: ${t.package_name || t.offer_name || "—"}`,
+    ];
+    const { error } = await (supabase as any).from("support_messages").insert({ employee_id: user.id, sender_id: user.id, sender_role: "employee", body: lines.join("\n") });
+    setSupportBusy(null);
+    if (error) return void toast.error(error.message);
+    toast.success(pick("Sent to support", "تم إرسال تفاصيل الأوردر للدعم"));
+    setSupportOpen(true);
+  };
   const mapTask = active.find((task: any) => String(task.id) === selectedMapTaskId) || active[0] || null;
   const customerMapQuery = mapTask ? (mapTask.latitude != null && mapTask.longitude != null ? String(mapTask.latitude) + "," + String(mapTask.longitude) : String(mapTask.location_text || mapTask.location_url || "").trim()) : "";
   const customerMapPoint = mapTask ? parseCustomerMapPoint(mapTask) : null;
 
   useEffect(() => {
-    if (!mapDialogOpen || !mapTask?.id || !user?.id) { setDriverLocation(null); return; }
+    if (employeePage !== "map" || !mapTask?.id || !user?.id) { setDriverLocation(null); return; }
     let mounted = true;
     let watchId: number | null = null;
     const savePosition = async (position: GeolocationPosition) => {
@@ -179,7 +267,7 @@ export function EmployeeDashboard() {
       if (row?.employee_id === user.id && Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude))) setDriverLocation(row);
     }).subscribe();
     return () => { mounted = false; if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId); void supabase.removeChannel(channel); };
-  }, [mapDialogOpen, mapTask?.id, user?.id]);
+  }, [employeePage, mapTask?.id, user?.id]);
   const openCustomerMap = (provider: "google" | "waze" | "apple" | "osm") => {
     if (!customerMapQuery) return toast.error(pick("The current order has no customer location.", "الأوردر الحالي لا يحتوي على موقع للعميل."));
     const q = encodeURIComponent(customerMapQuery);
@@ -286,6 +374,7 @@ export function EmployeeDashboard() {
         url: result.url,
       });
       if (error) throw error;
+      if (kind === "after") void loadAfterPhotos();
       toast.success(kind === "before" ? pick("Before-wash photo uploaded", "تم رفع صورة قبل الغسيل") : pick("After-cleaning photo uploaded", "تم رفع صورة بعد التنظيف"));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : pick("Photo upload failed", "فشل رفع الصورة"));
@@ -299,10 +388,10 @@ export function EmployeeDashboard() {
     const paymentState = displayValue(t.payment_status === "paid" ? pick("Paid online", "مدفوع أونلاين") : t.payment_status === "pending" ? pick("Payment pending", "الدفع معلّق") : t.payment_status || (t.payment_method === "cash" ? pick("Pay on delivery", "الدفع كاش") : "—"));
     const amount = Number(t.collection_amount ?? t.amount ?? 0);
     const appointmentTime = t.scheduled_at ? formatTime(t.scheduled_at) : "—";
-    return <article key={t.id} className="rounded-2xl border border-blue-200/70 bg-card p-4 shadow-sm dark:border-blue-900/60 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-bold">{displayValue(t.title || pick("Order", "أوردر"))}</h3><Badge>{displayValue(t.status)}</Badge><Badge variant="outline">#{displayValue(t.serial_number || String(t.id).slice(0, 8).toUpperCase())}</Badge></div><p className="text-sm text-muted-foreground">{displayValue(t.wash_type)}</p></div>{t.scheduled_at && <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary"><Clock3 className="size-4" />{fmtDate(t.scheduled_at)} · {appointmentTime}</span>}</div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl border border-border bg-card p-4"><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><p className="font-bold">{displayValue(t.customer_name)}</p><p>{displayValue(t.customer_phone)}</p><p className="text-sm">{displayValue(t.customer_email)}</p></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Appointment", "موعد الغسيل")}</p><p className="font-bold">{t.scheduled_at ? `${fmtDate(t.scheduled_at)} · ${appointmentTime}` : "—"}</p></div><div className="rounded-2xl border border-border bg-card p-4 md:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-muted-foreground">{pick("Order amount", "سعر الأوردر")}</p><p className="text-xl font-bold">{amount.toFixed(2)} EGP</p></div><div className="text-end"><p className="text-xs text-muted-foreground">{pick("Payment", "الدفع")}</p><p className="font-semibold">{paymentMethod}</p><p className="text-sm text-muted-foreground">{paymentState}</p></div></div></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Subscription / offer", "الاشتراك / العرض")}</p><p className="font-bold">{displayValue(t.package_name || t.offer_name)}</p><p>{t.remaining_washes != null ? `${displayValue(t.remaining_washes)} ${pick("remaining", "متبقي")}` : "—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-4" />{displayValue(t.location_text || t.location_url)}</p>{(t.location_url || t.location_text || t.latitude != null) && <Button className="mt-2" size="sm" variant="outline" onClick={() => openLocation(t)}><Navigation className="me-1 size-4" />{pick("Open location", "فتح الموقع")}</Button>}</div></div><div className="mt-4 flex flex-wrap gap-2">
+    return <article key={t.id} className="rounded-2xl border border-blue-200/70 bg-card p-4 shadow-sm dark:border-blue-900/60 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-bold">{displayValue(t.title || pick("Order", "أوردر"))}</h3><Badge>{displayValue(t.status)}</Badge><Badge variant="outline">#{displayValue(t.serial_number || String(t.id).slice(0, 8).toUpperCase())}</Badge></div><p className="text-sm text-muted-foreground">{displayValue(t.wash_type)}</p></div>{t.scheduled_at && <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary"><Clock3 className="size-4" />{fmtDate(t.scheduled_at)} · {appointmentTime}</span>}</div><div className="mt-4 grid gap-3 md:grid-cols-2"><div className="rounded-2xl border border-border bg-card p-4"><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><p className="font-bold">{displayValue(t.customer_name)}</p><p>{displayValue(t.customer_phone)}</p><p className="text-sm">{displayValue(t.customer_email)}</p></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Appointment", "موعد الغسيل")}</p><p className="font-bold">{t.scheduled_at ? `${fmtDate(t.scheduled_at)} · ${appointmentTime}` : "—"}</p></div><div className="rounded-2xl border border-border bg-card p-4 md:col-span-2"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs text-muted-foreground">{pick("Order amount", "سعر الأوردر")}</p><p className="text-xl font-bold">{amount.toFixed(2)} EGP</p></div><div className="text-end"><p className="text-xs text-muted-foreground">{pick("Payment", "الدفع")}</p><p className="font-semibold">{paymentMethod}</p><p className="text-sm text-muted-foreground">{paymentState}</p></div></div></div><div className="rounded-xl border p-4"><p className="text-xs text-muted-foreground">{pick("Subscription / offer", "الاشتراك / العرض")}</p><p className="font-bold">{displayValue(t.package_name || t.offer_name)}</p><p>{t.remaining_washes != null ? `${displayValue(t.remaining_washes)} ${pick("remaining", "متبقي")}` : "—"}</p></div><div className="rounded-xl border p-4 md:col-span-2"><p className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-4" />{displayValue(t.location_text || t.location_url)}</p>{(t.location_url || t.location_text || t.latitude != null) && <div className="tw-location-actions mt-2 flex flex-wrap justify-center gap-2"><Button size="sm" variant="outline" onClick={() => openLocation(t)}><Navigation className="me-1 size-4" />{pick("Open in Maps", "فتح في الخرائط")}</Button><Button size="sm" variant="outline" onClick={() => void shareLocation(t)}><MapPin className="me-1 size-4" />{pick("Open with…", "فتح بتطبيق…")}</Button></div>}</div></div><div className="tw-order-actions mt-4 flex flex-wrap gap-2">{t.status === "in_progress" && !afterPhotoTasks.includes(String(t.id)) && <p className="tw-photo-hint">{pick("Upload an after-wash photo first to complete the order", "ارفع صورة بعد الغسيل أولاً عشان تقدر تنهي الأوردر")}</p>}
       {t.status === "pending" && <Button className="rounded-full" disabled={loading === t.id} onClick={() => setStatus(t.id, "accepted")}>{pick("Accept order", "استلام الأوردر")}</Button>}
       {t.status === "accepted" && <Button className="rounded-full" disabled={loading === t.id} onClick={() => setStatus(t.id, "in_progress")}>{pick("Start", "بدء التنفيذ")}</Button>}
-      {t.status === "in_progress" && <Button className="rounded-full bg-blue-600 text-white hover:bg-blue-700" disabled={loading === t.id} onClick={() => setStatus(t.id, "completed")}><CheckCircle2 className="me-1 size-4" />{pick("Complete order", "إنهاء الأوردر")}</Button>}
+      {t.status === "in_progress" && <Button className="rounded-full bg-blue-600 text-white hover:bg-blue-700" disabled={loading === t.id || !afterPhotoTasks.includes(String(t.id))} onClick={() => setStatus(t.id, "completed")}><CheckCircle2 className="me-1 size-4" />{pick("Complete order", "إنهاء الأوردر")}</Button>}
       <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted">
         <Camera className="size-4" />{pick("Before wash", "قبل الغسيل")}
         <input type="file" accept="image/*" multiple capture="environment" className="hidden" disabled={photoBusy === `${t.id}:before`} onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(file => void uploadOrderPhoto(t, "before", file)); e.currentTarget.value = ""; }} />
@@ -311,6 +400,7 @@ export function EmployeeDashboard() {
         <Camera className="size-4" />{pick("After wash", "بعد الغسيل")}
         <input type="file" accept="image/*" multiple capture="environment" className="hidden" disabled={photoBusy === `${t.id}:after`} onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(file => void uploadOrderPhoto(t, "after", file)); e.currentTarget.value = ""; }} />
       </label>
+      <Button type="button" variant="outline" className="tw-order-support" disabled={supportBusy === String(t.id)} onClick={() => void sendOrderToSupport(t)}><MessageCircle className="me-1 size-4" />{pick("Can't use NFC? Contact support", "تعذر استخدام NFC؟ تواصل مع الدعم")}</Button>
     </div></article>;
   };
 
@@ -329,16 +419,9 @@ export function EmployeeDashboard() {
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Button variant="outline" size="sm" className="rounded-full border-white/25 bg-white/15 px-3 text-white hover:bg-white/25 hover:text-white" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>{lang === "ar" ? "English" : "العربية"}</Button>
-            <Button variant="ghost" size="icon" className="rounded-full bg-white/15 text-white hover:bg-white/25 hover:text-white" aria-label={pick("Toggle appearance", "تغيير المظهر")} onClick={toggleTheme}>{dark ? <Sun className="size-5" /> : <Moon className="size-5" />}</Button>
             <Button variant="ghost" size="icon" className="rounded-full bg-white/15 text-white hover:bg-white/25 hover:text-white" aria-label={pick("Log out", "تسجيل الخروج")} onClick={logout}><LogOut className="size-4" /></Button>
           </div>
         </div>
-        <nav aria-label={pick("Employee work navigation", "قائمة تنقل الموظف")} className="employee-nav-glass flex w-full items-center gap-2 overflow-x-auto border-t border-white/20 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <Button size="sm" className={`shrink-0 gap-2 rounded-full border border-white/20 ${employeePage === "current" ? "!bg-white !text-blue-800 hover:!bg-white/90" : "!bg-white/15 !text-white hover:!bg-white/25"}`} variant={employeePage === "current" ? "default" : "ghost"} onClick={() => setEmployeePage("current")}><ClipboardList className="size-4" />{pick("Current orders", "الأوردرات الحالية")}<Badge variant={employeePage === "current" ? "secondary" : "outline"}>{active.length}</Badge></Button>
-          <Button size="sm" className={`shrink-0 gap-2 rounded-full border border-white/20 ${employeePage === "archive" ? "!bg-white !text-blue-800 hover:!bg-white/90" : "!bg-white/15 !text-white hover:!bg-white/25"}`} variant={employeePage === "archive" ? "default" : "ghost"} onClick={() => setEmployeePage("archive")}><Archive className="size-4" />{pick("Previous orders", "الأوردرات السابقة")}<Badge variant={employeePage === "archive" ? "secondary" : "outline"}>{completed.length}</Badge></Button>
-          <Button size="sm" className={`shrink-0 gap-2 rounded-full border border-white/20 ${employeePage === "profile" ? "!bg-white !text-blue-800 hover:!bg-white/90" : "!bg-white/15 !text-white hover:!bg-white/25"}`} variant={employeePage === "profile" ? "default" : "ghost"} onClick={() => setEmployeePage("profile")}><UserCog className="size-4" />{pick("My data", "بياناتي")}</Button>
-          <Button size="sm" className="shrink-0 gap-2 rounded-full border-white/20 bg-white/15 text-white hover:bg-white/25 hover:text-white" variant="outline" onClick={() => setSupportOpen(true)}><MessageCircle className="size-4" />{pick("Support", "الدعم")}</Button>
-        </nav>
       </div>
     </header>
     <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 pb-28 pt-4 sm:px-6 sm:pb-32 sm:pt-6">
@@ -362,13 +445,17 @@ export function EmployeeDashboard() {
       </section>}
       {employeePage === "scan" && <section className="panel mb-4 p-4 sm:mb-6 sm:p-5"><div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"><div className="min-w-0"><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><ScanLine className="size-5 shrink-0 text-primary" />{pick("Scan customer NFC card", "مسح كارت العميل NFC")}</h2></div><Button className="w-full shrink-0 sm:w-auto" size="lg" onClick={scanNfc} disabled={scanning}>{scanning ? pick("Bring card closer...", "قرّب الكارت...") : pick("Scan NFC", "مسح NFC")}</Button></div>{card && <div className="mt-5 space-y-4 rounded-2xl border p-4 sm:p-5"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><div><p className="text-xs text-muted-foreground">{pick("Customer", "العميل")}</p><b>{displayValue(card.customer?.full_name || card.name || card.full_name)}</b><p className="text-xs text-muted-foreground">{displayValue(card.customer?.phone || card.phone)}</p></div><div><p className="text-xs text-muted-foreground">{pick("Vehicle", "العربية")}</p><b>{[card.car?.brand, card.car?.model, card.car?.color, card.car?.plate_number].filter(Boolean).map(displayValue).join(" · ") || "—"}</b></div><div><p className="text-xs text-muted-foreground">{pick("Package", "الباقة")}</p><b>{displayValue(card.subscription?.package_name || card.subscription?.package || card.package_name || card.package)}</b></div><div><p className="text-xs text-muted-foreground">{pick("Remaining washes", "الغسلات المتبقية")}</p><b className="text-2xl text-primary">{displayValue(card.subscription?.remaining_washes ?? card.remaining_washes)}</b></div></div><div className="flex flex-wrap items-center justify-end gap-3"><Button onClick={() => void deductScannedWash()} disabled={loading === "nfc" || Number(card.subscription?.remaining_washes ?? card.remaining_washes ?? 0) <= 0}><Droplets className="me-1 size-4" />{loading === "nfc" ? pick("Recording...", "جاري التسجيل...") : pick("Record wash — deduct 1", "تسجيل الغسلة — خصم 1")}</Button></div></div>}</section>}
       {(employeePage === "current" || employeePage === "archive") && <section className="panel p-4 sm:p-5"><div className="mb-4"><h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">{employeePage === "current" ? <ClipboardList className="size-5 text-primary" /> : <Archive className="size-5 text-primary" />}{employeePage === "current" ? pick("Current orders", "الأوردرات الحالية") : pick("Previous orders", "الأوردرات السابقة")}</h2></div><div className="space-y-4">
+        {employeePage === "current" && shiftLoaded && !shiftError && <div className="tw-shift-card">
+          <div><p className="text-xs text-muted-foreground">{pick("Shift", "الشفت")}</p><p className="tw-shift-status"><span className={`tw-shift-dot ${shiftOpen ? "is-on" : ""}`} />{shiftOpen ? `${pick("Shift running since", "الشفت شغال منذ")} ${formatTime(shift.started_at)}` : pick("Shift not started", "الشفت لم يبدأ")}</p></div>
+          <Button type="button" className={`tw-shift-button ${shiftOpen ? "is-end" : ""}`} disabled={shiftBusy} onClick={() => void (shiftOpen ? endShift() : startShift())}>{shiftOpen ? pick("End shift", "إنهاء الشفت") : pick("Start shift", "بدء الشفت")}</Button>
+        </div>}
         {employeePage === "current" && <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300"><ClipboardList className="size-5" /></span><div><p className="text-xs text-muted-foreground">{pick("Today's orders", "إجمالي الأوردرات اليوم")}</p><p className="text-2xl font-extrabold tabular-nums">{todayOrders.length}</p></div></div></div>
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-border bg-muted/60 text-foreground"><Banknote className="size-5" /></span><div><p className="text-xs text-muted-foreground">{pick("Today's collection", "إجمالي التحصيل اليوم")}</p><p className="text-2xl font-extrabold tabular-nums">{money(todayCollection)}</p></div></div></div>
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-border bg-muted/60 text-foreground"><Clock3 className="size-5" /></span><div><p className="text-xs text-muted-foreground">{pick("Available orders", "الأوردرات المتاحة")}</p><p className="text-2xl font-extrabold tabular-nums">{active.length}</p></div></div></div>
         </div>}
         {employeePage === "current" ? (
-          active.length ? active.map(renderOrder) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>
+          shiftGated ? <div className="tw-shift-note rounded-2xl border p-5 text-center text-sm"><p className="font-bold">{pick("Start your shift to receive orders", "ابدأ الشفت عشان تستقبل أوردرات")}</p><p className="mt-1 text-muted-foreground">{pick("Your orders appear here once your shift is running.", "أوردراتك هتظهر هنا أول ما الشفت يبدأ.")}</p></div> : active.length ? active.map(renderOrder) : <p className="py-8 text-center text-sm text-muted-foreground">{pick("No orders", "لا توجد أوردرات")}</p>
         ) : completed.length ? completed.slice().sort((a: any, b: any) => new Date(b.completed_at || b.updated_at || b.created_at).getTime() - new Date(a.completed_at || a.updated_at || a.created_at).getTime()).map((task: any) => {
           const executedAt = task.completed_at || task.updated_at || task.created_at;
           return <article key={task.id} className="rounded-2xl border bg-card p-4">
@@ -387,43 +474,39 @@ export function EmployeeDashboard() {
           {user?.id && <SupportChatThread employeeId={user.id} isAdmin={false} />}
         </DialogContent>
       </Dialog>
-      <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
-        <DialogContent className="z-[1100] max-h-[88vh] overflow-y-auto rounded-t-3xl border-blue-200/70 bg-card p-4 before:mx-auto before:mb-3 before:block before:h-1 before:w-10 before:rounded-full before:bg-muted-foreground/40 before:content-[&quot;&quot;] dark:border-blue-900/60 sm:rounded-2xl sm:p-6 sm:max-w-xl">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><MapPin className="size-5 text-blue-600" />{pick("Customer location — current order", "موقع العميل — الأوردر الحالي")}</DialogTitle></DialogHeader>
+      {employeePage === "map" && <section className="panel tw-dark-map space-y-3 p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl"><MapPin className="size-5 text-primary" />{pick("Customer location — current order", "موقع العميل — الأوردر الحالي")}</h2>
           {active.length > 1 && <div className="flex flex-wrap gap-2">{active.map((task: any) => <Button key={task.id} size="sm" variant={String(mapTask?.id) === String(task.id) ? "default" : "outline"} onClick={() => setSelectedMapTaskId(String(task.id))}>#{displayValue(task.serial_number || String(task.id).slice(0, 8).toUpperCase())}</Button>)}</div>}
-          {mapTask ? <>
-            <div className="rounded-2xl border border-border bg-card p-3"><p className="font-semibold">{displayValue(mapTask.customer_name)}</p><p className="text-sm text-muted-foreground">{displayValue(mapTask.location_text || mapTask.location_url || customerMapQuery)}</p></div>
-            {(driverLocation || map || customerMapPoint) && <div className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold">{pick("Live delivery location", "موقع الدليفري المباشر")}</p>
-                {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {formatTime(driverLocation.updated_at)}</span>}
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-blue-200/70 dark:border-blue-900/60"><DeliveryMap destination={customerMapPoint} driver={driverLocation && Number.isFinite(Number(driverLocation.latitude)) && Number.isFinite(Number(driverLocation.longitude)) ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : null} height="280px" /></div>
-              
-            </div>}
-            {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : !customerMapPoint && !driverLocation && !map ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No customer or delivery GPS location is available yet.", "لا يتوفر موقع GPS للعميل أو الدليفري حتى الآن.")}</p> : null}
-            <p className="text-sm font-semibold">{pick("Open with", "فتح باستخدام")}</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("google")} disabled={!customerMapQuery}>Google Maps</Button>
-              <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("waze")} disabled={!customerMapQuery}>Waze</Button>
-              <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("apple")} disabled={!customerMapQuery}>Apple Maps</Button>
-              <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("osm")} disabled={!customerMapQuery}>OpenStreetMap</Button>
+        {mapTask ? <>
+          <div className="rounded-2xl border border-border bg-card p-3"><p className="font-semibold">{displayValue(mapTask.customer_name)}</p><p className="text-sm text-muted-foreground">{displayValue(mapTask.location_text || mapTask.location_url || customerMapQuery)}</p></div>
+          {(driverLocation || map || customerMapPoint) && <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold">{pick("Live delivery location", "موقع الدليفري المباشر")}</p>
+              {driverLocation?.updated_at && <span className="text-xs text-muted-foreground">{pick("Last update:", "آخر تحديث:")} {formatTime(driverLocation.updated_at)}</span>}
             </div>
-          </> : <p className="py-8 text-center text-sm text-muted-foreground">{pick("There is no active order assigned to you.", "لا يوجد أوردر حالي مسند إليك.")}</p>}
-        </DialogContent>
-      </Dialog>
-      <div dir="rtl" className="tapwash-employee-dock-wrap pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),14px)]">
-        <div className="tapwash-employee-dock pointer-events-auto mx-auto flex w-full max-w-[292px] items-center justify-center gap-3 rounded-[30px] px-3 py-2.5">
-          <Button type="button" variant="ghost" title={pick("Location", "الموقع")} aria-label={pick("Location", "الموقع")} className="tapwash-employee-dock-button flex size-[58px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => { setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setMapDialogOpen(true); }}>
-            <MapPin className="size-[26px] shrink-0" strokeWidth={2.2} />
-          </Button>
-          <Button type="button" variant="ghost" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className="tapwash-employee-dock-button flex size-[58px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}>
-            <ScanLine className="size-[26px] shrink-0" strokeWidth={2.2} />
-          </Button>
-          <Button type="button" variant="ghost" title={pick("Support", "الدعم")} aria-label={pick("Support", "الدعم")} className="tapwash-employee-dock-button flex size-[58px] shrink-0 items-center justify-center rounded-full p-0" onClick={() => setSupportOpen(true)}>
-            <MessageCircle className="size-[26px] shrink-0" strokeWidth={2.2} />
-          </Button>
-        </div>
-      </div>
+            <div className="overflow-hidden rounded-2xl border border-blue-200/70 dark:border-blue-900/60"><DeliveryMap destination={customerMapPoint} driver={driverLocation && Number.isFinite(Number(driverLocation.latitude)) && Number.isFinite(Number(driverLocation.longitude)) ? { lat: Number(driverLocation.latitude), lng: Number(driverLocation.longitude), updatedAt: driverLocation.updated_at } : null} height="280px" /></div>
+            
+          </div>}
+          {customerMapQuery ? <iframe title="Customer location map" src={"https://www.google.com/maps?q=" + encodeURIComponent(customerMapQuery) + "&output=embed"} className="h-64 w-full rounded-xl border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : !customerMapPoint && !driverLocation && !map ? <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">{pick("No customer or delivery GPS location is available yet.", "لا يتوفر موقع GPS للعميل أو الدليفري حتى الآن.")}</p> : null}
+          <p className="text-sm font-semibold">{pick("Open with", "فتح باستخدام")}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("google")} disabled={!customerMapQuery}>Google Maps</Button>
+            <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("waze")} disabled={!customerMapQuery}>Waze</Button>
+            <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("apple")} disabled={!customerMapQuery}>Apple Maps</Button>
+            <Button variant="outline" className="rounded-full" onClick={() => openCustomerMap("osm")} disabled={!customerMapQuery}>OpenStreetMap</Button>
+            <Button variant="outline" className="col-span-2 rounded-full" onClick={() => void shareLocation(mapTask)}>{pick("Other apps…", "تطبيقات أخرى…")}</Button>
+          </div>
+        </> : <p className="py-8 text-center text-sm text-muted-foreground">{pick("There is no active order assigned to you.", "لا يوجد أوردر حالي مسند إليك.")}</p>}
+      </section>}
+      <nav aria-label={pick("Employee work navigation", "قائمة تنقل الموظف")} className="tw-employee-bar">
+        {([
+          ["current", pick("Current", "الحالي"), ClipboardList],
+          ["archive", pick("Previous", "السابقة"), Archive],
+          ["map", pick("Map", "الخريطة"), MapPin],
+        ] as const).map(([key, label, Icon]) => <button key={key} type="button" className={`tw-bar-item ${employeePage === key ? "is-active" : ""}`} onClick={() => { if (key === "map") setSelectedMapTaskId(active[0] ? String(active[0].id) : null); setEmployeePage(key); }}><Icon className="size-[22px]" /><span>{label}</span></button>)}
+        <div className="tw-bar-center"><button type="button" title={pick("Scan NFC", "مسح NFC")} aria-label={pick("Scan NFC", "مسح NFC")} className={`tw-bar-scan ${employeePage === "scan" ? "is-active" : ""} ${active.length > 0 && !shiftGated ? "is-pulsing" : ""}`} onClick={() => { setEmployeePage("scan"); void scanNfc(); }} disabled={scanning}><ScanLine className="size-[30px]" strokeWidth={2.2} /></button><span>NFC</span></div>
+        <button type="button" className="tw-bar-item" onClick={() => setSupportOpen(true)}><MessageCircle className="size-[22px]" /><span>{pick("Support", "الدعم")}</span></button>
+        <button type="button" className={`tw-bar-item ${employeePage === "profile" ? "is-active" : ""}`} onClick={() => setEmployeePage("profile")}><UserCog className="size-[22px]" /><span>{pick("My data", "بياناتي")}</span></button>
+      </nav>
     </main></div>;
 }
