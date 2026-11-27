@@ -496,7 +496,7 @@ function BookingPage() {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => chooseSavedCar(car)}
-                      className={`min-w-0 rounded-xl border p-4 text-start transition-colors ${selected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                      className={`min-w-0 rounded-xl border p-4 text-start transition-colors ${selected ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
                     >
                       <p dir="ltr" className="break-words text-start font-semibold">{car.plate_number || "—"}</p>
                       <p className="mt-1 break-words font-medium">{[car.brand, car.model].filter(Boolean).join(" ") || "—"}</p>
@@ -508,7 +508,7 @@ function BookingPage() {
                   type="button"
                   aria-pressed={selectedCarId === null}
                   onClick={chooseManualCar}
-                  className={`min-h-24 min-w-0 rounded-xl border border-dashed p-4 text-start text-sm font-semibold transition-colors ${selectedCarId === null ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                  className={`min-h-24 min-w-0 rounded-xl border border-dashed p-4 text-start text-sm font-semibold transition-colors ${selectedCarId === null ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
                 >
                   {pick("Enter a new car manually", "إدخال عربية جديدة يدوي")}
                 </button>
