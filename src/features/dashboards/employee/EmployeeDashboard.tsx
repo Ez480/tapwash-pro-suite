@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useSession, useUserRoles } from "@/lib/auth";
-import { useAdminTable, useMyEmployee, useProfile, useSettings } from "@/lib/data";
+import { useAdminTable, useMyEmployee, useProfile } from "@/lib/data";
 import { uploadImage } from "@/lib/media";
 import { DeliveryMap } from "@/components/app/DeliveryMap";
 import { SupportChatThread } from "@/components/app/SupportChat";
@@ -43,7 +43,6 @@ export function EmployeeDashboard() {
   const { data: profile } = useProfile(user?.id);
   const { data: tasks = [], refetch } = useAdminTable("employee_tasks", "*", "created_at");
   const { data: employee, refetch: refetchEmployee } = useMyEmployee(user?.id);
-  const { data: settings } = useSettings();
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [map, setMap] = useState<{ lat: number; lng: number } | null>(null);
   const [mapDialogOpen, setMapDialogOpen] = useState(false);

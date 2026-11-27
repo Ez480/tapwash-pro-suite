@@ -91,7 +91,7 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="admin-dashboard-shell min-h-screen bg-background">
       <AppTopbar
         title="لوحة الإدارة"
         extra={
