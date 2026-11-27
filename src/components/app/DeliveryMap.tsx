@@ -151,7 +151,7 @@ export function DeliveryMap({ destination, driver, height = "360px" }: DeliveryM
       if (driverAnimationRef.current != null) { cancelAnimationFrame(driverAnimationRef.current); driverAnimationRef.current = null; }
     }
 
-    if (points.length && !map.__tapwashInitialView) { if (points.length === 1) map.setView(points[0], 15); else map.fitBounds(L.latLngBounds(points), { padding: [45, 45], maxZoom: 16 }); map.__tapwashInitialView = true; }
+    if (points.length > 1 && !map.__tapwashHadTwoPoints) { map.fitBounds(L.latLngBounds(points), { padding: [45, 45], maxZoom: 16 }); map.__tapwashHadTwoPoints = true; map.__tapwashInitialView = true; } else if (points.length === 1 && !map.__tapwashInitialView) { map.setView(points[0], 15); map.__tapwashInitialView = true; }
     setTimeout(() => map.invalidateSize(), 50);
   }
 

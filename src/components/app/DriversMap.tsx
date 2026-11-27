@@ -39,14 +39,14 @@ export function DriversMap({ drivers, onSelect }: { drivers: DriverPoint[]; onSe
   function render(L: any, rows: DriverPoint[]) {
     const mapInstance = map.current;
     if (!mapInstance) return;
-    const visibleIds = new Set(rows.filter(row => row.status !== "offline" && row.accuracy != null && row.accuracy <= 100).map(row => row.employee_id));
+    const visibleIds = new Set(rows.filter(row => Number.isFinite(row.latitude) && Number.isFinite(row.longitude) && (row.latitude !== 0 || row.longitude !== 0) && row.accuracy != null && row.accuracy <= 100).map(row => row.employee_id));
     for (const [id, marker] of markers.current) if (!visibleIds.has(id)) { marker.remove(); markers.current.delete(id); circles.current.get(id)?.remove(); circles.current.delete(id); }
     const points: [number, number][] = [];
     for (const row of rows) {
-      if (row.status === "offline" || row.accuracy == null || row.accuracy > 100) continue;
+      if (row.accuracy == null || row.accuracy > 100 || !Number.isFinite(row.latitude) || !Number.isFinite(row.longitude) || (row.latitude === 0 && row.longitude === 0)) continue;
       const point: [number, number] = [row.latitude, row.longitude]; points.push(point);
-      const color = row.status === "active" ? "#f59e0b" : "#10b981";
-      const label = row.status === "active" ? "أوردر نشط" : "متاح";
+      const color = row.status === "active" ? "#f59e0b" : row.status === "available" ? "#10b981" : "#64748b";
+      const label = row.status === "active" ? "أوردر نشط" : row.status === "available" ? "متاح" : "غير متصل";
       const html = `<div style="display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:14px;background:white;border:2px solid ${color};box-shadow:0 4px 16px #0002;color:#172033;font-size:12px;font-weight:700;white-space:nowrap"><span style="width:9px;height:9px;border-radius:50%;background:${color}"></span>${row.name.replace(/[<>&"]/g, "")}</div>`;
       let marker = markers.current.get(row.employee_id);
       if (!marker) {
