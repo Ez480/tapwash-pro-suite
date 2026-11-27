@@ -76,7 +76,7 @@ export function AdminLayout() {
                   }
                 }}
               >
-                تفعيل المدير
+                {pick("Enable administrator access","تفعيل المدير")}
               </Button>
             </div>
           )}
