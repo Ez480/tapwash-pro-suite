@@ -362,3 +362,166 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+
+/* PR #8 follow-up: extend the approved frosted material to public and customer surfaces. */
+.customer-site {
+  --customer-glass-fill: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-card) 78%, white 22% / 0.72),
+    color-mix(in oklch, var(--color-primary) 7%, var(--color-card) 82% / 0.72));
+}
+.customer-site .panel,
+.customer-site article,
+.customer-site [data-slot="card"],
+.customer-site .booking-panel,
+.customer-site .booking-step-card {
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  border-radius: 1.55rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.customer-site .surface-hero > div > .grid > div:first-child .rounded-full.border,
+.customer-site .surface-hero > div > .grid > div:first-child .rounded-full {
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.45);
+}
+.customer-site .surface-blue,
+.auth-page-glass .surface-blue {
+  background-image: var(--gradient-blue);
+}
+.customer-site button[class*="bg-primary"],
+.customer-site a[class*="bg-primary"],
+.auth-page-glass button[class*="bg-primary"],
+.customer-dashboard button[class*="bg-primary"] {
+  background-image: var(--gradient-blue);
+  color: var(--color-primary-foreground);
+  border-color: color-mix(in oklch, var(--color-primary) 70%, white 30%);
+  box-shadow: 0 10px 26px -16px color-mix(in oklch, var(--color-primary) 72%, transparent);
+}
+.customer-site input:not([type="checkbox"]):not([type="radio"]),
+.customer-site textarea,
+.customer-site select,
+.auth-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.auth-page-glass textarea,
+.customer-dashboard input:not([type="checkbox"]):not([type="radio"]),
+.customer-dashboard textarea,
+.customer-dashboard select {
+  color: var(--color-foreground);
+  background: color-mix(in oklch, var(--color-card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--glass-panel-border) 62%, var(--color-border));
+  border-radius: 0.95rem;
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.42), 0 8px 22px -18px oklch(0.15 0.04 265 / 0.3);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.customer-site input::placeholder,
+.customer-site textarea::placeholder,
+.auth-page-glass input::placeholder,
+.auth-page-glass textarea::placeholder,
+.customer-dashboard input::placeholder,
+.customer-dashboard textarea::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 1;
+}
+.customer-dashboard .panel,
+.customer-dashboard .rounded-2xl.border,
+.customer-dashboard .rounded-xl.border,
+.customer-dashboard [data-slot="card"] {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-card) 76%, transparent),
+    color-mix(in oklch, var(--color-primary) 5%, var(--color-card) 82%));
+  border-color: color-mix(in oklch, var(--color-border) 72%, white 28%);
+  box-shadow: 0 16px 42px -28px oklch(0.18 0.08 260 / 0.32), inset 0 1px 0 oklch(1 0 0 / 0.48);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+}
+.customer-dashboard > header,
+.customer-dashboard .app-topbar-glass {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.auth-page-glass .rounded-2xl.border {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  border-radius: 1.65rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.dark .customer-site .panel,
+.dark .customer-site article,
+.dark .customer-site [data-slot="card"],
+.dark .customer-dashboard .panel,
+.dark .customer-dashboard .rounded-2xl.border,
+.dark .customer-dashboard .rounded-xl.border,
+.dark .auth-page-glass .rounded-2xl.border {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, color-mix(in oklch, var(--color-card) 84%, transparent)),
+    color-mix(in oklch, var(--color-card) 78%, transparent));
+  border-color: oklch(0.88 0.04 245 / 0.24);
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+.dark .customer-site input:not([type="checkbox"]):not([type="radio"]),
+.dark .customer-site textarea,
+.dark .customer-site select,
+.dark .auth-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.dark .auth-page-glass textarea,
+.dark .customer-dashboard input:not([type="checkbox"]):not([type="radio"]),
+.dark .customer-dashboard textarea,
+.dark .customer-dashboard select {
+  background: color-mix(in oklch, var(--color-card) 82%, transparent);
+  border-color: oklch(1 0 0 / 0.2);
+  color: var(--color-foreground);
+}
+@media (max-width: 640px) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .customer-site input,
+  .customer-site textarea,
+  .customer-site select,
+  .auth-page-glass input,
+  .auth-page-glass textarea {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .customer-site .panel,
+  .customer-site article,
+  .customer-site [data-slot="card"],
+  .customer-dashboard .panel,
+  .customer-dashboard .rounded-2xl.border,
+  .customer-dashboard .rounded-xl.border,
+  .auth-page-glass .rounded-2xl.border,
+  .customer-site input,
+  .customer-site textarea,
+  .customer-site select,
+  .auth-page-glass input,
+  .auth-page-glass textarea {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
