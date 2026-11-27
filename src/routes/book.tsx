@@ -496,11 +496,16 @@ function BookingPage() {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => chooseSavedCar(car)}
-                      className={`min-w-0 rounded-xl border p-4 text-start transition-colors ${selected ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                      className={`flex items-start gap-3 min-w-0 rounded-xl border p-4 text-start transition-colors ${selected ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
                     >
-                      <p dir="ltr" className="break-words text-start font-semibold">{car.plate_number || "—"}</p>
-                      <p className="mt-1 break-words font-medium">{[car.brand, car.model].filter(Boolean).join(" ") || "—"}</p>
-                      <p className="mt-1 break-words text-sm text-muted-foreground">{car.color || pick("Color not specified", "اللون غير محدد")}</p>
+                      <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${selected ? "border-[#2f7bff]" : "border-muted-foreground/50"}`}>
+                        {selected && <span className="size-2.5 rounded-full bg-[#2f7bff]" />}
+                      </span>
+                      <div className="min-w-0 flex-1 text-start">
+                        <p dir="ltr" className="break-words text-start font-semibold">{car.plate_number || "—"}</p>
+                        <p className="mt-1 break-words font-medium">{[car.brand, car.model].filter(Boolean).join(" ") || "—"}</p>
+                        <p className="mt-1 break-words text-sm text-muted-foreground">{car.color || pick("Color not specified", "اللون غير محدد")}</p>
+                      </div>
                     </button>
                   );
                 })}
@@ -508,9 +513,12 @@ function BookingPage() {
                   type="button"
                   aria-pressed={selectedCarId === null}
                   onClick={chooseManualCar}
-                  className={`min-h-24 min-w-0 rounded-xl border border-dashed p-4 text-start text-sm font-semibold transition-colors ${selectedCarId === null ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
+                  className={`flex items-start gap-3 min-h-24 min-w-0 rounded-xl border border-dashed p-4 text-start text-sm font-semibold transition-colors ${selectedCarId === null ? "border-primary bg-[color-mix(in_oklch,var(--color-primary)_8%,transparent)] ring-1 ring-primary" : "border-border hover:border-primary/50"}`}
                 >
-                  {pick("Enter a new car manually", "إدخال عربية جديدة يدوي")}
+                  <span className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${selectedCarId === null ? "border-[#2f7bff]" : "border-muted-foreground/50"}`}>
+                    {selectedCarId === null && <span className="size-2.5 rounded-full bg-[#2f7bff]" />}
+                  </span>
+                  <span className="min-w-0 flex-1 text-start">{pick("Enter a new car manually", "إدخال عربية جديدة يدوي")}</span>
                 </button>
               </div>
             </div>
