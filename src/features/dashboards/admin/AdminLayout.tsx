@@ -95,9 +95,12 @@ export function AdminLayout() {
       <AppTopbar
         title={pick("Admin dashboard","لوحة الإدارة")}
         extra={
-          <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-            <Link to="/dashboard">{t("nav_dashboard")}</Link>
-          </Button>
+          <>
+            <AdminNav items={items} mode="mobile" />
+            <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+              <Link to="/dashboard">{t("nav_dashboard")}</Link>
+            </Button>
+          </>
         }
       />
       <div className="flex min-w-0">
