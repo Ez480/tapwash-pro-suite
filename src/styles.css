@@ -525,3 +525,85 @@
     backdrop-filter: none;
   }
 }
+
+
+/* Booking route is authenticated but intentionally outside the public SiteLayout. */
+.booking-page-glass {
+  background-image: radial-gradient(75% 45% at 100% 0%, oklch(0.54 0.216 263 / 0.09), transparent 70%),
+    radial-gradient(65% 45% at 0% 18%, oklch(0.68 0.14 250 / 0.07), transparent 70%);
+}
+.booking-page-glass .panel,
+.booking-page-glass .rounded-xl.border,
+.booking-page-glass .rounded-2xl.border {
+  background: var(--glass-panel-bg);
+  border-color: var(--glass-panel-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-panel-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+}
+.booking-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.booking-page-glass textarea,
+.booking-page-glass select {
+  color: var(--color-foreground);
+  background: color-mix(in oklch, var(--color-card) 72%, transparent);
+  border-color: color-mix(in oklch, var(--glass-panel-border) 62%, var(--color-border));
+  border-radius: 0.95rem;
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.42), 0 8px 22px -18px oklch(0.15 0.04 265 / 0.3);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+}
+.booking-page-glass button[class*="bg-primary"] {
+  background-image: var(--gradient-blue);
+  color: var(--color-primary-foreground);
+  border-color: color-mix(in oklch, var(--color-primary) 70%, white 30%);
+  box-shadow: 0 10px 26px -16px color-mix(in oklch, var(--color-primary) 72%, transparent);
+}
+.dark .booking-page-glass .panel,
+.dark .booking-page-glass .rounded-xl.border,
+.dark .booking-page-glass .rounded-2xl.border {
+  background: linear-gradient(135deg,
+    color-mix(in oklch, var(--color-primary) 15%, color-mix(in oklch, var(--color-card) 84%, transparent)),
+    color-mix(in oklch, var(--color-card) 78%, transparent));
+  border-color: oklch(0.88 0.04 245 / 0.24);
+  box-shadow: 0 20px 52px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.14);
+}
+.dark .booking-page-glass input:not([type="checkbox"]):not([type="radio"]),
+.dark .booking-page-glass textarea,
+.dark .booking-page-glass select {
+  background: color-mix(in oklch, var(--color-card) 82%, transparent);
+  border-color: oklch(1 0 0 / 0.2);
+  color: var(--color-foreground);
+}
+@media (max-width: 640px) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border,
+  .booking-page-glass input,
+  .booking-page-glass textarea,
+  .booking-page-glass select {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .booking-page-glass .panel,
+  .booking-page-glass .rounded-xl.border,
+  .booking-page-glass .rounded-2xl.border,
+  .booking-page-glass input,
+  .booking-page-glass textarea,
+  .booking-page-glass select {
+    background: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
