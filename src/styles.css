@@ -744,3 +744,49 @@
     background-color: var(--color-card) !important;
   }
 }
+
+/* Batch 2 performance */
+html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html body :is(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .mobile-menu-glass, .admin-nav-glass, .tapwash-nfc-card, [data-slot="dialog-content"], [data-slot="sheet-content"]) {
+  -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+  backdrop-filter: blur(16px) saturate(130%) !important;
+}
+html body .tapwash-nfc-card * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+@media (max-width: 768px), (hover: none) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body :is(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .mobile-menu-glass, .admin-nav-glass) {
+    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html body *:not(.site-header-glass):not(.app-topbar-glass):not(.employee-topbar-glass):not(.mobile-menu-glass):not(.admin-nav-glass):not(.tapwash-nfc-card):not([data-slot="dialog-content"]):not([data-slot="sheet-content"]) {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body :is(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .mobile-menu-glass, .admin-nav-glass, .tapwash-nfc-card, [data-slot="dialog-content"], [data-slot="sheet-content"]) {
+    background-color: var(--color-card);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html body :is(.site-header-glass, .app-topbar-glass, .employee-topbar-glass, .mobile-menu-glass, .admin-nav-glass, .tapwash-nfc-card, [data-slot="dialog-content"], [data-slot="sheet-content"]) {
+    background-color: var(--color-card);
+  }
+}
