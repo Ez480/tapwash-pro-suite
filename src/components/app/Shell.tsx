@@ -67,7 +67,7 @@ export function AdminNav({items,mode="all"}:{items:{to:string;label:string;icon:
       setPendingPayments((paymentCount??0)+(manualCount??0));setPendingBookings(bookingCount??0);setUnreadMessages(messageCount??0);setPendingSubscriptions(subscriptionCount??0);
     };
     void load();
-    const ch=supabase.channel("admin-nav-badges")
+    const ch=supabase.channel(`admin-nav-badges-${mode}`)
       .on("postgres_changes",{event:"*",schema:"public",table:"payments"},()=>void load())
       .on("postgres_changes",{event:"*",schema:"public",table:"booking_requests"},()=>void load())
       .on("postgres_changes",{event:"*",schema:"public",table:"customer_messages"},()=>void load())
