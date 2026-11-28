@@ -38,6 +38,7 @@ export function AdminLayout() {
     { to: "/admin/live-orders", label: pick("Driver tracking", "تتبع السائقين"), icon: MapPinned },
     { to: "/admin/tasks", label: pick("Tasks", "المهام"), icon: ClipboardList },
     { to: "/admin/customers", label: pick("Customers", "العملاء"), icon: Users },
+    { to: "/admin/customer-monitor", label: pick("Customer monitor", "مونيتور العملاء"), icon: Archive },
     { to: "/admin/cards", label: pick("NFC cards", "كروت NFC"), icon: CreditCard },
     { to: "/admin/subscriptions", label: pick("Subscriptions", "الاشتراكات"), icon: Package },
     { to: "/admin/packages", label: pick("Packages", "الباقات"), icon: Package },
