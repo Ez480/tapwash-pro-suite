@@ -4,7 +4,7 @@ import { Gauge, ShieldCheck, Nfc } from "lucide-react";
 import { PageHero, SiteLayout } from "@/components/site/Chrome";
 import { useI18n } from "@/lib/i18n";
 import { usePage } from "@/lib/data";
-import nfcKit from "@/assets/nfc-kit.jpg";
+import nfcKit from "@/brand/about-card-image";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
