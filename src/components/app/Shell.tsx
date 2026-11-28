@@ -91,7 +91,7 @@ export function AdminNav({items,mode="all"}:{items:{to:string;label:string;icon:
     {mode!=="desktop"&&<div className="lg:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild><Button variant="outline" size="icon" aria-label={pick("Open admin menu","فتح قائمة الإدارة")} className="border-white/30 bg-primary text-white hover:bg-primary/90"><span className="text-xl leading-none">☰</span></Button></SheetTrigger>
-        <SheetContent side={dir==="rtl"?"right":"left"} className="public-menu-glass w-[min(88vw,320px)] border border-transparent bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] p-5 text-white dark:from-[#0c1a45] dark:via-[#0b1536] dark:to-[#070d22] dark:border dark:border-white/10 [&>button]:text-white">
+        <SheetContent side={dir==="rtl"?"right":"left"} className="public-menu-glass overflow-y-auto overscroll-contain w-[min(88vw,320px)] border border-transparent bg-gradient-to-b from-[#2461E9] via-[#273FC7] to-[#273FC7] p-5 text-white dark:from-[#0c1a45] dark:via-[#0b1536] dark:to-[#070d22] dark:border dark:border-white/10 [&>button]:text-white">
           {brand}{renderLinks(()=>setOpen(false))}
         </SheetContent>
       </Sheet>
