@@ -5,6 +5,7 @@ import { PageHero, SiteLayout } from "@/components/site/Chrome";
 import { useI18n } from "@/lib/i18n";
 import { usePage } from "@/lib/data";
 import nfcKit from "@/brand/about-card-image";
+import nfcKitDark from "@/brand/about-card-image-dark";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -52,7 +53,15 @@ function About() {
           loading="lazy"
           width={1408}
           height={1008}
-          className="rounded-3xl object-cover shadow-luxe"
+          className="rounded-3xl object-cover shadow-luxe dark:hidden"
+        />
+        <img
+          src={nfcKitDark}
+          alt={pick("TapWash NFC kit", "أدوات NFC من TapWash")}
+          loading="lazy"
+          width={1408}
+          height={1008}
+          className="hidden rounded-3xl object-cover shadow-luxe dark:block"
         />
       </section>
       <section className="mx-auto w-full max-w-7xl px-4 pb-20 sm:px-6">
