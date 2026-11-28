@@ -15,6 +15,7 @@ import {
 import { SectionHeader } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
+import { AdminDashboard } from "@/features/dashboards/admin/AdminDashboard";
 
 export const Route = createFileRoute("/_authenticated/admin/reports")({
   component: AdminReports,
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/admin/reports")({
 const COLORS = ["#1F6FEB", "#0B1220", "#4C9AFF", "#7C3AED", "#0EA5E9", "#64748B"];
 
 function monthKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, "0")}\`;
 }
 
 function lastMonths(n: number) {
@@ -68,6 +69,7 @@ function AdminReports() {
   return (
     <div>
       <SectionHeader title={t("a_reports")} description={t("reports_note")} />
+      <div className="mb-8"><AdminDashboard /></div>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="panel p-6">
           <h3 className="text-lg font-bold">{t("washes_by_month")}</h3>
