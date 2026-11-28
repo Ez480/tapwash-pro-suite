@@ -15,6 +15,7 @@ import {
 import { SectionHeader } from "@/components/admin/Crud";
 import { useI18n } from "@/lib/i18n";
 import { useAdminTable } from "@/lib/data";
+import { AdminDashboard } from "@/features/dashboards/admin/AdminDashboard";
 
 export const Route = createFileRoute("/_authenticated/admin/reports")({
   component: AdminReports,
@@ -68,6 +69,7 @@ function AdminReports() {
   return (
     <div>
       <SectionHeader title={t("a_reports")} description={t("reports_note")} />
+      <div className="mb-8"><AdminDashboard /></div>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="panel p-6">
           <h3 className="text-lg font-bold">{t("washes_by_month")}</h3>
