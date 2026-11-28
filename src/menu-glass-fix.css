@@ -1,0 +1,9 @@
+/* Side drawers in dark mode: restore the approved translucent blue glass. The generic dialog rule in solid-glass.css made them solid. */
+html.dark [role="dialog"].public-menu-glass {
+  background-color: transparent !important;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, .10), transparent 35%),
+    linear-gradient(135deg, rgba(12, 26, 69, .62), rgba(11, 21, 54, .60)) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+}
